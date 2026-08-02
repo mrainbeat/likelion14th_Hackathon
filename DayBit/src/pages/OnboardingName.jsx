@@ -43,7 +43,8 @@ export default function Onboarding() {
       {/* 전체 텍스트 뭉치 컨테이너 */}
       <div className="flex flex-col w-full">
         {/* 상단 진행 바 */}
-        <div className="flex gap-[3%] w-full mb-[7.11vh]">
+        <div className="flex gap-[3%] w-[calc(100%+8.2%)] -mx-[4.1%] mb-[7.11vh]">
+          {" "}
           <div className="h-[4px] flex-1 rounded-full bg-[#2D3038]"></div>
           <div className="h-[4px] flex-1 rounded-full bg-[#CDD1DA]"></div>
           <div className="h-[4px] flex-1 rounded-full bg-[#CDD1DA]"></div>
