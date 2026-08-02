@@ -25,7 +25,7 @@ export default function SplashScreen() {
       <div className="flex-1 flex items-center justify-center w-full px-8">
         <img
           src={logoImage}
-          alt="DAY BIT Logo"
+          alt="Logo"
           className="w-auto h-auto max-w-[220px] max-h-[220px] object-contain"
         />
       </div>
