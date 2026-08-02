@@ -6,9 +6,9 @@ export default function SplashScreen() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // 2.5초 뒤 온보딩 페이지로 이동 (뒤로가기 방지 replace: true 적용)
+    // 2.5초 뒤 로그인 페이지로 이동 (뒤로가기 방지 replace: true 적용)
     const timer = setTimeout(() => {
-      navigate("/onboarding", { replace: true });
+      navigate("/login", { replace: true });
     }, 2500);
 
     // 컴포넌트 언마운트 시 타이머 종료시킴
