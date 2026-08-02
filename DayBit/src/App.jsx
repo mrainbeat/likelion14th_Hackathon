@@ -4,6 +4,7 @@ import SplashScreen from "./pages/SplashScreen";
 import LoginPage from "./pages/LoginPage";
 import OnboardingName from "./pages/OnboardingName";
 import OnboardingJob from "./pages/OnboardingJob";
+import DiaryPage from "./pages/Diary/DiaryPage";
 function App() {
   return (
     <BrowserRouter>
@@ -15,6 +16,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/onboarding" element={<OnboardingName />} />
           <Route path="/onboarding/job" element={<OnboardingJob />} />
+          <Route path="/diary" element={<DiaryPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
