@@ -32,7 +32,7 @@ export default function Onboarding() {
 
   const handleNext = () => {
     if (isValid) {
-      navigate("/onboarding/next", { replace: true });
+      navigate("/onboarding/job", { replace: true });
     }
   };
 
