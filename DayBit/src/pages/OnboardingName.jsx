@@ -102,7 +102,7 @@ export default function Onboarding() {
         </div>
       </div>
 
-      {/* 하단 작성 완료 버튼 */}
+      {/* 하단 다음 버튼 */}
       {/* 입력 중이 아닐 대는 보이지 않게 하고, 입력 중이거나 입력값이 있을 때만 보이도록 설정 */}
       {showButton && (
         <div className="absolute bottom-0 left-0 w-full z-50">
@@ -117,7 +117,7 @@ export default function Onboarding() {
                 : "bg-[#E7E9EE] text-[#FFF] cursor-not-allowed"
             }`}
           >
-            작성 완료
+            다음
           </button>
         </div>
       )}
