@@ -3,7 +3,7 @@ import Layout from "./components/Layout";
 import SplashScreen from "./pages/SplashScreen";
 import LoginPage from "./pages/LoginPage";
 import OnboardingName from "./pages/OnboardingName";
-
+import OnboardingJob from "./pages/OnboardingJob";
 function App() {
   return (
     <BrowserRouter>
@@ -14,6 +14,7 @@ function App() {
           <Route path="/" element={<SplashScreen />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/onboarding" element={<OnboardingName />} />
+          <Route path="/onboarding/job" element={<OnboardingJob />} />
         </Route>
       </Routes>
     </BrowserRouter>
