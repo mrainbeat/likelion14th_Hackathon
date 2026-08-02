@@ -63,9 +63,10 @@ export default function OnboardingJob() {
   const isValid =
     selectedJob === "기타" ? customJob.trim().length > 0 : selectedJob !== "";
 
+  // 이거 테스트용으로 일기 작성으로 보내는 거임
   const handleNext = () => {
     if (isValid) {
-      navigate("/onboarding/next", { replace: true });
+      navigate("/diary", { replace: true });
     }
   };
 
