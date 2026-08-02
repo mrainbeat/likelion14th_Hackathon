@@ -163,7 +163,7 @@ export default function OnboardingJob() {
         </div>
       </div>
 
-      {/* 하단 작성 완료 버튼 */}
+      {/* 하단 다음 버튼 */}
       {showButton && (
         <div className="absolute bottom-0 left-0 w-full z-50">
           <button
@@ -176,7 +176,7 @@ export default function OnboardingJob() {
                 : "bg-[#E7E9EE] text-[#FFF] cursor-not-allowed"
             }`}
           >
-            작성 완료
+            다음
           </button>
         </div>
       )}
