@@ -1,1 +1,8 @@
+@import "pretendard/dist/web/static/pretendard.css";
 @import "tailwindcss";
+
+@theme {
+  --font-sans:
+    "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto,
+    sans-serif;
+}
