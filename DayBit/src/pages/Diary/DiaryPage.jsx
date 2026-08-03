@@ -175,7 +175,7 @@ export default function DiaryPage() {
     questionPool.length > 0 && questions.length === questionPool.length;
 
   return (
-    <div className="flex flex-col w-full h-full bg-[#F6F8FA] box-border relative select-none overflow-hidden">
+    <div className="flex flex-col w-full h-full  min-h-0 bg-[#F6F8FA] box-border relative select-none overflow-hidden">
       {/* 하단 여백 */}
       <div className="absolute bottom-0 left-0 right-0 w-full h-[42px] bg-[#F6F8FA] z-30 pointer-events-none"></div>
 
@@ -207,7 +207,7 @@ export default function DiaryPage() {
         </div>
       </div>
 
-      <div className="relative flex-1 w-full flex flex-col overflow-hidden z-20">
+      <div className="relative flex-1 min-h-0 w-full flex flex-col overflow-hidden z-20">
         {/* 상단 그라데이션 */}
         <div
           className={`absolute top-0 left-[20px] right-[20px] h-[92px] z-10 pointer-events-none transition-opacity duration-200 ${
@@ -232,7 +232,7 @@ export default function DiaryPage() {
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="flex-1 overflow-y-auto scrollbar-hide px-[20px] pb-[170px] flex flex-col gap-[16px] relative z-0"
+          className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-[20px] pb-[170px] flex flex-col gap-[16px] relative z-0"
         >
           {/* 에디터 박스 */}
           <div className="w-full bg-white rounded-[12px] px-[16px] py-[20px] flex flex-col shrink-0 shadow-[0_0_30px_0_rgba(65,68,80,0.05),0_0_10px_0_rgba(77,80,91,0.05)] min-h-[91px]">
