@@ -258,49 +258,54 @@ export default function DiaryPage() {
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-[20px] pb-[170px] flex flex-col gap-[16px] relative z-0"
+          className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-[20px] relative z-0"
         >
-          {/* 에디터 박스 */}
-          <div className="w-full bg-white rounded-[12px] px-[16px] py-[20px] flex flex-col shrink-0 shadow-[0_0_30px_0_rgba(65,68,80,0.05),0_0_10px_0_rgba(77,80,91,0.05)] min-h-[91px] ">
-            <div
-              ref={editorRef}
-              contentEditable
-              onInput={handleInput}
-              onPaste={handlePaste}
-              className="w-full bg-transparent focus:outline-none text-[16px] text-[#2D3038] leading-[26px] tracking-[-0.32px] whitespace-pre-wrap outline-none"
-              style={{ wordBreak: "break-word" }}
-            />
-          </div>
-
-          {/* 버튼과 질문 묶음 */}
-          <div className="flex flex-col gap-[10px] w-full shrink-0 ">
-            <div className="flex w-full gap-[12px] z-20 relative">
-              <button
-                type="button"
-                onClick={handleGetQuestions}
-                disabled={isAllQuestionsLoaded}
-                className="w-[217px] h-[48px] border border-[#5F6473] bg-white rounded-[12px] px-[26px] text-[18px] font-medium text-[#2D3038] tracking-[-0.36px] flex items-center justify-center gap-[4px] whitespace-nowrap active:bg-gray-50 disabled:opacity-50 transition-all"
-              >
-                <img
-                  src={logoImage}
-                  alt="로고"
-                  className="w-[16px] h-[20px] object-contain shrink-0"
-                />
-                <span className="whitespace-nowrap">
-                  {isAllQuestionsLoaded ? "질문 완료" : "데이빗에게 질문 받기"}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={handleComplete}
-                disabled={!hasUserWritten}
-                className="w-[118px] h-[48px] rounded-[12px] px-[26px] text-[18px] font-semibold tracking-[-0.18px] bg-grey-70 text-white disabled:bg-grey-20 disabled:text-white disabled:cursor-not-allowed transition-colors whitespace-nowrap"
-              >
-                작성 완료
-              </button>
+          {/* 콘텐츠 높이 계산용 래퍼 */}
+          <div className="flex flex-col gap-[16px] pb-[170px]">
+            {/* 에디터 박스 */}
+            <div className="w-full bg-white rounded-[12px] px-[16px] py-[20px] flex flex-col shrink-0 shadow-[0_0_30px_0_rgba(65,68,80,0.05),0_0_10px_0_rgba(77,80,91,0.05)] min-h-[91px] ">
+              <div
+                ref={editorRef}
+                contentEditable
+                onInput={handleInput}
+                onPaste={handlePaste}
+                className="w-full bg-transparent focus:outline-none text-[16px] text-[#2D3038] leading-[26px] tracking-[-0.32px] whitespace-pre-wrap outline-none"
+                style={{ wordBreak: "break-word" }}
+              />
             </div>
 
-            <QuestionModal questions={questions} />
+            {/* 버튼과 질문 묶음 */}
+            <div className="flex flex-col gap-[10px] w-full shrink-0 ">
+              <div className="flex w-full gap-[12px] z-20 relative">
+                <button
+                  type="button"
+                  onClick={handleGetQuestions}
+                  disabled={isAllQuestionsLoaded}
+                  className="w-[217px] h-[48px] border border-[#5F6473] bg-white rounded-[12px] px-[26px] text-[18px] font-medium text-[#2D3038] tracking-[-0.36px] flex items-center justify-center gap-[4px] whitespace-nowrap active:bg-gray-50 disabled:opacity-50 transition-all"
+                >
+                  <img
+                    src={logoImage}
+                    alt="로고"
+                    className="w-[16px] h-[20px] object-contain shrink-0"
+                  />
+                  <span className="whitespace-nowrap">
+                    {isAllQuestionsLoaded
+                      ? "질문 완료"
+                      : "데이빗에게 질문 받기"}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleComplete}
+                  disabled={!hasUserWritten}
+                  className="w-[118px] h-[48px] rounded-[12px] px-[26px] text-[18px] font-semibold tracking-[-0.18px] bg-grey-70 text-white disabled:bg-grey-20 disabled:text-white disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                >
+                  작성 완료
+                </button>
+              </div>
+
+              <QuestionModal questions={questions} />
+            </div>
           </div>
         </div>
       </div>
