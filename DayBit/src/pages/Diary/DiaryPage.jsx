@@ -11,8 +11,6 @@ import profileIcon from "../../assets/icons/profile.svg";
 export default function DiaryPage() {
   const navigate = useNavigate();
   const { dateStr } = useCurrentTime() || {};
-  // 버그 확인용
-  const [dbg, setDbg] = useState({});
   const [content, setContent] = useState("");
   const [initialText, setInitialText] = useState("");
   const [hadPriorContent, setHadPriorContent] = useState(false);
@@ -36,25 +34,6 @@ export default function DiaryPage() {
     fetchMockQuestions().then((data) => {
       setQuestionPool(data);
     });
-  }, []);
-
-  // 버그 확인용
-  useEffect(() => {
-    const update = () => {
-      const el = scrollContainerRef.current;
-      if (!el) return;
-      setDbg({
-        sh: el.scrollHeight,
-        ch: el.clientHeight,
-        diff: el.scrollHeight - el.clientHeight,
-        top: Math.round(el.scrollTop),
-        parent: Math.round(el.parentElement.getBoundingClientRect().height),
-        win: window.innerHeight,
-      });
-    };
-    update();
-    const id = setInterval(update, 300);
-    return () => clearInterval(id);
   }, []);
 
   const handleScroll = (e) => {
@@ -196,12 +175,6 @@ export default function DiaryPage() {
 
   return (
     <div className="flex flex-col w-full h-full  min-h-0 bg-[#F6F8FA] box-border relative select-none overflow-hidden">
-      {/* 버그 확인용 */}
-      <div className="fixed top-[70px] left-[8px] z-[9999] bg-black/85 text-white text-[11px] px-2 py-1 rounded leading-snug pointer-events-none font-mono">
-        sh:{dbg.sh} ch:{dbg.ch} diff:{dbg.diff}
-        <br />
-        top:{dbg.top} parent:{dbg.parent} win:{dbg.win}
-      </div>
       {/* 하단 여백 */}
       <div className="absolute bottom-0 left-0 right-0 w-full h-[42px] bg-[#F6F8FA] z-30 pointer-events-none"></div>
 
@@ -228,7 +201,7 @@ export default function DiaryPage() {
           </button>
         </header>
 
-        <div className="flex w-[106px] h-[33px] justify-center items-center text-[28px] font-bold text-[#4F5563] mb-[12px] tracking-[-0.56px]">
+        <div className="flex w-[106px] h-[33px] justify-center items-center text-heading-28 text-grey-80 mb-[12px]">
           {dateStr}
         </div>
       </div>
@@ -269,19 +242,19 @@ export default function DiaryPage() {
                 contentEditable
                 onInput={handleInput}
                 onPaste={handlePaste}
-                className="w-full bg-transparent focus:outline-none text-[16px] text-[#2D3038] leading-[26px] tracking-[-0.32px] whitespace-pre-wrap outline-none"
+                className="w-full bg-transparent focus:outline-none text-16 text-grey-90 whitespace-pre-wrap outline-none"
                 style={{ wordBreak: "break-word" }}
               />
             </div>
 
             {/* 버튼과 질문 묶음 */}
             <div className="flex flex-col gap-[10px] w-full shrink-0 ">
-              <div className="flex w-full gap-[12px] z-20 relative">
+              <div className="flex w-full gap-[14px] z-20 relative">
                 <button
                   type="button"
                   onClick={handleGetQuestions}
                   disabled={isAllQuestionsLoaded}
-                  className="w-[217px] h-[48px] border border-[#5F6473] bg-white rounded-[12px] px-[26px] text-[18px] font-medium text-[#2D3038] tracking-[-0.36px] flex items-center justify-center gap-[4px] whitespace-nowrap active:bg-gray-50 disabled:opacity-50 transition-all"
+                  className="w-[217px] h-[48px] border-[1.5px] border-[#858C9C] bg-white rounded-[12px] px-[26px] text-[18px] font-semibold text-[#414450] tracking-[-0.18px] flex items-center justify-center gap-[4px] whitespace-nowrap active:bg-gray-50 disabled:opacity-50 transition-all"
                 >
                   <img
                     src={logoImage}

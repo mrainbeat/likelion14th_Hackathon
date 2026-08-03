@@ -15,7 +15,7 @@ export default function QuestionModal({ questions }) {
         return (
           <div
             key={index}
-            className="relative w-fit max-w-full bg-[#DFE2EA] rounded-[12px] px-[16px] py-[10px] text-[#4F5563] text-[16px] font-medium tracking-[-0.32px] leading-[19px] break-words whitespace-pre-wrap"
+            className="relative w-fit max-w-full bg-[#DFE2EA] rounded-[12px] px-[16px] py-[10px] text-[#4F5563] text-[16px] font-medium tracking-[-0.32px] leading-normal break-words whitespace-pre-wrap"
           >
             <img
               src={bubbleTail}
