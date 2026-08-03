@@ -180,7 +180,7 @@ export default function DiaryPage() {
       <div className="absolute bottom-0 left-0 right-0 w-full h-[42px] bg-[#F6F8FA] z-30 pointer-events-none"></div>
 
       {/* 상단 헤더 날짜 영역 */}
-      <div className="shrink-0 pt-[64px] px-[20px] relative z-20">
+      <div className="shrink-0 pt-[16px] px-[20px] relative z-20">
         <header className="flex justify-between items-center mb-[12px] w-full">
           <button
             onClick={handleBack}
