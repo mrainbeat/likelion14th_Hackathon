@@ -1,16 +1,31 @@
+import bubbleTail from "../../../assets/icons/tail.svg";
+
 export default function QuestionModal({ questions }) {
-  if (!questions || questions.length === 0) return null;
+  if (!questions || !Array.isArray(questions) || questions.length === 0)
+    return null;
 
   return (
-    <div className="flex flex-col gap-[12px] w-full shrink-0">
-      {questions.map((question, idx) => (
-        <div
-          key={idx}
-          className="bg-[#DFE2EA] text-[#2D3038] text-[15px] leading-snug px-[16px] py-[12px] rounded-[16px] rounded-tl-[4px] self-start max-w-[90%] animate-fade-in shadow-sm"
-        >
-          {question}
-        </div>
-      ))}
+    <div className="flex flex-col items-start gap-[12px] w-full max-w-[350px] pb-[20px]">
+      {questions.map((question, index) => {
+        const questionText =
+          typeof question === "string"
+            ? question
+            : question?.text || question?.content || question?.question || "";
+
+        return (
+          <div
+            key={index}
+            className="relative w-fit max-w-full bg-[#DFE2EA] rounded-[12px] px-[16px] py-[10px] text-[#4F5563] text-[16px] font-medium tracking-[-0.32px] leading-[19px] break-words whitespace-pre-wrap"
+          >
+            <img
+              src={bubbleTail}
+              alt=""
+              className="absolute -top-[7px] left-0 w-[9px] h-[13px]"
+            />
+            <span className="relative z-10">{questionText}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
