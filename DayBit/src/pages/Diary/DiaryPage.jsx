@@ -1,58 +1,113 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
 import QuestionModal from "./components/QuestionModal";
+import ExitConfirmModal from "./components/ExitConfirmModal";
 import { fetchMockQuestions } from "./mocks/questionMock";
-import profileIcon from "../../assets/icons/profile.png";
 import backIcon from "../../assets/icons/back.svg";
 import logoImage from "../../assets/logos/logo-symbol.png";
+import profileIcon from "../../assets/icons/profile.svg";
 
 export default function DiaryPage() {
   const navigate = useNavigate();
-  const { dateStr, timeStr } = useCurrentTime();
+  const { dateStr } = useCurrentTime() || {};
 
   const [content, setContent] = useState("");
-
-  // 로컬스토리지에서 기존에 받았던 질문 목록 불러오기
+  const [initialText, setInitialText] = useState("");
+  const [hadPriorContent, setHadPriorContent] = useState(false);
   const [questions, setQuestions] = useState(() => {
-    const savedQuestions = localStorage.getItem("diary_questions");
-    return savedQuestions ? JSON.parse(savedQuestions) : [];
+    try {
+      const savedQuestions = localStorage.getItem("diary_questions");
+      return savedQuestions ? JSON.parse(savedQuestions) : [];
+    } catch (error) {
+      return [];
+    }
   });
-
   const [questionPool, setQuestionPool] = useState([]);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false);
 
   const isTimeAppended = useRef(false);
-  const textareaRef = useRef(null);
+  const editorRef = useRef(null);
   const scrollContainerRef = useRef(null);
 
-  // 컴포넌트 마운트 시 질문 풀 미리 로드
   useEffect(() => {
     fetchMockQuestions().then((data) => {
       setQuestionPool(data);
     });
   }, []);
 
-  // 글자 양에 따라 입력창 크기 조절 및 스크롤 튐 방지
-  useEffect(() => {
-    if (textareaRef.current && scrollContainerRef.current) {
-      const container = scrollContainerRef.current;
-      const currentScrollTop = container.scrollTop;
-
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-
-      container.scrollTop = currentScrollTop;
-    }
-  }, [content]);
-
-  // 스크롤 위치 감지하여 블러 노출 여부 결정->10px 이상 스크롤 시 블러 노출
   const handleScroll = (e) => {
-    const scrollTop = e.target.scrollTop;
-    setIsScrolled(scrollTop > 10);
+    setIsScrolled(e.target.scrollTop > 10);
   };
 
-  // 질문 받기 로직->api 호출 후 질문을 받아오는 로직으로 변경 필요
+  const getFormattedTime = () => {
+    const now = new Date();
+    let hours = now.getHours();
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12;
+    return `${ampm} ${hours}:${minutes}`;
+  };
+
+  useEffect(() => {
+    if (isTimeAppended.current) return;
+
+    const timeStr = getFormattedTime();
+    const timeHtml = `<span style="color: #5F6473; font-weight: 500;">${timeStr}</span><br><span style="color: #2D3038;">\u200B</span>`;
+    const savedDiary = localStorage.getItem("diary_content");
+
+    // 이전에 저장된 내용이 있었는지 확인
+    if (savedDiary) {
+      const tempPrior = document.createElement("div");
+      tempPrior.innerHTML = savedDiary;
+      const priorText = (
+        tempPrior.textContent ||
+        tempPrior.innerText ||
+        ""
+      ).trim();
+      if (priorText.length > 0) {
+        setHadPriorContent(true);
+      }
+    }
+
+    const newContent = savedDiary
+      ? `${savedDiary}<br><br>${timeHtml}`
+      : timeHtml;
+
+    if (editorRef.current) {
+      editorRef.current.innerHTML = newContent;
+      setContent(newContent);
+
+      const temp = document.createElement("div");
+      temp.innerHTML = newContent;
+      setInitialText(temp.textContent || temp.innerText || "");
+
+      setTimeout(() => {
+        try {
+          const range = document.createRange();
+          const sel = window.getSelection();
+          range.selectNodeContents(editorRef.current);
+          range.collapse(false);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        } catch (e) {}
+      }, 10);
+    }
+
+    isTimeAppended.current = true;
+  }, []);
+
+  const handleInput = (e) => {
+    setContent(e.currentTarget.innerHTML);
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData("text/plain");
+    document.execCommand("insertText", false, text);
+  };
+
   const handleGetQuestions = () => {
     if (questions.length < questionPool.length) {
       const nextQuestion = questionPool[questions.length];
@@ -73,23 +128,18 @@ export default function DiaryPage() {
     }
   };
 
-  // 진입 시 시간 세팅 및 저장 파일 불러오기
-  useEffect(() => {
-    if (!timeStr || isTimeAppended.current) return;
-    const savedDiary = localStorage.getItem("diary_content");
-    if (savedDiary) {
-      setContent(savedDiary);
-    } else {
-      setContent(`${timeStr}\n`);
-    }
-    isTimeAppended.current = true;
-  }, [timeStr]);
+  const currentText = useMemo(() => {
+    if (typeof document === "undefined") return "";
+    const temp = document.createElement("div");
+    temp.innerHTML = content;
+    return temp.textContent || temp.innerText || "";
+  }, [content]);
 
-  // 사용자가 시간을 제외하고 실제로 내용을 작성했는지 확인
-  const hasUserWritten = content.replace(timeStr, "").trim().length > 0;
-
-  // 뒤로가기 버튼
-  const handleBack = () => {
+  // 이번에 새로 내용을 썼거나, 이전에 이미 내용이 있었으면 true
+  const hasUserWritten =
+    hadPriorContent ||
+    (currentText !== initialText && currentText.trim().length > 0);
+  const performBack = () => {
     if (hasUserWritten) {
       localStorage.setItem("diary_content", content);
     } else {
@@ -99,7 +149,21 @@ export default function DiaryPage() {
     navigate(-1);
   };
 
-  // 작성완료 버튼
+  const handleBack = () => {
+    if (hasUserWritten) {
+      setShowExitModal(true);
+    } else {
+      performBack();
+    }
+  };
+
+  const handleContinueWriting = () => setShowExitModal(false);
+
+  const handleStopWriting = () => {
+    setShowExitModal(false);
+    performBack();
+  };
+
   const handleComplete = () => {
     if (!hasUserWritten) return;
     localStorage.removeItem("diary_content");
@@ -111,14 +175,16 @@ export default function DiaryPage() {
     questionPool.length > 0 && questions.length === questionPool.length;
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full bg-[#F6F8FA] box-border overflow-hidden relative select-none">
-      {/* 상단 고정 영역 */}
-      <div className="shrink-0 pt-[2.57vh] px-[20px] bg-[#F6F8FA] z-25">
-        <header className="flex justify-between items-center mb-[2vh] w-full">
-          {/* 뒤로가기 버튼 */}
+    <div className="flex flex-col w-full h-full bg-[#F6F8FA] box-border relative select-none overflow-hidden">
+      {/* 하단 여백 */}
+      <div className="absolute bottom-0 left-0 right-0 w-full h-[42px] bg-[#F6F8FA] z-30 pointer-events-none"></div>
+
+      {/* 상단 헤더 날짜 영역 */}
+      <div className="shrink-0 pt-[64px] px-[20px] relative z-20">
+        <header className="flex justify-between items-center mb-[12px] w-full">
           <button
             onClick={handleBack}
-            className="w-[clamp(32px,9.74vw,44px)] h-[clamp(32px,9.74vw,44px)] flex items-center justify-center cursor-pointer bg-transparent border-none p-0"
+            className="w-[38px] h-[38px] flex items-center justify-center cursor-pointer bg-transparent border-none p-0"
           >
             <img
               src={backIcon}
@@ -127,81 +193,98 @@ export default function DiaryPage() {
             />
           </button>
 
-          {/* 프로필 버튼 */}
-          <button className="w-[clamp(32px,9.74vw,44px)] h-[clamp(32px,9.74vw,44px)] rounded-full overflow-hidden cursor-pointer bg-transparent border-none p-0 flex items-center justify-center">
+          <button className="w-[38px] h-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0">
             <img
               src={profileIcon}
               alt="프로필"
-              className="w-[115%] h-[115%] rounded-full object-cover"
+              className="w-full h-full object-contain [filter:drop-shadow(0_0_9.938px_rgba(65,68,80,0.16))]"
             />
           </button>
         </header>
 
-        {/* 날짜 정보 영역 */}
-        <div className="inline-flex h-[clamp(28px,3.91vh,40px)] items-center text-[24px] font-bold text-[#4F5563] mb-[1.18vh] tracking-tight">
+        <div className="flex w-[106px] h-[33px] justify-center items-center text-[28px] font-bold text-[#4F5563] mb-[12px] tracking-[-0.56px]">
           {dateStr}
         </div>
       </div>
 
-      {/* 스크롤 영역 래퍼 */}
-      <div className="relative flex-1 flex flex-col overflow-hidden">
-        {/* 상단 블러 효과 */}
+      <div className="relative flex-1 w-full flex flex-col overflow-hidden z-20">
+        {/* 상단 그라데이션 */}
         <div
-          className={`absolute top-0 left-0 w-full h-[2.84vh] bg-gradient-to-b from-[#F6F8FA] via-[#F6F8FA]/80 to-transparent backdrop-blur-[1px] z-10 pointer-events-none transition-opacity duration-200 ${
+          className={`absolute top-0 left-[20px] right-[20px] h-[92px] z-10 pointer-events-none transition-opacity duration-200 ${
             isScrolled ? "opacity-100" : "opacity-0"
           }`}
+          style={{
+            background:
+              "linear-gradient(180deg, #F6F8FA 0%, rgba(246, 248, 250, 0) 100%)",
+          }}
         ></div>
 
-        {/* 실제 스크롤되는 콘텐츠의 영역 */}
+        {/* 하단 그라데이션 */}
+        <div
+          className="absolute bottom-[42px] left-[20px] right-[20px] h-[92px] z-10 pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(0deg, #F6F8FA 0%, rgba(246, 248, 250, 0) 100%)",
+          }}
+        ></div>
+
+        {/* 스크롤 가능한 본문 */}
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="flex-1 overflow-y-auto scrollbar-hide px-[20px] pt-[1.18vh] pb-[200px] flex flex-col"
+          className="flex-1 overflow-y-auto scrollbar-hide px-[20px] pb-[160px] flex flex-col gap-[16px] relative z-0"
         >
-          {/* 일기 작성 카드 */}
-          <div className="w-full bg-white rounded-[12px] p-[16px] flex flex-col mb-[20px] shrink-0 shadow-sm">
-            <textarea
-              ref={textareaRef}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="오늘 어떤 일이 있었나요?"
-              rows={1}
-              className="w-full bg-transparent resize-none focus:outline-none text-[15px] text-[#2D3038] leading-relaxed overflow-hidden"
+          {/* 에디터 박스 */}
+          <div className="w-full bg-white rounded-[12px] px-[16px] py-[20px] flex flex-col shrink-0 shadow-[0_0_30px_0_rgba(65,68,80,0.05),0_0_10px_0_rgba(77,80,91,0.05)] min-h-[91px]">
+            <div
+              ref={editorRef}
+              contentEditable
+              onInput={handleInput}
+              onPaste={handlePaste}
+              className="w-full bg-transparent focus:outline-none text-[16px] text-[#2D3038] leading-[26px] tracking-[-0.32px] whitespace-pre-wrap outline-none"
+              style={{ wordBreak: "break-word" }}
             />
           </div>
 
-          {/* 버튼 그룹 */}
-          <div className="flex gap-[10px] w-full h-[48px] shrink-0 mb-[24px]">
-            <button
-              type="button"
-              onClick={handleGetQuestions}
-              disabled={isAllQuestionsLoaded}
-              className="flex-[219] h-full bg-white border border-[#2D3038] rounded-[11.5px] text-[15px] font-semibold text-[#2D3038] flex items-center justify-center gap-[8px] active:bg-gray-50 disabled:opacity-50 transition-all shadow-sm"
-            >
-              <img
-                src={logoImage}
-                alt="로고"
-                className="w-[clamp(16px,4.62vw,22px)] h-[clamp(16px,4.62vw,22px)] object-contain"
-              />
-              {isAllQuestionsLoaded ? "질문 완료" : "데이빗에게 질문 받기"}
-            </button>
-            <button
-              type="button"
-              onClick={handleComplete}
-              disabled={!hasUserWritten}
-              className="flex-[125] h-full rounded-[12px] text-[15px] font-semibold bg-[#5F6473] text-white shadow-sm active:bg-[#4F5563] disabled:bg-[#E7E9EE] disabled:text-[#9499A8] disabled:cursor-not-allowed transition-colors"
-            >
-              작성 완료
-            </button>
-          </div>
+          {/* 버튼과 질문 묶음 */}
+          <div className="flex flex-col gap-[10px] w-full shrink-0">
+            <div className="flex w-full gap-[12px] z-20 relative">
+              <button
+                type="button"
+                onClick={handleGetQuestions}
+                disabled={isAllQuestionsLoaded}
+                className="w-[217px] h-[48px] border border-[#5F6473] bg-white rounded-[12px] px-[26px] text-[18px] font-medium text-[#2D3038] tracking-[-0.36px] flex items-center justify-center gap-[4px] whitespace-nowrap active:bg-gray-50 disabled:opacity-50 transition-all"
+              >
+                <img
+                  src={logoImage}
+                  alt="로고"
+                  className="w-[16px] h-[20px] object-contain shrink-0"
+                />
+                <span className="whitespace-nowrap">
+                  {isAllQuestionsLoaded ? "질문 완료" : "데이빗에게 질문 받기"}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={handleComplete}
+                disabled={!hasUserWritten}
+                className="w-[118px] h-[48px] rounded-[12px] px-[26px] text-[18px] font-semibold tracking-[-0.18px] bg-grey-70 text-white disabled:bg-grey-20 disabled:text-white disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+              >
+                작성 완료
+              </button>
+            </div>
 
-          {/* 질문 모달 컴포넌트 */}
-          <QuestionModal questions={questions} />
+            <QuestionModal questions={questions} />
+          </div>
         </div>
       </div>
 
-      {/* 하단 바 */}
-      <div className="w-full h-[30px] bg-[#FF00000D] shrink-0"></div>
+      {showExitModal && (
+        <ExitConfirmModal
+          onContinue={handleContinueWriting}
+          onExit={handleStopWriting}
+        />
+      )}
     </div>
   );
 }
