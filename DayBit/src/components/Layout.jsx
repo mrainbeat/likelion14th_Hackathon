@@ -6,7 +6,7 @@ export default function Layout() {
     // dvh 대신 svh 사용
     <div className="w-screen  h-[100svh] bg-white sm:bg-[#E5E8EB] flex justify-center items-center overflow-hidden font-sans sm:p-[20px]">
       {/* 데스크톱에선 390x796 고정->핸드폰 화면처럼 보이도록 */}
-      <div className="w-full h-full sm:w-[390px] sm:h-[796px] sm:max-h-full bg-[#F6F8FA] flex flex-col sm:rounded-3xl sm:shadow-2xl overflow-hidden relative">
+      <div className="w-full h-[100svh] sm:w-[390px] sm:h-[796px] sm:max-h-full bg-[#F6F8FA] flex flex-col sm:rounded-3xl sm:shadow-2xl overflow-hidden relative">
         {/* 자식 페이지들이 렌더링되는 영역 */}
         <div className="w-full h-full min-h-0 flex flex-col overflow-hidden">
           <Outlet />
