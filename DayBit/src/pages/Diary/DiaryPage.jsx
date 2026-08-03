@@ -232,7 +232,7 @@ export default function DiaryPage() {
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="flex-1 overflow-y-auto scrollbar-hide px-[20px] pb-[160px] flex flex-col gap-[16px] relative z-0"
+          className="flex-1 overflow-y-auto scrollbar-hide px-[20px] pb-[170px] flex flex-col gap-[16px] relative z-0"
         >
           {/* 에디터 박스 */}
           <div className="w-full bg-white rounded-[12px] px-[16px] py-[20px] flex flex-col shrink-0 shadow-[0_0_30px_0_rgba(65,68,80,0.05),0_0_10px_0_rgba(77,80,91,0.05)] min-h-[91px]">
