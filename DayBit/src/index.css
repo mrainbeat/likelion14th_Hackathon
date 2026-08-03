@@ -5,4 +5,15 @@
   --font-sans:
     "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto,
     sans-serif;
+  --color-grey-0: #ffffff;
+  --color-grey-10: #f3f4f7;
+  --color-grey-20: #e7e9ee;
+  --color-grey-30: #dfe2ea;
+  --color-grey-40: #cdd1da;
+  --color-grey-50: #afb6c4;
+  --color-grey-60: #858c9c;
+  --color-grey-70: #5f6473;
+  --color-grey-80: #4f5563;
+  --color-grey-90: #2d3038;
+  --color-grey-95: #414450;
 }
