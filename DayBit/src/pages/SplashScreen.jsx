@@ -17,7 +17,7 @@ export default function SplashScreen() {
       <img
         src={LogoFull}
         alt="DAY BIT"
-        className="pointer-events-none absolute left-1/2 top-[286px] w-[161px] -translate-x-1/2 object-contain"
+        className="pointer-events-none absolute left-1/2 top-[33.9dvh] w-[156px] -translate-x-1/2 object-contain"
       />
     </div>
   );
