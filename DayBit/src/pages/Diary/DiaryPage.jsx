@@ -11,7 +11,8 @@ import profileIcon from "../../assets/icons/profile.svg";
 export default function DiaryPage() {
   const navigate = useNavigate();
   const { dateStr } = useCurrentTime() || {};
-
+  // 버그 확인용
+  const [dbg, setDbg] = useState({});
   const [content, setContent] = useState("");
   const [initialText, setInitialText] = useState("");
   const [hadPriorContent, setHadPriorContent] = useState(false);
@@ -35,6 +36,25 @@ export default function DiaryPage() {
     fetchMockQuestions().then((data) => {
       setQuestionPool(data);
     });
+  }, []);
+
+  // 버그 확인용
+  useEffect(() => {
+    const update = () => {
+      const el = scrollContainerRef.current;
+      if (!el) return;
+      setDbg({
+        sh: el.scrollHeight,
+        ch: el.clientHeight,
+        diff: el.scrollHeight - el.clientHeight,
+        top: Math.round(el.scrollTop),
+        parent: Math.round(el.parentElement.getBoundingClientRect().height),
+        win: window.innerHeight,
+      });
+    };
+    update();
+    const id = setInterval(update, 300);
+    return () => clearInterval(id);
   }, []);
 
   const handleScroll = (e) => {
@@ -176,6 +196,12 @@ export default function DiaryPage() {
 
   return (
     <div className="flex flex-col w-full h-full  min-h-0 bg-[#F6F8FA] box-border relative select-none overflow-hidden">
+      {/* 버그 확인용 */}
+      <div className="fixed top-[70px] left-[8px] z-[9999] bg-black/85 text-white text-[11px] px-2 py-1 rounded leading-snug pointer-events-none font-mono">
+        sh:{dbg.sh} ch:{dbg.ch} diff:{dbg.diff}
+        <br />
+        top:{dbg.top} parent:{dbg.parent} win:{dbg.win}
+      </div>
       {/* 하단 여백 */}
       <div className="absolute bottom-0 left-0 right-0 w-full h-[42px] bg-[#F6F8FA] z-30 pointer-events-none"></div>
 
@@ -228,14 +254,14 @@ export default function DiaryPage() {
           }}
         ></div>
 
-        {/* 스크롤 가능한 본문 */}
+        {/* 본문 */}
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
           className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-[20px] pb-[170px] flex flex-col gap-[16px] relative z-0"
         >
           {/* 에디터 박스 */}
-          <div className="w-full bg-white rounded-[12px] px-[16px] py-[20px] flex flex-col shrink-0 shadow-[0_0_30px_0_rgba(65,68,80,0.05),0_0_10px_0_rgba(77,80,91,0.05)] min-h-[91px]  overflow-y-auto scrollbar-hide">
+          <div className="w-full bg-white rounded-[12px] px-[16px] py-[20px] flex flex-col shrink-0 shadow-[0_0_30px_0_rgba(65,68,80,0.05),0_0_10px_0_rgba(77,80,91,0.05)] min-h-[91px] ">
             <div
               ref={editorRef}
               contentEditable
