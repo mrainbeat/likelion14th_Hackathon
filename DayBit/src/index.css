@@ -16,4 +16,14 @@
   --color-grey-80: #4f5563;
   --color-grey-90: #2d3038;
   --color-grey-95: #414450;
+  /* Heading/28 */
+  --text-heading-28: 28px;
+  --text-heading-28--line-height: normal;
+  --text-heading-28--letter-spacing: -0.56px;
+  --text-heading-28--font-weight: 700;
+  /* Text/16 */
+  --text-16: 16px;
+  --text-16--line-height: 26px;
+  --text-16--letter-spacing: -0.32px;
+  --text-16--font-weight: 400;
 }
