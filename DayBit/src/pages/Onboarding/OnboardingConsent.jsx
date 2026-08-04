@@ -43,7 +43,7 @@ export default function OnboardingConsent() {
 
   const handleAgree = () => {
     localStorage.setItem("memoryConsent", "true");
-    navigate("/diary", { replace: true });
+    navigate("/onboarding/done", { replace: true });
   };
 
   return (
