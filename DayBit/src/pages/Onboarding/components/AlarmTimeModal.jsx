@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ModalButton } from "./OnboardingUI";
+import { ModalButton } from "./OnboardingUi";
 
 const ITEM_H = 46;
 const PERIODS = ["오전", "오후"];

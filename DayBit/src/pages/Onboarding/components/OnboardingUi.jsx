@@ -31,7 +31,7 @@ export function Chip({ label, selected = false, onClick }) {
   );
 }
 
-/* 하단 버튼 (bottom 50px 고정) */
+/* 하단 버튼 */
 export function BottomButton({ children = "다음", disabled = false, onClick }) {
   return (
     <button

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ModalButton } from "./OnboardingUI";
+import { ModalButton } from "./OnboardingUi";
 
 const LINE_H = 26;
 const MAX_LENGTH = 40;
