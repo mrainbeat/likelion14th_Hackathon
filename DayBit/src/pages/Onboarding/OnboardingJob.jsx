@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import OnboardingHeader from "./components/OnboardingHeader";
-import { ProgressBar, Chip, BottomButton } from "./components/OnboardingUI";
+import { ProgressBar, Chip, BottomButton } from "./components/OnboardingUi";
 import JobInputModal from "./components/JobInputModal";
 
 const PRESET_JOBS = ["직장인", "대학생", "구직중", "쉬는중", "프리랜서"];

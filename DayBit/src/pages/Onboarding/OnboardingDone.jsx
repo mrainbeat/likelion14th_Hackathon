@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import OnboardingHeader from "./components/OnboardingHeader";
-import { ProgressBar, BottomButton } from "./components/OnboardingUI";
+import { ProgressBar, BottomButton } from "./components/OnboardingUi";
 
 const BLOBS = [
   // 하단 왼쪽, 노랑

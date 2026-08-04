@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import OnboardingHeader from "./components/OnboardingHeader";
-import { ProgressBar, BottomButton } from "./components/OnboardingUI";
+import { ProgressBar, BottomButton } from "./components/OnboardingUi";
 import bubbleTail from "../../assets/icons/tail.svg";
 
 const SECTIONS = [
