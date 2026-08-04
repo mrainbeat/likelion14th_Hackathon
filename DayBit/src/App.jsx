@@ -2,8 +2,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import SplashScreen from "./pages/SplashScreen";
 import LoginPage from "./pages/LoginPage";
-import OnboardingName from "./pages/OnboardingName";
-import OnboardingJob from "./pages/OnboardingJob";
+import OnboardingName from "./pages/Onboarding/OnboardingName";
+import OnboardingJob from "./pages/Onboarding/OnboardingJob";
 import DiaryPage from "./pages/Diary/DiaryPage";
 function App() {
   return (
