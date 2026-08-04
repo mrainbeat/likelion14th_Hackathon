@@ -2,13 +2,9 @@ import { Outlet } from "react-router-dom";
 
 export default function Layout() {
   return (
-    /* 바깥 전체 화면->모바일에선 꽉 차고, 데스크톱에선 회색 배경 + 정중앙 정렬 */
-    // dvh 대신 svh 사용
-    <div className="w-screen  h-[100svh] bg-white sm:bg-[#E5E8EB] flex justify-center items-center overflow-hidden font-sans sm:p-[20px]">
-      {/* 데스크톱에선 390x796 고정->핸드폰 화면처럼 보이도록 */}
-      <div className="w-full h-[100svh] sm:w-[390px] sm:h-[796px] sm:max-h-full bg-[#F6F8FA] flex flex-col sm:rounded-3xl sm:shadow-2xl overflow-hidden relative">
-        {/* 자식 페이지들이 렌더링되는 영역 */}
-        <div className="w-full h-full min-h-0 flex flex-col overflow-hidden">
+    <div className="flex h-[100svh] w-full items-center justify-center overflow-hidden bg-white font-sans sm:bg-grey-20 sm:p-[20px]">
+      <div className="relative flex h-[100svh] w-full flex-col overflow-hidden bg-[#F6F8FA] sm:h-[796px] sm:max-h-full sm:w-[390px] sm:rounded-3xl sm:shadow-2xl">
+        <div className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
           <Outlet />
         </div>
       </div>

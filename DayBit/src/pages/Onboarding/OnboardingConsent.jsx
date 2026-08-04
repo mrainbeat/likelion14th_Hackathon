@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import OnboardingHeader from "./components/OnboardingHeader";
 import { ProgressBar, BottomButton } from "./components/OnboardingUi";
-import bubbleTail from "../../assets/icons/tail.svg";
+import bubbleTailSvg from "../../assets/icons/tail.svg";
 
 const SECTIONS = [
   {
@@ -25,11 +25,11 @@ function SpeechBubble({ lines }) {
   return (
     <div className="relative flex shrink-0 items-center gap-[10px] rounded-[12px] bg-grey-30 px-[16px] py-[10px]">
       <img
-        src={bubbleTail}
+        src={bubbleTailSvg}
         alt=""
         className="pointer-events-none absolute left-[-4px] top-[-9px] h-[18.739px] w-[15.307px]"
       />
-      <div className="shrink-0 whitespace-nowrap text-[16px] font-medium leading-[1.19] tracking-[-0.32px] text-grey-80">
+      <div className="shrink-0 whitespace-nowrap text-[16px] font-medium leading-[19px] tracking-[-0.32px] text-grey-80">
         {lines.map((line, i) => (
           <p key={i}>{line}</p>
         ))}
@@ -55,18 +55,20 @@ export default function OnboardingConsent() {
         caption="설정에서 언제든지 변경 가능해요."
       />
 
-      <div className="absolute left-[36px] top-[288px] flex w-[318px] flex-col gap-[16px]">
-        {SECTIONS.map(({ title, lines }) => (
-          <div
-            key={title}
-            className="flex w-full flex-col items-start gap-[8px]"
-          >
-            <p className="whitespace-nowrap text-[20px] font-semibold leading-[1.19] tracking-[-0.4px] text-grey-90">
-              {title}
-            </p>
-            <SpeechBubble lines={lines} />
-          </div>
-        ))}
+      <div className="absolute inset-x-0 bottom-[115px] top-[288px] overflow-y-auto overscroll-contain pl-[36px] [&::-webkit-scrollbar]:hidden">
+        <div className="flex w-[318px] flex-col gap-[16px] pb-[8px]">
+          {SECTIONS.map(({ title, lines }) => (
+            <div
+              key={title}
+              className="flex w-full flex-col items-start gap-[8px]"
+            >
+              <p className="whitespace-nowrap text-[20px] font-semibold leading-[24px] tracking-[-0.4px] text-grey-90">
+                {title}
+              </p>
+              <SpeechBubble lines={lines} />
+            </div>
+          ))}
+        </div>
       </div>
 
       <BottomButton onClick={handleAgree}>동의하기</BottomButton>
