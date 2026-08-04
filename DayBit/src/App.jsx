@@ -5,6 +5,7 @@ import LoginPage from "./pages/LoginPage";
 import OnboardingName from "./pages/Onboarding/OnboardingName";
 import OnboardingJob from "./pages/Onboarding/OnboardingJob";
 import DiaryPage from "./pages/Diary/DiaryPage";
+import OnboardingAlarm from "./pages/Onboarding/OnboardingAlarm ";
 function App() {
   return (
     <BrowserRouter>
@@ -16,6 +17,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/onboarding" element={<OnboardingName />} />
           <Route path="/onboarding/job" element={<OnboardingJob />} />
+          <Route path="/onboarding/alarm" element={<OnboardingAlarm />} />
           <Route path="/diary" element={<DiaryPage />} />
         </Route>
       </Routes>
