@@ -5,7 +5,7 @@ import LoginPage from "./pages/LoginPage";
 import OnboardingName from "./pages/Onboarding/OnboardingName";
 import OnboardingJob from "./pages/Onboarding/OnboardingJob";
 import DiaryPage from "./pages/Diary/DiaryPage";
-import OnboardingAlarm from "./pages/Onboarding/OnboardingAlarm ";
+import OnboardingAlarm from "./pages/Onboarding/OnboardingAlarm";
 import OnboardingConsent from "./pages/Onboarding/OnboardingConsent";
 import OnboardingDone from "./pages/Onboarding/OnboardingDone";
 
