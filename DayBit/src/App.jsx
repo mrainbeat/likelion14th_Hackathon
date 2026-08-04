@@ -6,6 +6,7 @@ import OnboardingName from "./pages/Onboarding/OnboardingName";
 import OnboardingJob from "./pages/Onboarding/OnboardingJob";
 import DiaryPage from "./pages/Diary/DiaryPage";
 import OnboardingAlarm from "./pages/Onboarding/OnboardingAlarm ";
+import OnboardingConsent from "./pages/Onboarding/OnboardingConsent";
 function App() {
   return (
     <BrowserRouter>
@@ -18,6 +19,7 @@ function App() {
           <Route path="/onboarding" element={<OnboardingName />} />
           <Route path="/onboarding/job" element={<OnboardingJob />} />
           <Route path="/onboarding/alarm" element={<OnboardingAlarm />} />
+          <Route path="/onboarding/consent" element={<OnboardingConsent />} />
           <Route path="/diary" element={<DiaryPage />} />
         </Route>
       </Routes>

@@ -35,7 +35,7 @@ export default function OnboardingName() {
 
   return (
     <div className="relative h-full w-full select-none overflow-hidden bg-background">
-      <ProgressBar step={1} />
+      <ProgressBar step={0} />
 
       <OnboardingHeader
         titleSize={22}

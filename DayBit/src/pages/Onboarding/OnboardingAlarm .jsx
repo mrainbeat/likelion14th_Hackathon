@@ -50,12 +50,12 @@ export default function OnboardingAlarm() {
   const isValid = selectedTime !== "";
 
   const handleNext = () => {
-    if (isValid) navigate("/diary", { replace: true });
+    if (isValid) navigate("/onboarding/consent", { replace: true });
   };
 
   return (
     <div className="relative h-full w-full select-none overflow-hidden bg-background">
-      <ProgressBar step={3} />
+      <ProgressBar step={2} />
 
       <OnboardingHeader
         lines={[
