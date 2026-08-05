@@ -11,7 +11,7 @@ export default function LoginPage() {
   //  카카오 로그인
   const handleKakaoLogin = (e) => {
     e.preventDefault();
-    window.location.href = `${BASE_URL}/oauth2/authorization/kakao`;
+    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/oauth2/authorization/kakao`;
   };
 
   // 다른 방법으로 시작하기->테스트용
