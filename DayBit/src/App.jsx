@@ -9,6 +9,8 @@ import OnboardingAlarm from "./pages/Onboarding/OnboardingAlarm";
 import OnboardingConsent from "./pages/Onboarding/OnboardingConsent";
 import OnboardingDone from "./pages/Onboarding/OnboardingDone";
 import KakaoCallbackPage from "./pages/Auth/KakaoCallbackPage";
+import ReflectionPage from "./pages/Diary/ReflectionPage";
+
 function App() {
   return (
     <BrowserRouter>
@@ -24,6 +26,7 @@ function App() {
           <Route path="/onboarding/consent" element={<OnboardingConsent />} />
           <Route path="/onboarding/done" element={<OnboardingDone />} />
           <Route path="/diary" element={<DiaryPage />} />
+          <Route path="/diary/reflection" element={<ReflectionPage />} />
           <Route
             path="/oauth2/callback/kakao"
             element={<KakaoCallbackPage />}

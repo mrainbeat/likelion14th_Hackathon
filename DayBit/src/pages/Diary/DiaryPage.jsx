@@ -4,6 +4,8 @@ import { useCurrentTime } from "../../hooks/useCurrentTime";
 import QuestionModal from "./components/QuestionModal";
 import ExitConfirmModal from "./components/ExitConfirmModal";
 import DiaryTutorial from "./components/DiaryTutorial";
+import CompleteConfirmModal from "./components/CompleteConfirmModal";
+import ReflectionConsentModal from "./components/ReflectionConsentModal";
 import { fetchMockQuestions } from "./mocks/questionMock";
 import backIcon from "../../assets/icons/back.svg";
 import logoImage from "../../assets/logos/logo-symbol.png";
@@ -27,11 +29,13 @@ export default function DiaryPage() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
 
-  // 튜토리얼 다 봤으면 다시 안 뜨게 localStorage로 체크
   const [tutorialStep, setTutorialStep] = useState(() => {
     const seen = localStorage.getItem("diary_tutorial_seen");
     return seen ? null : 0;
   });
+
+  const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
+  const [showReflectionConsent, setShowReflectionConsent] = useState(false);
 
   const isTimeAppended = useRef(false);
   const editorRef = useRef(null);
@@ -63,7 +67,6 @@ export default function DiaryPage() {
     const timeHtml = `<span style="color: #5F6473; font-weight: 500;">${timeStr}</span><br><span style="color: #2D3038;">\u200B</span>`;
     const savedDiary = localStorage.getItem("diary_content");
 
-    // 이전에 저장된 내용이 있었는지 확인
     if (savedDiary) {
       const tempPrior = document.createElement("div");
       tempPrior.innerHTML = savedDiary;
@@ -141,7 +144,6 @@ export default function DiaryPage() {
     return temp.textContent || temp.innerText || "";
   }, [content]);
 
-  // 이번에 새로 내용을 썼거나, 이전에 이미 내용이 있었으면 true
   const hasUserWritten =
     hadPriorContent ||
     (currentText !== initialText && currentText.trim().length > 0);
@@ -172,9 +174,20 @@ export default function DiaryPage() {
 
   const handleComplete = () => {
     if (!hasUserWritten) return;
-    localStorage.removeItem("diary_content");
-    localStorage.removeItem("diary_questions");
-    navigate("/diary");
+    setShowCompleteConfirm(true);
+  };
+
+  const handleCompleteContinue = () => setShowCompleteConfirm(false);
+
+  const handleCompleteProceed = () => {
+    setShowCompleteConfirm(false);
+    setShowReflectionConsent(true);
+  };
+
+  const goToReflection = (useDiaryContent) => {
+    setShowReflectionConsent(false);
+    localStorage.setItem("diary_content", content);
+    navigate("/diary/reflection", { state: { useDiaryContent } });
   };
 
   const handleTutorialNext = () => {
@@ -191,10 +204,8 @@ export default function DiaryPage() {
 
   return (
     <div className="flex flex-col w-full h-full  min-h-0 bg-[#F6F8FA] box-border relative select-none overflow-hidden">
-      {/* 하단 여백 */}
       <div className="absolute bottom-0 left-0 right-0 w-full h-[42px] bg-[#F6F8FA] z-30 pointer-events-none"></div>
 
-      {/* 상단 헤더 날짜 영역 */}
       <div className="shrink-0 pt-[16px] px-[20px] relative z-20">
         <header className="flex justify-between items-center mb-[12px] w-full">
           <button
@@ -223,7 +234,6 @@ export default function DiaryPage() {
       </div>
 
       <div className="relative flex-1 min-h-0 w-full flex flex-col overflow-hidden z-20">
-        {/* 상단 그라데이션 */}
         <div
           className={`absolute top-0 left-[20px] right-[20px] h-[92px] z-10 pointer-events-none transition-opacity duration-200 ${
             isScrolled ? "opacity-100" : "opacity-0"
@@ -234,7 +244,6 @@ export default function DiaryPage() {
           }}
         ></div>
 
-        {/* 하단 그라데이션 */}
         <div
           className="absolute bottom-[42px] left-[20px] right-[20px] h-[92px] z-10 pointer-events-none"
           style={{
@@ -243,15 +252,12 @@ export default function DiaryPage() {
           }}
         ></div>
 
-        {/* 본문 */}
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
           className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-[20px] relative z-0"
         >
-          {/* 콘텐츠 높이 계산용 래퍼 */}
           <div className="flex flex-col gap-[16px] pb-[170px]">
-            {/* 에디터 박스 */}
             <div className="w-full bg-white rounded-[12px] px-[16px] py-[20px] flex flex-col shrink-0 shadow-[0_0_30px_0_rgba(65,68,80,0.05),0_0_10px_0_rgba(77,80,91,0.05)] min-h-[91px] ">
               <div
                 ref={editorRef}
@@ -263,7 +269,6 @@ export default function DiaryPage() {
               />
             </div>
 
-            {/* 버튼과 질문 묶음 */}
             <div className="flex flex-col gap-[10px] w-full shrink-0 ">
               <div className="flex w-full gap-[14px] z-20 relative">
                 <button
@@ -308,6 +313,20 @@ export default function DiaryPage() {
 
       {tutorialStep !== null && (
         <DiaryTutorial step={tutorialStep} onNext={handleTutorialNext} />
+      )}
+
+      {showCompleteConfirm && (
+        <CompleteConfirmModal
+          onContinue={handleCompleteContinue}
+          onComplete={handleCompleteProceed}
+        />
+      )}
+
+      {showReflectionConsent && (
+        <ReflectionConsentModal
+          onSkip={() => goToReflection(false)}
+          onUse={() => goToReflection(true)}
+        />
       )}
     </div>
   );
