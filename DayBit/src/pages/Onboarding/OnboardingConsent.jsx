@@ -103,7 +103,7 @@ export default function OnboardingConsent() {
         caption="설정에서 언제든지 변경 가능해요."
       />
 
-      <div className="absolute inset-x-0 bottom-[115px] top-[288px] overflow-y-auto overscroll-contain pl-[36px] [&::-webkit-scrollbar]:hidden">
+      <div className="absolute inset-x-0 bottom-[115px] top-[244px] overflow-y-auto overscroll-contain pl-[36px] [&::-webkit-scrollbar]:hidden">
         <div className="flex w-[318px] flex-col gap-[16px] pb-[8px]">
           {SECTIONS.map(({ title, lines }) => (
             <div
