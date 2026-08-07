@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
 import QuestionModal from "./components/QuestionModal";
 import ExitConfirmModal from "./components/ExitConfirmModal";
+import DiaryTutorial from "./components/DiaryTutorial";
 import { fetchMockQuestions } from "./mocks/questionMock";
 import backIcon from "../../assets/icons/back.svg";
 import logoImage from "../../assets/logos/logo-symbol.png";
@@ -25,6 +26,12 @@ export default function DiaryPage() {
   const [questionPool, setQuestionPool] = useState([]);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
+
+  // 튜토리얼 다 봤으면 다시 안 뜨게 localStorage로 체크
+  const [tutorialStep, setTutorialStep] = useState(() => {
+    const seen = localStorage.getItem("diary_tutorial_seen");
+    return seen ? null : 0;
+  });
 
   const isTimeAppended = useRef(false);
   const editorRef = useRef(null);
@@ -170,6 +177,15 @@ export default function DiaryPage() {
     navigate("/diary");
   };
 
+  const handleTutorialNext = () => {
+    if (tutorialStep === 2) {
+      localStorage.setItem("diary_tutorial_seen", "true");
+      setTutorialStep(null);
+      return;
+    }
+    setTutorialStep((prev) => prev + 1);
+  };
+
   const isAllQuestionsLoaded =
     questionPool.length > 0 && questions.length === questionPool.length;
 
@@ -288,6 +304,10 @@ export default function DiaryPage() {
           onContinue={handleContinueWriting}
           onExit={handleStopWriting}
         />
+      )}
+
+      {tutorialStep !== null && (
+        <DiaryTutorial step={tutorialStep} onNext={handleTutorialNext} />
       )}
     </div>
   );

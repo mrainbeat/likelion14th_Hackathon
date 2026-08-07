@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import OnboardingHeader from "./components/OnboardingHeader";
 import { ProgressBar, BottomButton } from "./components/OnboardingUi";
 import bubbleTailSvg from "../../assets/icons/tail.svg";
+import apiClient from "../../api/apiClient";
 
 const SECTIONS = [
   {
@@ -38,12 +40,58 @@ function SpeechBubble({ lines }) {
   );
 }
 
+// "오후9시", "오전8시 30분" 같은 라벨을 백엔드가 원하는 "HH:mm"으로 바꿔줌
+function toServerTime(label) {
+  if (!label) return null;
+
+  const match = label.match(/^(오전|오후)(\d{1,2})시(?:\s*(\d{1,2})분)?$/);
+  if (!match) return null;
+
+  const [, period, hourStr, minuteStr] = match;
+  let hour = Number(hourStr);
+  const minute = minuteStr ? Number(minuteStr) : 0;
+
+  if (period === "오후" && hour !== 12) hour += 12;
+  if (period === "오전" && hour === 12) hour = 0;
+
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
 export default function OnboardingConsent() {
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleAgree = () => {
-    localStorage.setItem("memoryConsent", "true");
-    navigate("/onboarding/done", { replace: true });
+  const handleAgree = async () => {
+    if (isSubmitting) return;
+
+    const nickname = localStorage.getItem("nickname") || "";
+    const job = localStorage.getItem("job") || "";
+    const alarmLabel = localStorage.getItem("alarmTime") || "";
+    const reminderTime = toServerTime(alarmLabel);
+
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    try {
+      await apiClient.patch("/api/me", {
+        nickname,
+        job,
+        reminderTime,
+        aiMemoryConsent: true,
+      });
+
+      navigate("/onboarding/done", { replace: true });
+    } catch (error) {
+      console.error(
+        "PATCH /api/me 실패:",
+        error.response?.status,
+        error.response?.data,
+      );
+      setErrorMessage("저장 중 문제가 생겼어요. 다시 시도해주세요.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -71,7 +119,15 @@ export default function OnboardingConsent() {
         </div>
       </div>
 
-      <BottomButton onClick={handleAgree}>동의하기</BottomButton>
+      {errorMessage && (
+        <p className="absolute inset-x-[36px] bottom-[95px] text-[13px] font-medium text-red-500">
+          {errorMessage}
+        </p>
+      )}
+
+      <BottomButton disabled={isSubmitting} onClick={handleAgree}>
+        {isSubmitting ? "저장 중..." : "동의하기"}
+      </BottomButton>
     </div>
   );
 }
