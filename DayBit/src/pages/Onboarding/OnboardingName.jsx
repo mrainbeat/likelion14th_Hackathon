@@ -55,7 +55,7 @@ export default function OnboardingName() {
                 type="text"
                 value={nickname}
                 onChange={handleChange}
-                placeholder="제임스"
+                placeholder="닉네임을 입력해주세요."
                 className="min-w-0 flex-1 bg-transparent text-[18px] font-medium leading-[1.19] tracking-[-0.36px] text-grey-90 placeholder-grey-30 focus:outline-none"
               />
 
