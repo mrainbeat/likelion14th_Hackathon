@@ -62,7 +62,6 @@ export default function ReflectionPage() {
   const isSavedRef = useRef(false);
 
   useEffect(() => {
-    // StrictMode 이중 실행과 중복 작성을 막음
     if (isSavedRef.current) return;
     isSavedRef.current = true;
 
@@ -115,7 +114,7 @@ export default function ReflectionPage() {
   const handleFinish = () => {
     localStorage.removeItem("diary_content");
     localStorage.removeItem("diary_questions");
-    navigate("/diary", { replace: true });
+    navigate("/diary/today-color", { replace: true });
   };
 
   return (

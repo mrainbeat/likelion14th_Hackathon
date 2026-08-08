@@ -10,6 +10,7 @@ import OnboardingConsent from "./pages/Onboarding/OnboardingConsent";
 import OnboardingDone from "./pages/Onboarding/OnboardingDone";
 import KakaoCallbackPage from "./pages/Auth/KakaoCallbackPage";
 import ReflectionPage from "./pages/Diary/ReflectionPage";
+import TodayColorPage from "./pages/Diary/TodayColorPage";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
           <Route path="/onboarding/done" element={<OnboardingDone />} />
           <Route path="/diary" element={<DiaryPage />} />
           <Route path="/diary/reflection" element={<ReflectionPage />} />
+          <Route path="/diary/today-color" element={<TodayColorPage />} />
           <Route
             path="/oauth2/callback/kakao"
             element={<KakaoCallbackPage />}
