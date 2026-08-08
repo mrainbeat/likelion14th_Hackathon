@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+﻿import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
 import QuestionModal from "./components/QuestionModal";
@@ -10,6 +10,19 @@ import { fetchMockQuestions } from "./mocks/questionMock";
 import backIcon from "../../assets/icons/back.svg";
 import logoImage from "../../assets/logos/logo-symbol.png";
 import profileIcon from "../../assets/icons/profile.svg";
+
+function htmlToPlainText(html) {
+  if (!html) return "";
+
+  const temp = document.createElement("div");
+  temp.innerHTML = html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(div|p)>/gi, "\n");
+
+  return (temp.textContent || temp.innerText || "")
+    .replace(/\u200B/g, "")
+    .trim();
+}
 
 export default function DiaryPage() {
   const navigate = useNavigate();
@@ -185,9 +198,14 @@ export default function DiaryPage() {
   };
 
   const goToReflection = (useDiaryContent) => {
+    const plainText = htmlToPlainText(content);
+    if (!plainText) return;
+
     setShowReflectionConsent(false);
     localStorage.setItem("diary_content", content);
-    navigate("/diary/reflection", { state: { useDiaryContent } });
+    navigate("/diary/reflection", {
+      state: { content: plainText, useDiaryContent },
+    });
   };
 
   const handleTutorialNext = () => {

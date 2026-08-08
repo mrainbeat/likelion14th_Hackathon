@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
 import { fetchReflectionQuestion } from "./mocks/reflectionMock";
+import apiClient from "../../api/apiClient";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.png";
@@ -51,24 +52,58 @@ export default function ReflectionPage() {
   const location = useLocation();
   const { dateStr } = useCurrentTime() || {};
   const useDiaryContent = location.state?.useDiaryContent ?? false;
+  const diaryContent = location.state?.content ?? "";
 
   const [loading, setLoading] = useState(true);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const isSavedRef = useRef(false);
 
   useEffect(() => {
-    let alive = true;
-    fetchReflectionQuestion({ useDiaryContent }).then((data) => {
-      if (!alive) return;
-      setQuestion(data.question);
-      setLoading(false);
-    });
-    return () => {
-      alive = false;
-    };
-  }, [useDiaryContent]);
+    // StrictMode 이중 실행과 중복 작성을 막음
+    if (isSavedRef.current) return;
+    isSavedRef.current = true;
 
-  const handleBack = () => navigate(-1);
+    if (!diaryContent) {
+      navigate("/diary", { replace: true });
+      return;
+    }
+
+    const saveDiary = async () => {
+      try {
+        await apiClient.post("/api/v1/diaries", { content: diaryContent });
+
+        localStorage.removeItem("diary_content");
+        localStorage.removeItem("diary_questions");
+
+        // 성찰질문은 아직 AI 연동 전이라 mock 사용
+        const data = await fetchReflectionQuestion({ useDiaryContent });
+        setQuestion(data.question);
+      } catch (error) {
+        const code = error.response?.data?.code;
+        if (code === "DIARY409_1") {
+          localStorage.removeItem("diary_content");
+          localStorage.removeItem("diary_questions");
+          setErrorMessage("오늘의 일기는 이미 작성했어요.");
+        } else {
+          setErrorMessage("일기 저장에 실패했어요. 다시 시도해주세요.");
+        }
+        console.error(
+          "POST /api/v1/diaries 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    saveDiary();
+  }, [diaryContent, useDiaryContent, navigate]);
+
+  const handleBack = () => navigate("/diary", { replace: true });
 
   const handleAnswerChange = (e) => {
     setAnswer(e.target.value);
@@ -127,6 +162,19 @@ export default function ReflectionPage() {
           <p className="text-[20px] font-semibold tracking-[-0.4px] text-[#2D3038]">
             생성중..
           </p>
+        </div>
+      ) : errorMessage ? (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-[24px] px-[36px]">
+          <p className="text-center text-[18px] font-semibold tracking-[-0.36px] text-[#4F5563]">
+            {errorMessage}
+          </p>
+          <button
+            type="button"
+            onClick={handleBack}
+            className="w-full rounded-[12px] bg-[#5F6473] px-[26px] py-[14px] text-[18px] font-semibold tracking-[-0.18px] text-white"
+          >
+            돌아가기
+          </button>
         </div>
       ) : (
         <div className="absolute inset-x-0 top-[164px] bottom-0 z-10 flex flex-col justify-between rounded-[12px] bg-white px-[36px] pb-[50px] pt-[36px] shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">
