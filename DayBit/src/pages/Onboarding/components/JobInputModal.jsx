@@ -76,23 +76,13 @@ export default function JobInputModal({
           />
         </div>
 
-        <div
-          className={`grid w-full transition-all duration-200 ease-out ${
-            isValid
-              ? "mt-0 grid-rows-[1fr] opacity-100"
-              : "-mt-[16px] grid-rows-[0fr] opacity-0"
-          }`}
-        >
-          <div className="overflow-hidden">
-            <div className="h-[49px] w-[318px]">
-              <ModalButton
-                disabled={!isValid}
-                onClick={() => isValid && onConfirm(value.trim())}
-              >
-                완료
-              </ModalButton>
-            </div>
-          </div>
+        <div className="h-[49px] w-full">
+          <ModalButton
+            disabled={!isValid}
+            onClick={() => isValid && onConfirm(value.trim())}
+          >
+            완료
+          </ModalButton>
         </div>
       </div>
     </div>

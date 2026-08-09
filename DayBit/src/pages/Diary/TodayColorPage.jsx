@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
-import { fetchTodayColor } from "./mocks/todayColorMock";
+import apiClient from "../../api/apiClient";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.png";
@@ -53,27 +53,76 @@ function hexToRgba(hex, alpha) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+const FALLBACK_COLOR = "#858C9C";
+const POLL_INTERVAL_MS = 2000;
+const MAX_POLL_ATTEMPTS = 15; // 약 30초
+
 export default function TodayColorPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { dateStr } = useCurrentTime() || {};
 
-  const [loading, setLoading] = useState(true);
-  const [color, setColor] = useState("#00DEAD");
+  // ?diaryId=1 처럼 쿼리로 직접 접근하면 그 일기의 reward를 조회해서 미리보기
+  const previewDiaryId = new URLSearchParams(location.search).get("diaryId");
+  const diaryId =
+    location.state?.diaryId ?? (previewDiaryId ? Number(previewDiaryId) : null);
+  const [reward, setReward] = useState(
+    location.state?.reward ?? (previewDiaryId ? { status: "PENDING" } : null),
+  );
+
+  const isPending = reward?.status === "PENDING";
+  const isReady = reward?.status === "COMPLETED" && reward?.colorHex;
+  const color = isReady ? reward.colorHex : FALLBACK_COLOR;
+
+  // 성찰질문 페이지를 거치지 않고 직접 접근한 경우
+  useEffect(() => {
+    if (!reward) navigate("/diary", { replace: true });
+  }, [reward, navigate]);
 
   useEffect(() => {
+    if (!isPending || !diaryId) return;
+
     let alive = true;
-    fetchTodayColor().then((data) => {
+    let timer;
+    let attempts = 0;
+
+    const poll = async () => {
+      attempts += 1;
+      try {
+        const response = await apiClient.get(`/api/v1/diaries/${diaryId}`);
+        const nextReward = response.data.result?.reward;
+        if (!alive) return;
+        if (nextReward && nextReward.status !== "PENDING") {
+          setReward(nextReward);
+          return;
+        }
+      } catch (error) {
+        console.error(
+          "GET /api/v1/diaries/{diaryId} 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      }
+
       if (!alive) return;
-      setColor(data.color);
-      setLoading(false);
-    });
+      if (attempts >= MAX_POLL_ATTEMPTS) {
+        setReward((prev) => ({ ...prev, status: "FAILED" }));
+        return;
+      }
+      timer = setTimeout(poll, POLL_INTERVAL_MS);
+    };
+
+    timer = setTimeout(poll, POLL_INTERVAL_MS);
     return () => {
       alive = false;
+      clearTimeout(timer);
     };
-  }, []);
+  }, [isPending, diaryId]);
 
-  const handleBack = () => navigate(-1);
+  const handleBack = () => navigate("/diary", { replace: true });
   const handleFinish = () => navigate("/diary", { replace: true });
+
+  if (!reward) return null;
 
   return (
     <div className="relative h-full w-full select-none overflow-hidden bg-[#F6F8FA]">
@@ -100,97 +149,111 @@ export default function TodayColorPage() {
           <button type="button" onClick={handleBack}>
             <img src={backIcon} alt="뒤로가기" className="size-[32px]" />
           </button>
-          <div
-            className="flex size-[38px] items-center justify-center rounded-full bg-white"
-            style={{
-              boxShadow: loading
-                ? "0 0 9.938px 0 rgba(65,68,80,0.16)"
-                : `0 0 9.938px 0 ${hexToRgba(color, 0.16)}`,
-            }}
-          >
-            <img src={profileIcon} alt="프로필" className="size-[20px]" />
-          </div>
+          <button className="w-[38px] h-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0">
+            <img
+              src={profileIcon}
+              alt="프로필"
+              className="w-full h-full object-contain [filter:drop-shadow(0_0_9.938px_rgba(65,68,80,0.16))]"
+            />
+          </button>
         </div>
         <p
           className="text-[28px] font-bold tracking-[-0.56px]"
-          style={{ color: loading ? "#4F5563" : color }}
+          style={{ color: isReady ? color : "#4F5563" }}
         >
           {dateStr}
         </p>
       </div>
 
-      {loading ? (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-[17px]">
+      <div
+        className="absolute inset-x-0 top-[164px] bottom-0 z-10 flex flex-col justify-between overflow-hidden rounded-[12px] bg-white px-[36px] pb-[50px] pt-[36px]"
+        style={{
+          boxShadow: `0 0 10px 0 ${hexToRgba(color, 0.05)}, 0 0 30px 0 ${hexToRgba(color, 0.05)}`,
+        }}
+      >
+        <div
+          className="pointer-events-none absolute rounded-[50%]"
+          style={{
+            left: 86,
+            top: 44,
+            width: 473,
+            height: 573,
+            backgroundColor: hexToRgba(color, 0.15),
+            filter: "blur(80px)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute rounded-[50%]"
+          style={{
+            left: -199,
+            top: 302,
+            width: 473,
+            height: 573,
+            backgroundColor: hexToRgba(color, 0.15),
+            filter: "blur(80px)",
+          }}
+        />
+
+        <div className="relative z-10 flex w-full items-center gap-[6px]">
           <img
             src={logoImage}
-            alt="DAYBIT"
-            className="h-[124px] w-[98px] object-cover"
+            alt=""
+            className="h-[28px] w-[22px] object-cover"
           />
-          <p className="text-[20px] font-semibold tracking-[-0.4px] text-[#2D3038]">
-            생성중..
+          <p className="text-[24px] font-bold tracking-[-0.48px] text-[#4F5563]">
+            오늘의 색
           </p>
         </div>
-      ) : (
-        <div
-          className="absolute inset-x-0 top-[164px] bottom-0 z-10 flex flex-col justify-between overflow-hidden rounded-[12px] bg-white px-[36px] pb-[50px] pt-[36px]"
-          style={{
-            boxShadow: `0 0 10px 0 ${hexToRgba(color, 0.05)}, 0 0 30px 0 ${hexToRgba(color, 0.05)}`,
-          }}
-        >
-          <div
-            className="pointer-events-none absolute rounded-[50%]"
-            style={{
-              left: 86,
-              top: 44,
-              width: 473,
-              height: 573,
-              backgroundColor: hexToRgba(color, 0.15),
-              filter: "blur(80px)",
-            }}
-          />
-          <div
-            className="pointer-events-none absolute rounded-[50%]"
-            style={{
-              left: -199,
-              top: 302,
-              width: 473,
-              height: 573,
-              backgroundColor: hexToRgba(color, 0.15),
-              filter: "blur(80px)",
-            }}
-          />
 
-          <div className="relative z-10 flex w-full items-center gap-[6px]">
-            <img
-              src={logoImage}
-              alt=""
-              className="h-[28px] w-[22px] object-cover"
-            />
-            <p className="text-[24px] font-bold tracking-[-0.48px] text-[#4F5563]">
-              오늘의 색
-            </p>
+        {isPending ? (
+          <div className="relative z-10 flex w-full flex-col items-start gap-[6px]">
+            <div className="flex aspect-square w-full flex-col items-center justify-center gap-[12px] bg-[#F6F8FA]">
+              <img
+                src={logoImage}
+                alt="DAYBIT"
+                className="h-[62px] w-[49px] object-cover"
+              />
+              <p className="text-[16px] font-semibold text-[#858C9C]">
+                생성중..
+              </p>
+            </div>
           </div>
-
+        ) : isReady ? (
           <div className="relative z-10 flex w-full flex-col items-start gap-[6px]">
             <div
               className="aspect-square w-full"
               style={{ backgroundColor: color }}
             />
+            {reward.colorName && (
+              <p className="text-[16px] font-semibold text-[#4F5563]">
+                {reward.colorName}
+              </p>
+            )}
             <p className="text-[24px] font-bold" style={{ color }}>
               {color}
             </p>
           </div>
+        ) : (
+          <div className="relative z-10 flex w-full flex-col items-start gap-[6px]">
+            <div className="flex aspect-square w-full items-center justify-center bg-[#F6F8FA]">
+              <p className="px-[24px] text-center text-[16px] font-medium text-[#858C9C]">
+                오늘은 색을 만드는 데 실패했어요.
+                <br />
+                일기는 안전하게 저장됐어요.
+              </p>
+            </div>
+          </div>
+        )}
 
-          <button
-            type="button"
-            onClick={handleFinish}
-            className="relative z-10 w-[350px] max-w-full self-center rounded-[12px] px-[26px] py-[14px] text-[18px] font-semibold tracking-[-0.18px] text-white"
-            style={{ backgroundColor: color }}
-          >
-            완료
-          </button>
-        </div>
-      )}
+        <button
+          type="button"
+          onClick={handleFinish}
+          className="relative z-10 w-[350px] max-w-full self-center rounded-[12px] px-[26px] py-[14px] text-[18px] font-semibold tracking-[-0.18px] text-white"
+          style={{ backgroundColor: color }}
+        >
+          완료
+        </button>
+      </div>
     </div>
   );
 }

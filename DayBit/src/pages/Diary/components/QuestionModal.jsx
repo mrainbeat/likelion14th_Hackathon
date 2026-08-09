@@ -10,7 +10,11 @@ export default function QuestionModal({ questions }) {
         const questionText =
           typeof question === "string"
             ? question
-            : question?.text || question?.content || question?.question || "";
+            : question?.questionText ||
+              question?.text ||
+              question?.content ||
+              question?.question ||
+              "";
 
         return (
           <div

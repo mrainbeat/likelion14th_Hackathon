@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
-import { fetchReflectionQuestion } from "./mocks/reflectionMock";
 import apiClient from "../../api/apiClient";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
@@ -51,13 +50,18 @@ export default function ReflectionPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { dateStr } = useCurrentTime() || {};
-  const useDiaryContent = location.state?.useDiaryContent ?? false;
   const diaryContent = location.state?.content ?? "";
+  const useDiaryContent = location.state?.useDiaryContent ?? false;
 
   const [loading, setLoading] = useState(true);
   const [question, setQuestion] = useState("");
+  const [questionId, setQuestionId] = useState(null);
+  const [diaryId, setDiaryId] = useState(null);
+  const [reward, setReward] = useState(null);
   const [answer, setAnswer] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [answerError, setAnswerError] = useState("");
 
   const isSavedRef = useRef(false);
 
@@ -72,22 +76,27 @@ export default function ReflectionPage() {
 
     const saveDiary = async () => {
       try {
-        await apiClient.post("/api/v1/diaries", { content: diaryContent });
+        const response = await apiClient.post("/api/v1/diaries", {
+          content: diaryContent,
+          reflectionUsesDiaryContent: useDiaryContent,
+        });
+        const result = response.data.result;
+
+        setQuestionId(result.reflectionQuestion?.questionId ?? null);
+        setQuestion(result.reflectionQuestion?.questionText ?? "");
+        setDiaryId(result.diaryId ?? null);
+        setReward(result.reward ?? null);
 
         localStorage.removeItem("diary_content");
         localStorage.removeItem("diary_questions");
-
-        // 성찰질문은 아직 AI 연동 전이라 mock 사용
-        const data = await fetchReflectionQuestion({ useDiaryContent });
-        setQuestion(data.question);
       } catch (error) {
         const code = error.response?.data?.code;
         if (code === "DIARY409_1") {
           localStorage.removeItem("diary_content");
           localStorage.removeItem("diary_questions");
-          setErrorMessage("오늘의 일기는 이미 작성했어요.");
+          setSaveError("오늘의 일기는 이미 작성했어요.");
         } else {
-          setErrorMessage("일기 저장에 실패했어요. 다시 시도해주세요.");
+          setSaveError("일기 저장에 실패했어요. 다시 시도해주세요.");
         }
         console.error(
           "POST /api/v1/diaries 실패:",
@@ -111,10 +120,45 @@ export default function ReflectionPage() {
     el.style.height = `${el.scrollHeight}px`;
   };
 
-  const handleFinish = () => {
-    localStorage.removeItem("diary_content");
-    localStorage.removeItem("diary_questions");
-    navigate("/diary/today-color", { replace: true });
+  const handleFinish = async () => {
+    if (isSubmitting) return;
+
+    const trimmed = answer.trim();
+
+    // 답변 없이 넘어가면 추가 API를 호출하지 않음
+    if (!trimmed || !questionId) {
+      navigate("/diary/today-color", {
+        replace: true,
+        state: { reward, diaryId },
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await apiClient.post(`/api/v1/questions/${questionId}/answer`, {
+        answer: trimmed,
+      });
+      navigate("/diary/today-color", {
+        replace: true,
+        state: { reward, diaryId },
+      });
+    } catch (error) {
+      if (error.response?.data?.code === "QUESTION409_1") {
+        navigate("/diary/today-color", {
+          replace: true,
+          state: { reward, diaryId },
+        });
+        return;
+      }
+      setAnswerError("답변 제출에 실패했어요. 다시 시도해주세요.");
+      console.error(
+        "POST /api/v1/questions/{questionId}/answer 실패:",
+        error.response?.status,
+        error.response?.data,
+      );
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -142,9 +186,13 @@ export default function ReflectionPage() {
           <button type="button" onClick={handleBack}>
             <img src={backIcon} alt="뒤로가기" className="size-[32px]" />
           </button>
-          <div className="flex size-[38px] items-center justify-center rounded-full bg-white shadow-[0_0_9.938px_0_rgba(65,68,80,0.16)]">
-            <img src={profileIcon} alt="프로필" className="size-[20px]" />
-          </div>
+          <button className="w-[38px] h-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0">
+            <img
+              src={profileIcon}
+              alt="프로필"
+              className="w-full h-full object-contain [filter:drop-shadow(0_0_9.938px_rgba(65,68,80,0.16))]"
+            />
+          </button>
         </div>
         <p className="text-[28px] font-bold tracking-[-0.56px] text-[#4F5563]">
           {dateStr}
@@ -162,10 +210,10 @@ export default function ReflectionPage() {
             생성중..
           </p>
         </div>
-      ) : errorMessage ? (
+      ) : saveError ? (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-[24px] px-[36px]">
           <p className="text-center text-[18px] font-semibold tracking-[-0.36px] text-[#4F5563]">
-            {errorMessage}
+            {saveError}
           </p>
           <button
             type="button"
@@ -212,14 +260,21 @@ export default function ReflectionPage() {
               rows={1}
               className="w-full resize-none overflow-hidden rounded-[12px] bg-[#DFE2EA] px-[16px] py-[10px] text-[16px] font-medium tracking-[-0.32px] text-[#4F5563] placeholder:text-[#AFB6C4] focus:outline-none"
             />
+
+            {answerError && (
+              <p className="text-[13px] font-medium text-red-500">
+                {answerError}
+              </p>
+            )}
           </div>
 
           <button
             type="button"
             onClick={handleFinish}
-            className="w-full rounded-[12px] bg-[#5F6473] px-[26px] py-[14px] text-[18px] font-semibold tracking-[-0.18px] text-white"
+            disabled={isSubmitting}
+            className="w-full rounded-[12px] bg-[#5F6473] px-[26px] py-[14px] text-[18px] font-semibold tracking-[-0.18px] text-white disabled:opacity-50"
           >
-            작성완료
+            {isSubmitting ? "제출 중..." : "작성완료"}
           </button>
         </div>
       )}

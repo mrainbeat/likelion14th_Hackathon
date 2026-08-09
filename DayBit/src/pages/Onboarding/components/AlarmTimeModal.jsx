@@ -20,13 +20,18 @@ export function formatAlarmLabel({ period, hour, minute }) {
 function WheelColumn({ items, value, onChange, label, className }) {
   const ref = useRef(null);
   const timer = useRef(null);
+  const valueRef = useRef(value);
+  const wheelLocked = useRef(false);
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
 
   const scrollToIndex = (idx, smooth = true) => {
     const el = ref.current;
     if (!el) return;
     const next = Math.min(Math.max(idx, 0), items.length - 1);
     el.scrollTo({ top: next * ITEM_H, behavior: smooth ? "smooth" : "auto" });
-    if (items[next] !== value) onChange(items[next]);
+    if (items[next] !== valueRef.current) onChange(items[next]);
   };
 
   useEffect(() => {
@@ -41,9 +46,26 @@ function WheelColumn({ items, value, onChange, label, className }) {
       if (!ref.current) return;
       const idx = Math.round(ref.current.scrollTop / ITEM_H);
       const next = items[Math.min(Math.max(idx, 0), items.length - 1)];
-      if (next && next !== value) onChange(next);
+      if (next && next !== valueRef.current) onChange(next);
     }, 90);
   };
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const handleWheel = (e) => {
+      e.preventDefault();
+      if (wheelLocked.current) return;
+      wheelLocked.current = true;
+      const dir = e.deltaY > 0 ? 1 : -1;
+      scrollToIndex(items.indexOf(valueRef.current) + dir);
+      setTimeout(() => {
+        wheelLocked.current = false;
+      }, 160);
+    };
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, [items]);
 
   // 위아래 화살표로 한 칸씩
   const handleKeyDown = (e) => {
@@ -114,7 +136,6 @@ export default function AlarmTimeModal({
 
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center">
-      {/* 어두워짐 효과 */}
       <div
         onClick={onClose}
         className={`absolute inset-0 bg-grey-90/25 backdrop-blur-[1px] transition-opacity duration-200 ease-out ${

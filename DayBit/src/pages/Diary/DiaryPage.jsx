@@ -6,7 +6,7 @@ import ExitConfirmModal from "./components/ExitConfirmModal";
 import DiaryTutorial from "./components/DiaryTutorial";
 import CompleteConfirmModal from "./components/CompleteConfirmModal";
 import ReflectionConsentModal from "./components/ReflectionConsentModal";
-import { fetchMockQuestions } from "./mocks/questionMock";
+import apiClient from "../../api/apiClient";
 import backIcon from "../../assets/icons/back.svg";
 import logoImage from "../../assets/logos/logo-symbol.png";
 import profileIcon from "../../assets/icons/profile.svg";
@@ -38,7 +38,9 @@ export default function DiaryPage() {
       return [];
     }
   });
-  const [questionPool, setQuestionPool] = useState([]);
+  // null = 남은 횟수 아직 모름, 0 = 오늘 소진
+  const [remainingQuestions, setRemainingQuestions] = useState(null);
+  const [isAskingQuestion, setIsAskingQuestion] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
 
@@ -50,15 +52,74 @@ export default function DiaryPage() {
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
   const [showReflectionConsent, setShowReflectionConsent] = useState(false);
 
+  const [isResetting, setIsResetting] = useState(false);
+  const isDevResetEnabled = import.meta.env.VITE_DEV_RESET_ENABLED === "true";
+
   const isTimeAppended = useRef(false);
   const editorRef = useRef(null);
   const scrollContainerRef = useRef(null);
 
+  // 페이지 진입 시 오늘 남은 작성 도움 질문 횟수 조회
   useEffect(() => {
-    fetchMockQuestions().then((data) => {
-      setQuestionPool(data);
-    });
+    let alive = true;
+    apiClient
+      .get("/api/v1/ai/writing-help/status")
+      .then((response) => {
+        if (!alive) return;
+        const { available, remainingCount } = response.data.result;
+        setRemainingQuestions(available ? remainingCount : 0);
+      })
+      .catch((error) => {
+        console.error(
+          "GET /api/v1/ai/writing-help/status 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      });
+    return () => {
+      alive = false;
+    };
   }, []);
+
+  const handleResetTodayDiary = async () => {
+    if (isResetting) return;
+    if (
+      !window.confirm(
+        "오늘 작성한 일기와 연결된 색상·성찰 질문·기억 후보를 초기화합니다. 계속할까요?",
+      )
+    )
+      return;
+
+    setIsResetting(true);
+    try {
+      const response = await apiClient.delete("/api/dev/me/diaries/today");
+      const result = response.data.result;
+      alert(
+        result.deleted
+          ? "초기화가 완료되었습니다. 오늘 일기를 다시 작성할 수 있습니다."
+          : "오늘 작성된 일기가 없어 초기화할 데이터가 없습니다.",
+      );
+      window.location.reload();
+    } catch (error) {
+      const code = error.response?.data?.code;
+      if (code === "DEV409_1") {
+        alert("공유 이력이 있는 일기는 초기화할 수 없습니다.");
+      } else if (error.response?.status === 401) {
+        alert("로그인이 필요합니다.");
+      } else if (error.response?.status === 404) {
+        alert("현재 서버에서는 개발용 초기화 기능이 활성화되어 있지 않습니다.");
+      } else {
+        alert("오늘 일기를 초기화하지 못했습니다.");
+      }
+      console.error(
+        "DELETE /api/dev/me/diaries/today 실패:",
+        error.response?.status,
+        error.response?.data,
+      );
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   const handleScroll = (e) => {
     setIsScrolled(e.target.scrollTop > 10);
@@ -130,23 +191,42 @@ export default function DiaryPage() {
     document.execCommand("insertText", false, text);
   };
 
-  const handleGetQuestions = () => {
-    if (questions.length < questionPool.length) {
-      const nextQuestion = questionPool[questions.length];
-      setQuestions((prev) => {
-        const updated = [...prev, nextQuestion];
-        localStorage.setItem("diary_questions", JSON.stringify(updated));
+  const handleGetQuestions = async () => {
+    if (isAskingQuestion || remainingQuestions === 0) return;
 
-        setTimeout(() => {
-          if (scrollContainerRef.current) {
-            scrollContainerRef.current.scrollTo({
-              top: scrollContainerRef.current.scrollHeight,
-              behavior: "smooth",
-            });
-          }
-        }, 50);
+    setIsAskingQuestion(true);
+    try {
+      const response = await apiClient.post("/api/v1/questions/writing-help", {
+        currentContent: htmlToPlainText(content),
+      });
+      const { questionId, questionText, remainingCount } = response.data.result;
+
+      setRemainingQuestions(remainingCount);
+      setQuestions((prev) => {
+        const updated = [...prev, { questionId, questionText }];
+        localStorage.setItem("diary_questions", JSON.stringify(updated));
         return updated;
       });
+
+      setTimeout(() => {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTo({
+            top: scrollContainerRef.current.scrollHeight,
+            behavior: "smooth",
+          });
+        }
+      }, 50);
+    } catch (error) {
+      if (error.response?.data?.code === "QUESTION429") {
+        setRemainingQuestions(0);
+      }
+      console.error(
+        "POST /api/v1/questions/writing-help 실패:",
+        error.response?.status,
+        error.response?.data,
+      );
+    } finally {
+      setIsAskingQuestion(false);
     }
   };
 
@@ -217,8 +297,7 @@ export default function DiaryPage() {
     setTutorialStep((prev) => prev + 1);
   };
 
-  const isAllQuestionsLoaded =
-    questionPool.length > 0 && questions.length === questionPool.length;
+  const isAllQuestionsLoaded = remainingQuestions === 0;
 
   return (
     <div className="flex flex-col w-full h-full  min-h-0 bg-[#F6F8FA] box-border relative select-none overflow-hidden">
@@ -237,13 +316,25 @@ export default function DiaryPage() {
             />
           </button>
 
-          <button className="w-[38px] h-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0">
-            <img
-              src={profileIcon}
-              alt="프로필"
-              className="w-full h-full object-contain [filter:drop-shadow(0_0_9.938px_rgba(65,68,80,0.16))]"
-            />
-          </button>
+          <div className="flex items-center gap-[8px]">
+            {isDevResetEnabled && (
+              <button
+                type="button"
+                onClick={handleResetTodayDiary}
+                disabled={isResetting}
+                className="shrink-0 rounded-[8px] border border-red-400 bg-white px-[8px] py-[4px] text-[12px] font-semibold text-red-500 disabled:opacity-50"
+              >
+                {isResetting ? "초기화 중..." : "오늘 일기 초기화"}
+              </button>
+            )}
+            <button className="w-[38px] h-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0">
+              <img
+                src={profileIcon}
+                alt="프로필"
+                className="w-full h-full object-contain [filter:drop-shadow(0_0_9.938px_rgba(65,68,80,0.16))]"
+              />
+            </button>
+          </div>
         </header>
 
         <div className="flex w-[106px] h-[33px] justify-center items-center text-heading-28 text-grey-80 mb-[12px]">
@@ -292,7 +383,7 @@ export default function DiaryPage() {
                 <button
                   type="button"
                   onClick={handleGetQuestions}
-                  disabled={isAllQuestionsLoaded}
+                  disabled={isAllQuestionsLoaded || isAskingQuestion}
                   className="w-[217px] h-[48px] border-[1.5px] border-[#858C9C] bg-white rounded-[12px] px-[26px] text-[18px] font-semibold text-[#414450] tracking-[-0.18px] flex items-center justify-center gap-[4px] whitespace-nowrap active:bg-gray-50 disabled:opacity-50 transition-all"
                 >
                   <img
@@ -301,9 +392,11 @@ export default function DiaryPage() {
                     className="w-[16px] h-[20px] object-contain shrink-0"
                   />
                   <span className="whitespace-nowrap">
-                    {isAllQuestionsLoaded
-                      ? "질문 완료"
-                      : "데이빗에게 질문 받기"}
+                    {isAskingQuestion
+                      ? "질문 받는 중..."
+                      : isAllQuestionsLoaded
+                        ? "질문 완료"
+                        : "데이빗에게 질문 받기"}
                   </span>
                 </button>
                 <button
