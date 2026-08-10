@@ -55,7 +55,6 @@ export default function ReflectionPage() {
 
   const [loading, setLoading] = useState(true);
   const [question, setQuestion] = useState("");
-  const [questionId, setQuestionId] = useState(null);
   const [diaryId, setDiaryId] = useState(null);
   const [reward, setReward] = useState(null);
   const [answer, setAnswer] = useState("");
@@ -82,17 +81,18 @@ export default function ReflectionPage() {
         });
         const result = response.data.result;
 
-        setQuestionId(result.reflectionQuestion?.questionId ?? null);
         setQuestion(result.reflectionQuestion?.questionText ?? "");
         setDiaryId(result.diaryId ?? null);
         setReward(result.reward ?? null);
 
         localStorage.removeItem("diary_content");
+        localStorage.removeItem("diary_content_date");
         localStorage.removeItem("diary_questions");
       } catch (error) {
         const code = error.response?.data?.code;
         if (code === "DIARY409_1") {
           localStorage.removeItem("diary_content");
+          localStorage.removeItem("diary_content_date");
           localStorage.removeItem("diary_questions");
           setSaveError("오늘의 일기는 이미 작성했어요.");
         } else {
@@ -126,7 +126,7 @@ export default function ReflectionPage() {
     const trimmed = answer.trim();
 
     // 답변 없이 넘어가면 추가 API를 호출하지 않음
-    if (!trimmed || !questionId) {
+    if (!trimmed || !diaryId) {
       navigate("/diary/today-color", {
         replace: true,
         state: { reward, diaryId },
@@ -136,8 +136,8 @@ export default function ReflectionPage() {
 
     setIsSubmitting(true);
     try {
-      await apiClient.post(`/api/v1/questions/${questionId}/answer`, {
-        answer: trimmed,
+      await apiClient.post(`/api/v1/diaries/${diaryId}/reflection-answer`, {
+        answerText: trimmed,
       });
       navigate("/diary/today-color", {
         replace: true,
@@ -153,7 +153,7 @@ export default function ReflectionPage() {
       }
       setAnswerError("답변 제출에 실패했어요. 다시 시도해주세요.");
       console.error(
-        "POST /api/v1/questions/{questionId}/answer 실패:",
+        "POST /api/v1/diaries/{diaryId}/reflection-answer 실패:",
         error.response?.status,
         error.response?.data,
       );

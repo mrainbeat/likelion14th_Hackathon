@@ -11,6 +11,31 @@ import backIcon from "../../assets/icons/back.svg";
 import logoImage from "../../assets/logos/logo-symbol.png";
 import profileIcon from "../../assets/icons/profile.svg";
 
+function getTodaySeoulDate() {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(
+    new Date(),
+  );
+}
+
+function saveDraft(content) {
+  localStorage.setItem("diary_content", content);
+  localStorage.setItem("diary_content_date", getTodaySeoulDate());
+}
+
+function clearDraft() {
+  localStorage.removeItem("diary_content");
+  localStorage.removeItem("diary_content_date");
+}
+
+function loadTodayDraft() {
+  const savedDate = localStorage.getItem("diary_content_date");
+  if (savedDate !== getTodaySeoulDate()) {
+    clearDraft();
+    return null;
+  }
+  return localStorage.getItem("diary_content");
+}
+
 function htmlToPlainText(html) {
   if (!html) return "";
 
@@ -38,7 +63,6 @@ export default function DiaryPage() {
       return [];
     }
   });
-  // null = 남은 횟수 아직 모름, 0 = 오늘 소진
   const [remainingQuestions, setRemainingQuestions] = useState(null);
   const [isAskingQuestion, setIsAskingQuestion] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -139,7 +163,7 @@ export default function DiaryPage() {
 
     const timeStr = getFormattedTime();
     const timeHtml = `<span style="color: #5F6473; font-weight: 500;">${timeStr}</span><br><span style="color: #2D3038;">\u200B</span>`;
-    const savedDiary = localStorage.getItem("diary_content");
+    const savedDiary = loadTodayDraft();
 
     if (savedDiary) {
       const tempPrior = document.createElement("div");
@@ -196,9 +220,10 @@ export default function DiaryPage() {
 
     setIsAskingQuestion(true);
     try {
-      const response = await apiClient.post("/api/v1/questions/writing-help", {
-        currentContent: htmlToPlainText(content),
-      });
+      const response = await apiClient.post(
+        "/api/v1/ai/writing-help/questions",
+        { currentContent: htmlToPlainText(content) },
+      );
       const { questionId, questionText, remainingCount } = response.data.result;
 
       setRemainingQuestions(remainingCount);
@@ -221,7 +246,7 @@ export default function DiaryPage() {
         setRemainingQuestions(0);
       }
       console.error(
-        "POST /api/v1/questions/writing-help 실패:",
+        "POST /api/v1/ai/writing-help/questions 실패:",
         error.response?.status,
         error.response?.data,
       );
@@ -242,9 +267,9 @@ export default function DiaryPage() {
     (currentText !== initialText && currentText.trim().length > 0);
   const performBack = () => {
     if (hasUserWritten) {
-      localStorage.setItem("diary_content", content);
+      saveDraft(content);
     } else {
-      localStorage.removeItem("diary_content");
+      clearDraft();
     }
     localStorage.setItem("diary_questions", JSON.stringify(questions));
     navigate(-1);
@@ -282,7 +307,7 @@ export default function DiaryPage() {
     if (!plainText) return;
 
     setShowReflectionConsent(false);
-    localStorage.setItem("diary_content", content);
+    saveDraft(content);
     navigate("/diary/reflection", {
       state: { content: plainText, useDiaryContent },
     });
