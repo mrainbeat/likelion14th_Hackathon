@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
 import apiClient from "../../api/apiClient";
@@ -194,7 +194,7 @@ export default function ReflectionPage() {
             />
           </button>
         </div>
-        <p className="text-[28px] font-bold tracking-[-0.56px] text-[#4F5563]">
+        <p className="text-[28px] font-bold tracking-[-0.56px] text-grey-80">
           {dateStr}
         </p>
       </div>
@@ -206,25 +206,25 @@ export default function ReflectionPage() {
             alt="DAYBIT"
             className="h-[124px] w-[98px] object-cover"
           />
-          <p className="text-[20px] font-semibold tracking-[-0.4px] text-[#2D3038]">
+          <p className="text-[20px] font-semibold tracking-[-0.4px] text-grey-90">
             생성중..
           </p>
         </div>
       ) : saveError ? (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-[24px] px-[36px]">
-          <p className="text-center text-[18px] font-semibold tracking-[-0.36px] text-[#4F5563]">
+          <p className="text-center text-[18px] font-semibold tracking-[-0.36px] text-grey-80">
             {saveError}
           </p>
           <button
             type="button"
             onClick={handleBack}
-            className="w-full rounded-[12px] bg-[#5F6473] px-[26px] py-[14px] text-[18px] font-semibold tracking-[-0.18px] text-white"
+            className="w-full rounded-[12px] bg-grey-70 px-[26px] py-[14px] text-[18px] font-semibold tracking-[-0.18px] text-grey-0"
           >
             돌아가기
           </button>
         </div>
       ) : (
-        <div className="absolute inset-x-0 top-[164px] bottom-0 z-10 flex flex-col justify-between rounded-[12px] bg-white px-[36px] pb-[50px] pt-[36px] shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">
+        <div className="absolute inset-x-0 top-[164px] bottom-0 z-10 flex flex-col justify-between rounded-[12px] bg-grey-0 px-[36px] pb-[50px] pt-[36px] shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">
           <div className="flex w-full flex-col items-start gap-[16px]">
             <div className="flex w-full flex-col items-start gap-[8px]">
               <div className="flex items-start gap-[6px]">
@@ -233,22 +233,22 @@ export default function ReflectionPage() {
                   alt=""
                   className="h-[28px] w-[22px] object-cover"
                 />
-                <p className="text-[24px] font-bold tracking-[-0.48px] text-[#2D3038]">
+                <p className="text-[24px] font-bold tracking-[-0.48px] text-grey-90">
                   성찰질문
                 </p>
               </div>
-              <p className="text-[14px] font-medium text-[#AFB6C4]">
+              <p className="text-[14px] font-medium text-grey-50">
                 작성하지 않고 넘어가도 괜찮아요.
               </p>
             </div>
 
-            <div className="relative flex w-full items-center gap-[10px] rounded-[12px] bg-[#858C9C] px-[16px] py-[10px]">
+            <div className="relative flex w-full items-center gap-[10px] rounded-[12px] bg-grey-60 px-[16px] py-[10px]">
               <img
                 src={bubbleTailSvg}
                 alt=""
                 className="pointer-events-none absolute left-[-4px] top-[-9px] h-[18.739px] w-[15.307px]"
               />
-              <p className="flex-1 text-[16px] font-medium tracking-[-0.32px] text-white">
+              <p className="flex-1 text-[16px] font-medium tracking-[-0.32px] text-grey-0">
                 {question}
               </p>
             </div>
@@ -258,7 +258,7 @@ export default function ReflectionPage() {
               onChange={handleAnswerChange}
               placeholder="답변을 입력해주세요"
               rows={1}
-              className="w-full resize-none overflow-hidden rounded-[12px] bg-[#DFE2EA] px-[16px] py-[10px] text-[16px] font-medium tracking-[-0.32px] text-[#4F5563] placeholder:text-[#AFB6C4] focus:outline-none"
+              className="w-full resize-none overflow-hidden rounded-[12px] bg-grey-30 px-[16px] py-[10px] text-[16px] font-medium tracking-[-0.32px] text-grey-80 placeholder:text-grey-50 focus:outline-none"
             />
 
             {answerError && (
@@ -272,7 +272,7 @@ export default function ReflectionPage() {
             type="button"
             onClick={handleFinish}
             disabled={isSubmitting}
-            className="w-full rounded-[12px] bg-[#5F6473] px-[26px] py-[14px] text-[18px] font-semibold tracking-[-0.18px] text-white disabled:opacity-50"
+            className="w-full rounded-[12px] bg-grey-70 px-[26px] py-[14px] text-[18px] font-semibold tracking-[-0.18px] text-grey-0 disabled:opacity-50"
           >
             {isSubmitting ? "제출 중..." : "작성완료"}
           </button>

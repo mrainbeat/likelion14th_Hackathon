@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import { ModalButton } from "./OnboardingUi";
 
 const LINE_H = 26;
@@ -59,7 +59,7 @@ export default function JobInputModal({
         </p>
 
         <div
-          className="w-full shrink-0 rounded-[12px] bg-white px-[16px] py-[20px]"
+          className="w-full shrink-0 rounded-[12px] bg-grey-0 px-[16px] py-[20px]"
           style={{
             boxShadow:
               "0 0 10px 0 rgba(77,80,91,0.05), 0 0 30px 0 rgba(65,68,80,0.05)",

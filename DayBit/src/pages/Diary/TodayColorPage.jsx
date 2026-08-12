@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
 import apiClient from "../../api/apiClient";
@@ -55,20 +55,15 @@ function hexToRgba(hex, alpha) {
 
 const FALLBACK_COLOR = "#858C9C";
 const POLL_INTERVAL_MS = 2000;
-const MAX_POLL_ATTEMPTS = 15; // 약 30초
+const MAX_POLL_ATTEMPTS = 15;
 
 export default function TodayColorPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { dateStr } = useCurrentTime() || {};
 
-  // ?diaryId=1 처럼 쿼리로 직접 접근하면 그 일기의 reward를 조회해서 미리보기
-  const previewDiaryId = new URLSearchParams(location.search).get("diaryId");
-  const diaryId =
-    location.state?.diaryId ?? (previewDiaryId ? Number(previewDiaryId) : null);
-  const [reward, setReward] = useState(
-    location.state?.reward ?? (previewDiaryId ? { status: "PENDING" } : null),
-  );
+  const diaryId = location.state?.diaryId ?? null;
+  const [reward, setReward] = useState(location.state?.reward ?? null);
 
   const isPending = reward?.status === "PENDING";
   const isReady = reward?.status === "COMPLETED" && reward?.colorHex;
@@ -166,7 +161,7 @@ export default function TodayColorPage() {
       </div>
 
       <div
-        className="absolute inset-x-0 top-[164px] bottom-0 z-10 flex flex-col justify-between overflow-hidden rounded-[12px] bg-white px-[36px] pb-[50px] pt-[36px]"
+        className="absolute inset-x-0 top-[164px] bottom-0 z-10 flex flex-col justify-between overflow-hidden rounded-[12px] bg-grey-0 px-[36px] pb-[50px] pt-[36px]"
         style={{
           boxShadow: `0 0 10px 0 ${hexToRgba(color, 0.05)}, 0 0 30px 0 ${hexToRgba(color, 0.05)}`,
         }}
@@ -200,7 +195,7 @@ export default function TodayColorPage() {
             alt=""
             className="h-[28px] w-[22px] object-cover"
           />
-          <p className="text-[24px] font-bold tracking-[-0.48px] text-[#4F5563]">
+          <p className="text-[24px] font-bold tracking-[-0.48px] text-grey-80">
             오늘의 색
           </p>
         </div>
@@ -213,9 +208,7 @@ export default function TodayColorPage() {
                 alt="DAYBIT"
                 className="h-[62px] w-[49px] object-cover"
               />
-              <p className="text-[16px] font-semibold text-[#858C9C]">
-                생성중..
-              </p>
+              <p className="text-[16px] font-semibold text-grey-60">생성중..</p>
             </div>
           </div>
         ) : isReady ? (
@@ -225,7 +218,7 @@ export default function TodayColorPage() {
               style={{ backgroundColor: color }}
             />
             {reward.colorName && (
-              <p className="text-[16px] font-semibold text-[#4F5563]">
+              <p className="text-[16px] font-semibold text-grey-80">
                 {reward.colorName}
               </p>
             )}
@@ -236,7 +229,7 @@ export default function TodayColorPage() {
         ) : (
           <div className="relative z-10 flex w-full flex-col items-start gap-[6px]">
             <div className="flex aspect-square w-full items-center justify-center bg-[#F6F8FA]">
-              <p className="px-[24px] text-center text-[16px] font-medium text-[#858C9C]">
+              <p className="px-[24px] text-center text-[16px] font-medium text-grey-60">
                 오늘은 색을 만드는 데 실패했어요.
                 <br />
                 일기는 안전하게 저장됐어요.
@@ -248,7 +241,7 @@ export default function TodayColorPage() {
         <button
           type="button"
           onClick={handleFinish}
-          className="relative z-10 w-[350px] max-w-full self-center rounded-[12px] px-[26px] py-[14px] text-[18px] font-semibold tracking-[-0.18px] text-white"
+          className="relative z-10 w-[350px] max-w-full self-center rounded-[12px] px-[26px] py-[14px] text-[18px] font-semibold tracking-[-0.18px] text-grey-0"
           style={{ backgroundColor: color }}
         >
           완료

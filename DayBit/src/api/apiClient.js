@@ -30,7 +30,6 @@ apiClient.interceptors.response.use(
     }
 
     if (config.url === REFRESH_URL) {
-      window.location.href = "/login";
       return Promise.reject(error);
     }
 
@@ -49,7 +48,6 @@ apiClient.interceptors.response.use(
       return apiClient(config);
     } catch (refreshError) {
       flushQueue(refreshError);
-      window.location.href = "/login";
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;

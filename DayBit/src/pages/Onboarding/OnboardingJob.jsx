@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import OnboardingHeader from "./components/OnboardingHeader";
 import { ProgressBar, Chip, BottomButton } from "./components/OnboardingUi";
@@ -65,7 +65,7 @@ export default function OnboardingJob() {
       />
 
       <div className="absolute left-[36px] top-[288px] flex w-[318px] flex-col gap-[16px]">
-        <p className="whitespace-nowrap text-[20px] font-semibold leading-[1.19] tracking-[-0.4px] text-[#2D3038]">
+        <p className="whitespace-nowrap text-[20px] font-semibold leading-[1.19] tracking-[-0.4px] text-grey-90">
           현재 어떤 일을 하고 있나요?
         </p>
 

@@ -62,12 +62,12 @@ function buildCalendarWeeks(year, month) {
   return weeks;
 }
 
-function DayCell({ cell, colorHex }) {
+function DayCell({ cell, item, onClick }) {
   if (!cell.inMonth) {
     return (
       <div className="relative size-[38px] shrink-0 overflow-clip rounded-[2px]">
         <div className="absolute left-px top-1/2 flex h-[38px] w-[37px] -translate-y-1/2 flex-col items-center justify-center p-[10px]">
-          <p className="whitespace-nowrap text-[12px] font-semibold tracking-[-0.12px] text-[#f3f4f7]">
+          <p className="whitespace-nowrap text-[12px] font-semibold tracking-[-0.12px] text-grey-10">
             {cell.day}
           </p>
         </div>
@@ -75,37 +75,42 @@ function DayCell({ cell, colorHex }) {
     );
   }
 
+  const colorHex = item?.reward?.colorHex;
+
   return (
-    <div
-      className="relative size-[38px] shrink-0 overflow-clip rounded-[2px]"
+    <button
+      type="button"
+      onClick={item ? onClick : undefined}
+      disabled={!item}
+      className={`relative size-[38px] shrink-0 overflow-clip rounded-[2px] border-none p-0 ${item ? "cursor-pointer" : "cursor-default"}`}
       style={{ backgroundColor: colorHex || "#ffffff" }}
     >
       <div className="absolute left-px top-0 flex h-[38px] w-[37px] flex-col items-center justify-center p-[10px]">
         <p
-          className="whitespace-nowrap text-[16px] font-semibold"
-          style={{ color: colorHex ? "#ffffff" : "#e7e9ee" }}
+          className={`whitespace-nowrap text-[16px] font-semibold ${colorHex ? "text-grey-0" : "text-grey-20"}`}
         >
           {cell.day}
         </p>
       </div>
-    </div>
+    </button>
   );
 }
 
-// 미구현된 보상버튼
+// 미구현된 보상버튼. Figma 좌표(left/top 절대값) 그대로 사용 — flex 중앙정렬로 하면
+// 컨테이너 폭에 따라 텍스트 위치가 미세하게 밀려서 뷰포트별로 패딩이 달라 보임
 function RewardBadge({ active }) {
   if (active) {
     return (
-      <div className="flex size-[38px] shrink-0 items-center justify-center rounded-[4px] border-[1.5px] border-solid border-[#858c9c]">
-        <p className="whitespace-nowrap text-[12px] font-semibold tracking-[-0.12px] text-[#5f6473]">
+      <div className="relative size-[38px] shrink-0 overflow-clip rounded-[4px] border-[1.5px] border-solid border-grey-60">
+        <p className="absolute left-[7.5px] top-[10.5px] whitespace-nowrap text-[12px] font-semibold tracking-[-0.12px] text-grey-70">
           보상
         </p>
       </div>
     );
   }
   return (
-    <div className="flex size-[38px] shrink-0 items-center justify-center rounded-[4px] bg-[#dfe2ea]">
-      <p className="whitespace-nowrap text-[12px] font-semibold tracking-[-0.12px] text-white">
+    <div className="relative size-[38px] shrink-0 overflow-clip rounded-[4px] bg-grey-30">
+      <p className="absolute left-[9px] top-[12px] whitespace-nowrap text-[12px] font-semibold tracking-[-0.12px] text-grey-0">
         보상
       </p>
     </div>
@@ -173,8 +178,8 @@ export default function HomePage() {
     };
   }, [today]);
 
-  const colorByDate = new Map(
-    monthItems.map((item) => [item.recordedDate, item.reward?.colorHex]),
+  const itemByDate = new Map(
+    monthItems.map((item) => [item.recordedDate, item]),
   );
 
   const isCurrentMonth = viewYear === today.year && viewMonth === today.month;
@@ -218,11 +223,11 @@ export default function HomePage() {
               alt=""
               className="h-[25px] w-[20px] object-contain"
             />
-            <p className="whitespace-nowrap text-[14px] font-bold tracking-[1.12px] text-[#414450]">
+            <p className="whitespace-nowrap text-[14px] font-bold tracking-[1.12px] text-grey-95">
               DAY BIT
             </p>
           </div>
-          <button className="size-[38px] shrink-0 cursor-pointer rounded-full border-none bg-transparent p-0">
+          <button className="size-[38px] shrink-0 rounded-full border-none bg-transparent p-0">
             <img
               src={profileIcon}
               alt="프로필"
@@ -232,7 +237,7 @@ export default function HomePage() {
         </div>
 
         <div className="flex w-full items-end justify-between">
-          <p className="text-[22px] font-semibold tracking-[-0.44px] text-[#2d3038]">
+          <p className="text-[22px] font-semibold tracking-[-0.44px] text-grey-90">
             {viewMonth}월의 기록을
             <br />
             차곡차곡 쌓고 있어요
@@ -246,13 +251,13 @@ export default function HomePage() {
       </div>
 
       <div className="flex w-full flex-col items-center gap-[16px]">
-        <div className="relative w-full rounded-[12px] bg-white px-[16px] py-[14px] shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">
+        <div className="relative w-full rounded-[12px] bg-grey-0 px-[16px] py-[14px] shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">
           <div className="flex w-full flex-col gap-[6px]">
             <div className="flex w-full items-center justify-between">
               <button
                 type="button"
                 onClick={handlePrevMonth}
-                className="size-[24px] shrink-0"
+                className="size-[24px] shrink-0 cursor-pointer"
               >
                 <img
                   src={arrowIcon}
@@ -263,14 +268,14 @@ export default function HomePage() {
               <button
                 type="button"
                 onClick={() => setShowPicker(true)}
-                className="flex items-center gap-[8px] whitespace-nowrap text-[24px] font-bold tracking-[-0.48px] text-[#2d3038]"
+                className="flex cursor-pointer items-center gap-[8px] whitespace-nowrap text-[24px] font-bold tracking-[-0.48px] text-grey-90"
               >
                 {viewYear}년 {viewMonth}월
               </button>
               <button
                 type="button"
                 onClick={handleNextMonth}
-                className="size-[24px] shrink-0"
+                className="size-[24px] shrink-0 cursor-pointer"
               >
                 <img
                   src={arrowIcon}
@@ -286,7 +291,7 @@ export default function HomePage() {
                   {WEEKDAYS.map((label) => (
                     <div
                       key={label}
-                      className="flex size-[38px] shrink-0 items-center justify-center text-[16px] font-semibold tracking-[-0.16px] text-[#2d3038]"
+                      className="flex size-[38px] shrink-0 items-center justify-center text-[16px] font-semibold tracking-[-0.16px] text-grey-90"
                     >
                       {label}
                     </div>
@@ -306,17 +311,21 @@ export default function HomePage() {
                         className="flex w-full items-center justify-between"
                       >
                         <div className="flex items-center gap-[2px]">
-                          {week.map((cell, i) => (
-                            <DayCell
-                              key={i}
-                              cell={cell}
-                              colorHex={
-                                cell.inMonth
-                                  ? colorByDate.get(cell.dateStr)
-                                  : undefined
-                              }
-                            />
-                          ))}
+                          {week.map((cell, i) => {
+                            const item = cell.inMonth
+                              ? itemByDate.get(cell.dateStr)
+                              : undefined;
+                            return (
+                              <DayCell
+                                key={i}
+                                cell={cell}
+                                item={item}
+                                onClick={() =>
+                                  navigate(`/home/diaries/${item.diaryId}`)
+                                }
+                              />
+                            );
+                          })}
                         </div>
                         <RewardBadge active={isCurrentWeek} />
                       </div>
@@ -328,21 +337,21 @@ export default function HomePage() {
               <div className="flex w-full items-center justify-between">
                 <button
                   type="button"
-                  onClick={handleGoToWrite}
-                  className="flex size-[40px] shrink-0 items-center justify-center"
+                  onClick={() => navigate("/home/diaries")}
+                  className="flex size-[40px] shrink-0 cursor-pointer items-center justify-center"
                 >
                   <img
                     src={editIcon}
-                    alt="일기 작성"
+                    alt="일기 수정"
                     className="size-[26px] object-contain"
                   />
                 </button>
                 <button
                   type="button"
                   onClick={handleGoToWrite}
-                  className="flex items-center justify-center rounded-[12px] bg-[#5f6473] px-[20px] py-[12px]"
+                  className="flex cursor-pointer items-center justify-center rounded-[12px] bg-grey-70 px-[20px] py-[12px]"
                 >
-                  <p className="whitespace-nowrap text-[16px] font-semibold text-white">
+                  <p className="whitespace-nowrap text-[16px] font-semibold text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)] text-grey-0">
                     일기 작성하기
                   </p>
                 </button>
@@ -351,39 +360,40 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="flex w-full flex-col items-center rounded-[12px] bg-white px-[16px] py-[12px] shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">
+        <div className="flex w-full flex-col items-center rounded-[12px] bg-grey-0 px-[16px] py-[12px] shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">
           <div className="flex items-center gap-[47px]">
             <div className="flex w-[66px] flex-col items-center gap-[6px]">
-              <p className="whitespace-nowrap text-[16px] font-semibold text-[#2d3038]">
+              <p className="whitespace-nowrap text-[16px] font-semibold text-grey-90">
                 오늘 작성
               </p>
               <p
-                className="whitespace-nowrap text-[12px] font-semibold tracking-[-0.12px]"
-                style={{ color: isTodayWritten ? "#5f6473" : "#cdd1da" }}
+                className={`whitespace-nowrap text-[12px] font-semibold tracking-[-0.12px] ${
+                  isTodayWritten ? "text-grey-70" : "text-grey-40"
+                }`}
               >
                 {isTodayWritten ? "작성완료" : "작성전"}
               </p>
             </div>
-            <div className="h-full w-px shrink-0 bg-[#e7e9ee]" />
+            <div className="h-full w-px shrink-0 bg-grey-20" />
             <div className="flex flex-col items-center gap-[6px]">
-              <p className="whitespace-nowrap text-[16px] font-semibold text-[#2d3038]">
+              <p className="whitespace-nowrap text-[16px] font-semibold text-grey-90">
                 이달 기록
               </p>
-              <p className="whitespace-nowrap text-[12px] font-semibold tracking-[-0.12px] text-[#5f6473]">
+              <p className="whitespace-nowrap text-[12px] font-semibold tracking-[-0.12px] text-grey-70">
                 {monthItems.length}회
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex w-full flex-col items-start gap-[16px] rounded-[12px] bg-white px-[16px] py-[20px] shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">
+        <div className="flex w-full flex-col items-start gap-[16px] rounded-[12px] bg-grey-0 px-[16px] py-[20px] shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">
           <div className="flex items-center gap-[10px]">
             <img
               src={logoImage}
               alt=""
               className="h-[28px] w-[22px] object-contain"
             />
-            <p className="whitespace-nowrap text-[20px] font-semibold tracking-[-0.4px] text-[#2d3038]">
+            <p className="whitespace-nowrap text-[20px] font-semibold tracking-[-0.4px] text-grey-90">
               다른 사람의 경험
             </p>
           </div>
@@ -405,7 +415,7 @@ export default function HomePage() {
             <div
               key={i}
               className={`relative flex w-full items-center gap-[10px] rounded-[12px] px-[16px] py-[10px] ${
-                item.tone === "dark" ? "bg-[#858c9c]" : "bg-[#e7e9ee]"
+                item.tone === "dark" ? "bg-grey-60" : "bg-grey-20"
               }`}
             >
               <img
@@ -414,8 +424,9 @@ export default function HomePage() {
                 className="pointer-events-none absolute left-[-4px] top-[-9px] h-[18.739px] w-[15.307px]"
               />
               <p
-                className="flex-1 text-[16px] font-medium tracking-[-0.32px]"
-                style={{ color: item.tone === "dark" ? "#ffffff" : "#5f6473" }}
+                className={`flex-1 text-[16px] font-medium tracking-[-0.32px] ${
+                  item.tone === "dark" ? "text-grey-0" : "text-grey-70"
+                }`}
               >
                 {item.text}
               </p>

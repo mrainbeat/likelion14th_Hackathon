@@ -71,8 +71,8 @@ function WheelColumn({
   };
 
   return (
-    <div className="relative h-[138px] w-full">
-      <div className="pointer-events-none absolute left-0 right-0 top-[46px] h-[46px] rounded-[8px] bg-white shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]" />
+    <div className={`relative h-[138px] ${className}`}>
+      <div className="pointer-events-none absolute left-0 right-0 top-[46px] h-[46px] rounded-[8px] bg-grey-0 shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]" />
       <div
         ref={ref}
         role="listbox"
@@ -81,7 +81,7 @@ function WheelColumn({
         onScroll={handleScroll}
         onKeyDown={handleKeyDown}
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        className={`relative h-[138px] snap-y snap-mandatory overflow-y-scroll overscroll-contain focus:outline-none [&::-webkit-scrollbar]:hidden ${className}`}
+        className="relative h-[138px] w-full snap-y snap-mandatory overflow-y-scroll overscroll-contain focus:outline-none [&::-webkit-scrollbar]:hidden"
       >
         <div className="h-[46px]" />
         {items.map((item) => (
@@ -90,7 +90,7 @@ function WheelColumn({
             role="option"
             aria-selected={item === value}
             onClick={() => scrollToIndex(items.indexOf(item))}
-            className="flex h-[46px] cursor-pointer snap-center items-center justify-center text-[22px] font-semibold tracking-[-0.44px] text-[#4f5563] select-none"
+            className="flex h-[46px] cursor-pointer snap-center items-center justify-center text-[22px] font-semibold tracking-[-0.44px] text-grey-80 select-none"
           >
             {formatLabel(item)}
           </div>
@@ -131,7 +131,7 @@ export default function MonthYearPickerModal({
     <div className="absolute inset-0 z-50 flex items-center justify-center">
       <div
         onClick={onClose}
-        className={`absolute inset-0 bg-[#2d3038]/25 backdrop-blur-[1px] transition-opacity duration-200 ease-out ${
+        className={`absolute inset-0 bg-grey-90/25 backdrop-blur-[1px] transition-opacity duration-200 ease-out ${
           shown ? "opacity-100" : "opacity-0"
         }`}
       />
@@ -141,14 +141,14 @@ export default function MonthYearPickerModal({
           shown ? "scale-100 opacity-100" : "scale-95 opacity-0"
         }`}
       >
-        <div className="relative flex w-full items-center gap-[8px]">
+        <div className="relative mx-auto flex items-center gap-[32px]">
           <WheelColumn
             items={YEARS}
             value={year}
             onChange={setYear}
             label="연도"
             formatLabel={(y) => `${y}년`}
-            className="flex-1"
+            className="w-[92px] shrink-0"
           />
           <WheelColumn
             items={MONTHS}
@@ -156,7 +156,7 @@ export default function MonthYearPickerModal({
             onChange={setMonth}
             label="월"
             formatLabel={(m) => `${m}월`}
-            className="w-[76px] shrink-0"
+            className="w-[53px] shrink-0"
           />
 
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[36px] bg-gradient-to-b from-[#f6f8fa] to-transparent" />

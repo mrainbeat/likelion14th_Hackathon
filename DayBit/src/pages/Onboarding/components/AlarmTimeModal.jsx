@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import { ModalButton } from "./OnboardingUi";
 
 const ITEM_H = 46;
@@ -153,7 +153,7 @@ export default function AlarmTimeModal({
         </p>
 
         <div
-          className="pointer-events-none absolute left-[16px] top-[95px] h-[48px] w-[318px] rounded-[6px] bg-white"
+          className="pointer-events-none absolute left-[16px] top-[95px] h-[48px] w-[318px] rounded-[6px] bg-grey-0"
           style={{
             boxShadow:
               "0 0 10px 0 rgba(77,80,91,0.05), 0 0 30px 0 rgba(65,68,80,0.05)",

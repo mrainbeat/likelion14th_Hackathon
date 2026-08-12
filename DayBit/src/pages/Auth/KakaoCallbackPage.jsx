@@ -16,7 +16,12 @@ function KakaoCallbackPage() {
         } else {
           navigate("/onboarding", { replace: true });
         }
-      } catch {
+      } catch (error) {
+        console.error(
+          "GET /api/me 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
         navigate("/login", { replace: true });
       }
     };

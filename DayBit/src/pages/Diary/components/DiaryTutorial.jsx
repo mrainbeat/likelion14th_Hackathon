@@ -1,4 +1,4 @@
-export default function DiaryTutorial({ step, onNext }) {
+﻿export default function DiaryTutorial({ step, onNext }) {
   const STEPS = [
     {
       title: "무엇을 쓸지 막막한가요?",
@@ -20,13 +20,13 @@ export default function DiaryTutorial({ step, onNext }) {
   const current = STEPS[step];
 
   return (
-    <div className="absolute inset-0 z-50 flex flex-col justify-end bg-[#2D3038]/40">
-      <div className="flex w-full flex-col gap-[64px] rounded-t-[20px] bg-white px-[20px] pt-[16px] pb-[50px]">
+    <div className="absolute inset-0 z-50 flex flex-col justify-end bg-grey-90/40">
+      <div className="flex w-full flex-col gap-[64px] rounded-t-[20px] bg-grey-0 px-[20px] pt-[16px] pb-[50px]">
         <div className="flex flex-col gap-[8px]">
-          <p className="text-[22px] font-semibold tracking-[-0.44px] text-[#2D3038]">
+          <p className="text-[22px] font-semibold tracking-[-0.44px] text-grey-90">
             {current.title}
           </p>
-          <div className="text-[18px] font-medium tracking-[-0.36px] text-[#5F6473]">
+          <div className="text-[18px] font-medium tracking-[-0.36px] text-grey-70">
             {current.desc.map((line, i) => (
               <p key={i}>{line}</p>
             ))}
@@ -39,7 +39,7 @@ export default function DiaryTutorial({ step, onNext }) {
               <span
                 key={i}
                 className={`h-[4px] w-[8px] rounded-[65px] ${
-                  i === step ? "bg-[#5F6473]" : "bg-[#CDD1DA]"
+                  i === step ? "bg-grey-70" : "bg-grey-40"
                 }`}
               />
             ))}
@@ -48,7 +48,7 @@ export default function DiaryTutorial({ step, onNext }) {
           <button
             type="button"
             onClick={onNext}
-            className="w-full rounded-[12px] bg-[#5F6473] px-[26px] py-[14px] text-[18px] font-semibold tracking-[-0.18px] text-white"
+            className="w-full rounded-[12px] bg-grey-70 px-[26px] py-[14px] text-[18px] font-semibold tracking-[-0.18px] text-grey-0"
           >
             다음
           </button>
