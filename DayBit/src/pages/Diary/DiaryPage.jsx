@@ -272,7 +272,7 @@ export default function DiaryPage() {
       clearDraft();
     }
     localStorage.setItem("diary_questions", JSON.stringify(questions));
-    navigate(-1);
+    navigate("/home", { replace: true });
   };
 
   const handleBack = () => {

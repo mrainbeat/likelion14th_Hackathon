@@ -120,7 +120,7 @@ export default function TodayColorPage() {
   }, [isPending, diaryId]);
 
   const handleBack = () => navigate("/diary", { replace: true });
-  const handleFinish = () => navigate("/diary", { replace: true });
+  const handleFinish = () => navigate("/home", { replace: true });
 
   if (!reward) return null;
 

@@ -12,7 +12,7 @@ function KakaoCallbackPage() {
         const user = response.data.result;
 
         if (user.onboardingCompleted) {
-          navigate("/diary", { replace: true });
+          navigate("/home", { replace: true });
         } else {
           navigate("/onboarding", { replace: true });
         }
