@@ -1,4 +1,4 @@
-import LogoSymbol from "../../../assets/logos/logo-symbol.png";
+﻿import LogoSymbol from "../../../assets/logos/logo-symbol.png";
 
 export default function OnboardingHeader({
   lines = [],
@@ -22,13 +22,13 @@ export default function OnboardingHeader({
         {lines.map((line, i) => (
           <p
             key={i}
-            className={`whitespace-nowrap font-semibold leading-[1.19] text-[#2D3038] ${titleClass}`}
+            className={`whitespace-nowrap font-semibold leading-[1.19] text-grey-90 ${titleClass}`}
           >
             {line}
           </p>
         ))}
         {caption && (
-          <p className="whitespace-nowrap text-[12px] font-normal leading-[1.19] tracking-[-0.12px] text-[#858C9C]">
+          <p className="whitespace-nowrap text-[12px] font-normal leading-[1.19] tracking-[-0.12px] text-grey-60">
             {caption}
           </p>
         )}

@@ -1,4 +1,4 @@
-/* 진행 바 */
+﻿/* 진행 바 */
 export function ProgressBar({ step = 1, total = 4 }) {
   return (
     <div className="absolute left-[20px] top-[12px] flex w-[350px] items-center gap-[8px]">
@@ -6,7 +6,7 @@ export function ProgressBar({ step = 1, total = 4 }) {
         <div
           key={i}
           className={`h-[4px] min-w-px flex-1 rounded-full ${
-            i < step ? "bg-[#5F6473]" : "bg-[#CDD1DA]"
+            i < step ? "bg-grey-70" : "bg-grey-40"
           }`}
         />
       ))}
@@ -22,8 +22,8 @@ export function Chip({ label, selected = false, onClick }) {
       onClick={onClick}
       className={`flex h-[35px] shrink-0 items-center rounded-[17px] px-[12px] text-[16px] font-medium leading-none tracking-[-0.32px] transition-colors ${
         selected
-          ? "border-2 border-solid border-[#858C9C] text-[#4F5563]"
-          : "border border-solid border-[#DFE2EA] text-[#AFB6C4]"
+          ? "border-2 border-solid border-grey-60 text-grey-80"
+          : "border border-solid border-grey-30 text-grey-50"
       }`}
     >
       {label}
@@ -38,10 +38,10 @@ export function BottomButton({ children = "다음", disabled = false, onClick })
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`absolute bottom-[50px] left-[20px] flex h-[49px] w-[350px] items-center justify-center rounded-[12px] text-[18px] font-semibold leading-none tracking-[-0.18px] text-white transition-all ${
+      className={`absolute bottom-[50px] left-[20px] flex h-[49px] w-[350px] items-center justify-center rounded-[12px] text-[18px] font-semibold leading-none tracking-[-0.18px] text-grey-0 transition-all ${
         disabled
-          ? "cursor-not-allowed bg-[#CDD1DA]"
-          : "bg-[#5F6473] active:scale-[0.98]"
+          ? "cursor-not-allowed bg-grey-40"
+          : "cursor-pointer bg-grey-70 active:scale-[0.98]"
       }`}
     >
       {children}
@@ -56,10 +56,10 @@ export function ModalButton({ children = "완료", disabled = false, onClick }) 
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`flex h-[49px] w-full items-center justify-center rounded-[12px] text-[18px] font-semibold leading-none tracking-[-0.18px] text-white transition-all ${
+      className={`flex h-[49px] w-full items-center justify-center rounded-[12px] text-[18px] font-semibold leading-none tracking-[-0.18px] text-grey-0 text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)] transition-all ${
         disabled
-          ? "cursor-not-allowed bg-[#CDD1DA]"
-          : "bg-[#5F6473] active:scale-[0.98]"
+          ? "cursor-not-allowed bg-grey-40"
+          : "cursor-pointer bg-grey-70 active:scale-[0.98]"
       }`}
     >
       {children}

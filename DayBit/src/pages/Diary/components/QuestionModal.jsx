@@ -1,4 +1,4 @@
-import bubbleTail from "../../../assets/icons/tail.svg";
+﻿import bubbleTail from "../../../assets/icons/tail.svg";
 
 export default function QuestionModal({ questions }) {
   if (!questions || !Array.isArray(questions) || questions.length === 0)
@@ -19,7 +19,7 @@ export default function QuestionModal({ questions }) {
         return (
           <div
             key={index}
-            className="relative w-fit max-w-full bg-[#DFE2EA] rounded-[12px] px-[16px] py-[10px] text-[#4F5563] text-[16px] font-medium tracking-[-0.32px] leading-normal break-words whitespace-pre-wrap"
+            className="relative w-fit max-w-full bg-grey-30 rounded-[12px] px-[16px] py-[10px] text-grey-80 text-[16px] font-medium tracking-[-0.32px] leading-normal break-words whitespace-pre-wrap"
           >
             <img
               src={bubbleTail}

@@ -347,7 +347,7 @@ export default function DiaryPage() {
                 type="button"
                 onClick={handleResetTodayDiary}
                 disabled={isResetting}
-                className="shrink-0 rounded-[8px] border border-red-400 bg-white px-[8px] py-[4px] text-[12px] font-semibold text-red-500 disabled:opacity-50"
+                className="shrink-0 rounded-[8px] border border-red-400 bg-grey-0 px-[8px] py-[4px] text-[12px] font-semibold text-red-500 disabled:opacity-50"
               >
                 {isResetting ? "초기화 중..." : "오늘 일기 초기화"}
               </button>
@@ -392,7 +392,7 @@ export default function DiaryPage() {
           className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-[20px] relative z-0"
         >
           <div className="flex flex-col gap-[16px] pb-[170px]">
-            <div className="w-full bg-white rounded-[12px] px-[16px] py-[20px] flex flex-col shrink-0 shadow-[0_0_30px_0_rgba(65,68,80,0.05),0_0_10px_0_rgba(77,80,91,0.05)] min-h-[91px] ">
+            <div className="w-full bg-grey-0 rounded-[12px] px-[16px] py-[20px] flex flex-col shrink-0 shadow-[0_0_30px_0_rgba(65,68,80,0.05),0_0_10px_0_rgba(77,80,91,0.05)] min-h-[91px] ">
               <div
                 ref={editorRef}
                 contentEditable
@@ -409,7 +409,7 @@ export default function DiaryPage() {
                   type="button"
                   onClick={handleGetQuestions}
                   disabled={isAllQuestionsLoaded || isAskingQuestion}
-                  className="w-[217px] h-[48px] border-[1.5px] border-[#858C9C] bg-white rounded-[12px] px-[26px] text-[18px] font-semibold text-[#414450] tracking-[-0.18px] flex items-center justify-center gap-[4px] whitespace-nowrap active:bg-gray-50 disabled:opacity-50 transition-all"
+                  className="w-[217px] h-[48px] border-[1.5px] border-grey-60 bg-grey-0 rounded-[12px] px-[26px] text-[18px] font-semibold text-grey-95 tracking-[-0.18px] flex items-center justify-center gap-[4px] whitespace-nowrap active:bg-gray-50 disabled:opacity-50 transition-all"
                 >
                   <img
                     src={logoImage}
@@ -428,7 +428,7 @@ export default function DiaryPage() {
                   type="button"
                   onClick={handleComplete}
                   disabled={!hasUserWritten}
-                  className="w-[118px] h-[48px] rounded-[12px] px-[26px] text-[18px] font-semibold tracking-[-0.18px] bg-grey-70 text-white disabled:bg-grey-20 disabled:text-white disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                  className="w-[118px] h-[48px] rounded-[12px] px-[26px] text-[18px] font-semibold tracking-[-0.18px] bg-grey-70 text-grey-0 disabled:bg-grey-20 disabled:text-grey-0 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
                 >
                   작성 완료
                 </button>
