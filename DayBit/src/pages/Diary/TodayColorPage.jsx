@@ -1,5 +1,12 @@
-﻿import { useNavigate, useLocation } from "react-router-dom";
+﻿import { useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
+import {
+  getFillTint,
+  getGlowTint,
+  hexToRgba,
+  isHighLightness,
+} from "../../utils/rewardColor";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.png";
@@ -43,32 +50,6 @@ const BLOBS = [
   },
 ];
 
-function hexToRgba(hex, alpha) {
-  const clean = hex.replace("#", "");
-  const r = parseInt(clean.substring(0, 2), 16);
-  const g = parseInt(clean.substring(2, 4), 16);
-  const b = parseInt(clean.substring(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
-function getLightness(hex) {
-  const clean = hex.replace("#", "");
-  const r = parseInt(clean.substring(0, 2), 16) / 255;
-  const g = parseInt(clean.substring(2, 4), 16) / 255;
-  const b = parseInt(clean.substring(4, 6), 16) / 255;
-  return (Math.max(r, g, b) + Math.min(r, g, b)) / 2;
-}
-
-function getPaleTint(hex, ratio = 0.9) {
-  const clean = hex.replace("#", "");
-  const r = parseInt(clean.substring(0, 2), 16);
-  const g = parseInt(clean.substring(2, 4), 16);
-  const b = parseInt(clean.substring(4, 6), 16);
-  const mix = (c) => Math.round(c * (1 - ratio) + 255 * ratio);
-  const toHex = (c) => c.toString(16).padStart(2, "0");
-  return `#${toHex(mix(r))}${toHex(mix(g))}${toHex(mix(b))}`;
-}
-
 const FALLBACK_COLOR = "#858C9C";
 
 export default function TodayColorPage() {
@@ -78,20 +59,25 @@ export default function TodayColorPage() {
 
   const reward = location.state?.reward ?? null;
 
-  if (!reward) {
-    navigate("/diary", { replace: true });
-    return null;
-  }
-
-  const isReady = reward.status === "COMPLETED" && reward.colorHex;
+  const isPending = reward?.status === "PENDING";
+  const isReady = reward?.status === "COMPLETED" && reward?.colorHex;
   const rawColor = isReady ? reward.colorHex : FALLBACK_COLOR;
-  const isHighLightness = isReady && getLightness(rawColor) >= 0.5;
-  const accentColor = isHighLightness ? getPaleTint(rawColor) : rawColor;
-  const buttonTextColor = isHighLightness ? rawColor : "#FFFFFF";
-  const keywords = reward.keywords ?? [];
+  // 명도 높은 색은 흰 배경에 묻혀서 면/번짐을 옅은 톤으로 바꿔 씀
+  const isPale = isReady && isHighLightness(rawColor);
+  const accentColor = isPale ? getFillTint(rawColor) : rawColor;
+  const glowColor = isPale ? getGlowTint(rawColor) : rawColor;
+  const buttonTextColor = isPale ? rawColor : "#FFFFFF";
+  const keywords = reward?.keywords ?? [];
+
+  // 성찰질문 페이지를 거치지 않고 직접 접근한 경우
+  useEffect(() => {
+    if (!reward) navigate("/diary", { replace: true });
+  }, [reward, navigate]);
 
   const handleBack = () => navigate("/diary", { replace: true });
   const handleFinish = () => navigate("/home", { replace: true });
+
+  if (!reward) return null;
 
   return (
     <div className="relative h-full w-full select-none overflow-hidden bg-[#F6F8FA]">
@@ -124,7 +110,7 @@ export default function TodayColorPage() {
               alt="프로필"
               className="w-full h-full object-contain"
               style={{
-                filter: `drop-shadow(0 0 9.938px ${hexToRgba(accentColor, 0.16)})`,
+                filter: `drop-shadow(0 0 9.938px ${hexToRgba(glowColor, 0.16)})`,
               }}
             />
           </button>
@@ -138,9 +124,9 @@ export default function TodayColorPage() {
       </div>
 
       <div
-        className="absolute inset-x-0 top-[164px] bottom-0 z-10 flex flex-col justify-between overflow-hidden rounded-[12px] bg-grey-0 px-[20px] pb-[50px] pt-[36px]"
+        className="absolute inset-x-0 top-[115px] bottom-0 z-10 flex flex-col justify-between overflow-hidden rounded-[12px] bg-grey-0 px-[20px] pb-[50px] pt-[36px]"
         style={{
-          boxShadow: `0 0 10px 0 ${hexToRgba(accentColor, 0.05)}, 0 0 30px 0 ${hexToRgba(accentColor, 0.05)}`,
+          boxShadow: `0 0 10px 0 ${hexToRgba(glowColor, 0.05)}, 0 0 30px 0 ${hexToRgba(glowColor, 0.05)}`,
         }}
       >
         <div
@@ -150,8 +136,8 @@ export default function TodayColorPage() {
             top: 44,
             width: 473,
             height: 573,
-            backgroundColor: hexToRgba(accentColor, 0.15),
-            filter: "blur(80px)",
+            backgroundColor: hexToRgba(glowColor, 0.1),
+            filter: "blur(81px)",
           }}
         />
         <div
@@ -161,16 +147,16 @@ export default function TodayColorPage() {
             top: 302,
             width: 473,
             height: 573,
-            backgroundColor: hexToRgba(accentColor, 0.15),
-            filter: "blur(80px)",
+            backgroundColor: hexToRgba(glowColor, 0.1),
+            filter: "blur(81px)",
           }}
         />
 
-        <div className="relative z-10 flex w-full items-center gap-[6px]">
+        <div className="relative z-10 flex w-full items-start gap-[6px]">
           <img
             src={logoImage}
             alt=""
-            className="h-[28px] w-[22px] object-cover"
+            className="h-[28px] w-[22px] shrink-0 object-cover"
           />
           <p className="text-[24px] font-bold tracking-[-0.48px] text-grey-80">
             오늘의 색
@@ -192,7 +178,7 @@ export default function TodayColorPage() {
                 style={{ color: rawColor }}
               >
                 {keywords.map((keyword) => (
-                  <p key={keyword}>#{keyword}</p>
+                  <p key={keyword}>{keyword}</p>
                 ))}
               </div>
             )}
@@ -200,8 +186,10 @@ export default function TodayColorPage() {
         ) : (
           <div className="relative z-10 flex w-full flex-col items-start gap-[6px] px-[16px]">
             <div className="flex aspect-square w-full items-center justify-center bg-[#F6F8FA]">
-              <p className="px-[24px] text-center text-[16px] font-medium text-grey-60">
-                {reward.status === "FAILED"
+              <p className="whitespace-pre-line px-[24px] text-center text-[16px] font-medium text-grey-60">
+                {isPending
+                  ? "오늘의 색을 만들고 있어요.\n잠시만 기다려주세요."
+                  : reward.status === "FAILED"
                   ? "오늘은 색을 만드는 데 실패했어요.\n일기는 안전하게 저장됐어요."
                   : "색은 아직 준비되지 않았어요.\n홈에서 다시 확인해주세요."}
               </p>

@@ -5,8 +5,6 @@ import OtherLoginButton from "../assets/buttons/otherloginbutton.svg";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  // 환경변수에서 백엔드 주소 가져오기
-  const BASE_URL = import.meta.env.VITE_BASE_URL;
 
   //  카카오 로그인
   const handleKakaoLogin = (e) => {

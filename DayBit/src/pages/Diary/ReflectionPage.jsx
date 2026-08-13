@@ -46,6 +46,9 @@ const BLOBS = [
   },
 ];
 
+const POLL_INTERVAL_MS = 2000;
+const MAX_POLL_ATTEMPTS = 15; // 약 30초
+
 export default function ReflectionPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -113,6 +116,30 @@ export default function ReflectionPage() {
 
   const handleBack = () => navigate("/diary", { replace: true });
 
+  // 색 생성이 비동기라 PENDING이면 완료(or 실패)될 때까지 여기서 기다린 뒤 넘어감 —
+  // 오늘의 색 페이지에서는 로딩 없이 바로 결과가 보여야 하기 때문
+  const waitForReward = async (id, initialReward) => {
+    if (!id || initialReward?.status !== "PENDING") return initialReward;
+
+    for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+      try {
+        const response = await apiClient.get(`/api/v1/diaries/${id}`);
+        const nextReward = response.data.result?.reward;
+        if (nextReward && nextReward.status !== "PENDING") {
+          return nextReward;
+        }
+      } catch (error) {
+        console.error(
+          "GET /api/v1/diaries/{diaryId} 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      }
+    }
+    return { ...initialReward, status: "FAILED" };
+  };
+
   const handleAnswerChange = (e) => {
     setAnswer(e.target.value);
     const el = e.target;
@@ -127,9 +154,11 @@ export default function ReflectionPage() {
 
     // 답변 없이 넘어가면 추가 API를 호출하지 않음
     if (!trimmed || !diaryId) {
+      setIsSubmitting(true);
+      const finalReward = await waitForReward(diaryId, reward);
       navigate("/diary/today-color", {
         replace: true,
-        state: { reward, diaryId },
+        state: { reward: finalReward, diaryId },
       });
       return;
     }
@@ -139,15 +168,17 @@ export default function ReflectionPage() {
       await apiClient.post(`/api/v1/diaries/${diaryId}/reflection-answer`, {
         answerText: trimmed,
       });
+      const finalReward = await waitForReward(diaryId, reward);
       navigate("/diary/today-color", {
         replace: true,
-        state: { reward, diaryId },
+        state: { reward: finalReward, diaryId },
       });
     } catch (error) {
       if (error.response?.data?.code === "QUESTION409_1") {
+        const finalReward = await waitForReward(diaryId, reward);
         navigate("/diary/today-color", {
           replace: true,
-          state: { reward, diaryId },
+          state: { reward: finalReward, diaryId },
         });
         return;
       }

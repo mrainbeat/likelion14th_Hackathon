@@ -4,7 +4,6 @@ import { useCurrentTime } from "../../hooks/useCurrentTime";
 import QuestionModal from "./components/QuestionModal";
 import ExitConfirmModal from "./components/ExitConfirmModal";
 import DiaryTutorial from "./components/DiaryTutorial";
-import CompleteConfirmModal from "./components/CompleteConfirmModal";
 import ReflectionConsentModal from "./components/ReflectionConsentModal";
 import AnonymousShareModal from "./components/AnonymousShareModal";
 import apiClient from "../../api/apiClient";
@@ -66,6 +65,7 @@ export default function DiaryPage() {
   });
   const [remainingQuestions, setRemainingQuestions] = useState(null);
   const [isAskingQuestion, setIsAskingQuestion] = useState(false);
+  const [questionError, setQuestionError] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
 
@@ -74,7 +74,6 @@ export default function DiaryPage() {
     return seen ? null : 0;
   });
 
-  const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
   const [showReflectionConsent, setShowReflectionConsent] = useState(false);
   const [showAnonymousShare, setShowAnonymousShare] = useState(false);
   const [pendingUseDiaryContent, setPendingUseDiaryContent] = useState(false);
@@ -221,6 +220,7 @@ export default function DiaryPage() {
     if (isAskingQuestion || remainingQuestions === 0) return;
 
     setIsAskingQuestion(true);
+    setQuestionError("");
     try {
       const response = await apiClient.post(
         "/api/v1/ai/writing-help/questions",
@@ -244,8 +244,14 @@ export default function DiaryPage() {
         }
       }, 50);
     } catch (error) {
-      if (error.response?.data?.code === "QUESTION429") {
+      const code = error.response?.data?.code;
+      if (code === "QUESTION429") {
         setRemainingQuestions(0);
+      } else {
+        setQuestionError(
+          error.response?.data?.message ??
+            "질문을 받아오지 못했어요. 잠시 후 다시 시도해주세요.",
+        );
       }
       console.error(
         "POST /api/v1/ai/writing-help/questions 실패:",
@@ -294,13 +300,6 @@ export default function DiaryPage() {
 
   const handleComplete = () => {
     if (!hasUserWritten) return;
-    setShowCompleteConfirm(true);
-  };
-
-  const handleCompleteContinue = () => setShowCompleteConfirm(false);
-
-  const handleCompleteProceed = () => {
-    setShowCompleteConfirm(false);
     setShowReflectionConsent(true);
   };
 
@@ -446,6 +445,12 @@ export default function DiaryPage() {
                 </button>
               </div>
 
+              {questionError && (
+                <p className="text-[13px] font-medium text-red-500">
+                  {questionError}
+                </p>
+              )}
+
               <QuestionModal questions={questions} />
             </div>
           </div>
@@ -461,13 +466,6 @@ export default function DiaryPage() {
 
       {tutorialStep !== null && (
         <DiaryTutorial step={tutorialStep} onNext={handleTutorialNext} />
-      )}
-
-      {showCompleteConfirm && (
-        <CompleteConfirmModal
-          onContinue={handleCompleteContinue}
-          onComplete={handleCompleteProceed}
-        />
       )}
 
       {showReflectionConsent && (
