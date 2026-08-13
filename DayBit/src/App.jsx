@@ -15,12 +15,16 @@ import HomePage from "./pages/Home/HomePage";
 import DiaryListPage from "./pages/Home/DiaryListPage";
 import DiaryDetailPage from "./pages/Home/DiaryDetailPage";
 import ExperiencePage from "./pages/Experience/ExperiencePage";
+import ExperienceIncomingListPage from "./pages/Experience/ExperienceIncomingListPage";
+import ExperienceGottenListPage from "./pages/Experience/ExperienceGottenListPage";
+import ExperienceSentListPage from "./pages/Experience/ExperienceSentListPage";
+import ExperienceSentDetailPage from "./pages/Experience/ExperienceSentDetailPage";
+import ExperienceDiaryPage from "./pages/Experience/ExperienceDiaryPage";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* 레이아웃 전체 적용 */}
         <Route element={<Layout />}>
           <Route element={<Layout />}></Route>
           <Route path="/" element={<SplashScreen />} />
@@ -34,6 +38,23 @@ function App() {
           <Route path="/home/diaries" element={<DiaryListPage />} />
           <Route path="/home/diaries/:diaryId" element={<DiaryDetailPage />} />
           <Route path="/experience" element={<ExperiencePage />} />
+          <Route
+            path="/experience/incoming"
+            element={<ExperienceIncomingListPage />}
+          />
+          <Route
+            path="/experience/gotten"
+            element={<ExperienceGottenListPage />}
+          />
+          <Route path="/experience/sent" element={<ExperienceSentListPage />} />
+          <Route
+            path="/experience/sent/:pieceId"
+            element={<ExperienceSentDetailPage />}
+          />
+          <Route
+            path="/experience/diary/:pieceId"
+            element={<ExperienceDiaryPage />}
+          />
           <Route path="/diary" element={<DiaryPage />} />
           <Route path="/diary/reflection" element={<ReflectionPage />} />
           <Route path="/diary/today-color" element={<TodayColorPage />} />

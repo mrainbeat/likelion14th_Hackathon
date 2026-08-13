@@ -1,22 +1,68 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ExperienceNotificationBubble from "./components/ExperienceNotificationBubble";
-import ExperiencePieceSection from "./components/ExperiencePieceSection";
+import ExperiencePieceSection, {
+  MoreButton,
+} from "./components/ExperiencePieceSection";
+import IncomingConfirmModal from "./components/IncomingConfirmModal";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.png";
 
+const NAVIGATE_THRESHOLD = 8;
+
 const MOCK_NOTIFICATIONS = [
   {
     id: 1,
+    keyword: "다이어트",
     message: `"다이어트"와 관련된 경험 조각이 도착했어요.`,
     relativeTime: "12분 전",
     isToday: true,
   },
   {
     id: 2,
+    keyword: "다이어트",
     message: `"다이어트"와 관련된 경험 조각이 도착했어요.`,
     relativeTime: "21시간 전",
     isToday: true,
+  },
+];
+
+const MOCK_NOTIFICATIONS_MORE = [
+  {
+    id: 3,
+    keyword: "다이어트",
+    message: `"다이어트"와 관련된 경험 조각이 도착했어요.`,
+    relativeTime: "1일 전",
+    isToday: false,
+  },
+  {
+    id: 4,
+    keyword: "다이어트",
+    message: `"다이어트"와 관련된 경험 조각이 도착했어요.`,
+    relativeTime: "3일 전",
+    isToday: false,
+  },
+  {
+    id: 5,
+    keyword: "다이어트",
+    message: `"다이어트"와 관련된 경험 조각이 도착했어요.`,
+    relativeTime: "3일 전",
+    isToday: false,
+  },
+  {
+    id: 6,
+    keyword: "다이어트",
+    message: `"다이어트"와 관련된 경험 조각이 도착했어요.`,
+    relativeTime: "5일 전",
+    isToday: false,
+  },
+  {
+    id: 7,
+    keyword: "다이어트",
+    message: `"다이어트"와 관련된 경험 조각이 도착했어요.`,
+    relativeTime: "5일 전",
+    isToday: false,
   },
 ];
 
@@ -30,6 +76,51 @@ const MOCK_RECEIVED = [
   },
   {
     id: 2,
+    dateLabel: "8월 14일에 받은 조각",
+    tag: "수능공부",
+    time: "AM 10:05",
+    snippet: "새로운 레시피로 요리를 시도해 보았다.",
+  },
+];
+
+const MOCK_RECEIVED_MORE = [
+  {
+    id: 3,
+    dateLabel: "8월 14일에 받은 조각",
+    tag: "수능공부",
+    time: "AM 10:05",
+    snippet: "새로운 레시피로 요리를 시도해 보았다.",
+  },
+  {
+    id: 4,
+    dateLabel: "8월 14일에 받은 조각",
+    tag: "수능공부",
+    time: "AM 10:05",
+    snippet: "새로운 레시피로 요리를 시도해 보았다.",
+  },
+  {
+    id: 5,
+    dateLabel: "8월 14일에 받은 조각",
+    tag: "수능공부",
+    time: "AM 10:05",
+    snippet: "새로운 레시피로 요리를 시도해 보았다.",
+  },
+  {
+    id: 6,
+    dateLabel: "8월 14일에 받은 조각",
+    tag: "수능공부",
+    time: "AM 10:05",
+    snippet: "새로운 레시피로 요리를 시도해 보았다.",
+  },
+  {
+    id: 7,
+    dateLabel: "8월 14일에 받은 조각",
+    tag: "수능공부",
+    time: "AM 10:05",
+    snippet: "새로운 레시피로 요리를 시도해 보았다.",
+  },
+  {
+    id: 8,
     dateLabel: "8월 14일에 받은 조각",
     tag: "수능공부",
     time: "AM 10:05",
@@ -52,6 +143,21 @@ const MOCK_PENDING = [
   },
 ];
 
+const MOCK_PENDING_MORE = [
+  {
+    id: 3,
+    dateLabel: "8월 29일에 익명화 됨 • 2일남음",
+    time: "PM 3:20",
+    snippet: "친구랑 오랜만에 만나서 이야기했다.",
+  },
+  {
+    id: 4,
+    dateLabel: "8월 28일에 익명화 됨 • 1일남음",
+    time: "AM 9:15",
+    snippet: "아침 일찍 일어나서 운동을 했다.",
+  },
+];
+
 const MOCK_SENT = [
   {
     id: 1,
@@ -69,8 +175,79 @@ const MOCK_SENT = [
   },
 ];
 
+const MOCK_SENT_MORE = [
+  {
+    id: 3,
+    dateLabel: "9월 16일에 전달한 조각",
+    tag: "부업",
+    time: "PM 3:00",
+    snippet: "부업으로 웹사이트를 만들며 시간 가...",
+  },
+  {
+    id: 4,
+    dateLabel: "9월 17일에 전달한 조각",
+    tag: "정규직",
+    time: "AM 9:00",
+    snippet: "정규직 면접에서 긴장이 너무 되어 실...",
+  },
+  {
+    id: 5,
+    dateLabel: "9월 18일에 전달한 조각",
+    tag: "프리랜서",
+    time: "PM 5:00",
+    snippet: "프리랜서 프로젝트 마감일이 다가와서...",
+  },
+  {
+    id: 6,
+    dateLabel: "9월 19일에 전달한 조각",
+    tag: "아르바이트",
+    time: "AM 11:00",
+    snippet: "아르바이트 중 친구와 재미있는 이야...",
+  },
+  {
+    id: 7,
+    dateLabel: "9월 20일에 전달한 조각",
+    tag: "인턴십",
+    time: "PM 4:00",
+    snippet: "인턴십에서 귀여운 강아지를 만나서 기...",
+  },
+  {
+    id: 8,
+    dateLabel: "9월 21일에 전달한 조각",
+    tag: "여름 알바",
+    time: "PM 6:00",
+    snippet: "여름 알바하면서 시원한 음료수를 마셨다.",
+  },
+];
+
 export default function ExperiencePage() {
   const navigate = useNavigate();
+  const [confirmTarget, setConfirmTarget] = useState(null);
+  const [notificationsExpanded, setNotificationsExpanded] = useState(false);
+
+  const handleConfirmView = () => {
+    if (!confirmTarget) return;
+    navigate(`/experience/diary/${confirmTarget.id}`, {
+      state: { mode: "incoming", keyword: confirmTarget.keyword },
+    });
+    setConfirmTarget(null);
+  };
+
+  const notificationsTotal =
+    MOCK_NOTIFICATIONS.length + MOCK_NOTIFICATIONS_MORE.length;
+  const useNavigateNotifications = notificationsTotal >= NAVIGATE_THRESHOLD;
+
+  const visibleNotifications = notificationsExpanded
+    ? [...MOCK_NOTIFICATIONS, ...MOCK_NOTIFICATIONS_MORE]
+    : MOCK_NOTIFICATIONS;
+
+  const handleNotificationsMoreClick = () => {
+    if (useNavigateNotifications) {
+      navigate("/experience/incoming");
+      return;
+    }
+    setNotificationsExpanded((prev) => !prev);
+  };
 
   return (
     <div className="relative flex h-full w-full select-none flex-col overflow-y-auto bg-[#f6f8fa] px-[20px] py-[16px] scrollbar-hide">
@@ -125,32 +302,62 @@ export default function ExperiencePage() {
             </div>
 
             <div className="flex w-full flex-col items-start gap-[12px]">
-              {MOCK_NOTIFICATIONS.map((n) => (
-                <ExperienceNotificationBubble key={n.id} {...n} />
+              {visibleNotifications.map((n) => (
+                <ExperienceNotificationBubble
+                  key={n.id}
+                  {...n}
+                  onConfirm={() => setConfirmTarget(n)}
+                />
               ))}
             </div>
+
+            <MoreButton
+              expanded={
+                useNavigateNotifications ? false : notificationsExpanded
+              }
+              onClick={handleNotificationsMoreClick}
+            />
           </div>
         </div>
 
         <ExperiencePieceSection
           title="받은 경험조각"
           items={MOCK_RECEIVED}
-          hasMore
+          moreItems={MOCK_RECEIVED_MORE}
+          kebabMode="options"
+          onNavigateMore={() => navigate("/experience/gotten")}
         />
 
         <ExperiencePieceSection
           title="전달 대기중인 경험조각"
           subtitle="5일동안 익명화된 내용을 확인하고 전달을 취소할 수 있어요. 이후에는 다른 사람에게 전달될 수 있어요."
           items={MOCK_PENDING}
-          hasMore
+          moreItems={MOCK_PENDING_MORE}
+          kebabMode="link"
+          onItemKebabClick={(item) =>
+            navigate(`/experience/diary/${item.id}`, {
+              state: { mode: "pending" },
+            })
+          }
         />
 
         <ExperiencePieceSection
           title="전달된 나의 경험조각"
           items={MOCK_SENT}
-          hasMore
+          moreItems={MOCK_SENT_MORE}
+          kebabMode="link"
+          onItemKebabClick={(item) => navigate(`/experience/sent/${item.id}`)}
+          onNavigateMore={() => navigate("/experience/sent")}
         />
       </div>
+
+      {confirmTarget && (
+        <IncomingConfirmModal
+          keyword={confirmTarget.keyword}
+          onDecline={() => setConfirmTarget(null)}
+          onConfirm={handleConfirmView}
+        />
+      )}
     </div>
   );
 }
