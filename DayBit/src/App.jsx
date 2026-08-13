@@ -14,6 +14,7 @@ import TodayColorPage from "./pages/Diary/TodayColorPage";
 import HomePage from "./pages/Home/HomePage";
 import DiaryListPage from "./pages/Home/DiaryListPage";
 import DiaryDetailPage from "./pages/Home/DiaryDetailPage";
+import ExperiencePage from "./pages/Experience/ExperiencePage";
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
           <Route path="/home" element={<HomePage />} />
           <Route path="/home/diaries" element={<DiaryListPage />} />
           <Route path="/home/diaries/:diaryId" element={<DiaryDetailPage />} />
+          <Route path="/experience" element={<ExperiencePage />} />
           <Route path="/diary" element={<DiaryPage />} />
           <Route path="/diary/reflection" element={<ReflectionPage />} />
           <Route path="/diary/today-color" element={<TodayColorPage />} />
