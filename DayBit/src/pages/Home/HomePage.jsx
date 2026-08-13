@@ -433,7 +433,11 @@ export default function HomePage() {
           className="flex w-full flex-col items-start gap-[16px] rounded-[12px] bg-grey-0 px-[16px] py-[20px]"
           style={cardShadowStyle}
         >
-          <div className="flex items-center gap-[10px]">
+          <button
+            type="button"
+            onClick={() => navigate("/experience")}
+            className="flex cursor-pointer items-center gap-[10px]"
+          >
             <img
               src={logoImage}
               alt=""
@@ -442,7 +446,7 @@ export default function HomePage() {
             <p className="whitespace-nowrap text-[20px] font-semibold tracking-[-0.4px] text-grey-90">
               다른 사람의 경험
             </p>
-          </div>
+          </button>
           {[
             {
               text: "“다이어트”와 관련된 다른사람의 경험이 도착했어요.",
