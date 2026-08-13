@@ -11,11 +11,26 @@ import editIcon from "../../assets/icons/edit-pencil.svg";
 
 const WEEKDAYS = ["월", "화", "수", "목", "금", "토", "일"];
 
+function hexToRgba(hex, alpha) {
+  const clean = hex.replace("#", "");
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function getLightness(hex) {
+  const clean = hex.replace("#", "");
+  const r = parseInt(clean.substring(0, 2), 16) / 255;
+  const g = parseInt(clean.substring(2, 4), 16) / 255;
+  const b = parseInt(clean.substring(4, 6), 16) / 255;
+  return (Math.max(r, g, b) + Math.min(r, g, b)) / 2;
+}
+
 function pad2(n) {
   return String(n).padStart(2, "0");
 }
 
-// 서버 기준(서울) 오늘 날짜
 function getSeoulToday() {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Seoul",
@@ -32,7 +47,6 @@ function getSeoulToday() {
   };
 }
 
-// 월요일 시작 기준 주 단위로 달력 셀 생성
 function buildCalendarWeeks(year, month) {
   const firstOfMonth = new Date(year, month - 1, 1);
   const daysInMonth = new Date(year, month, 0).getDate();
@@ -96,8 +110,6 @@ function DayCell({ cell, item, onClick }) {
   );
 }
 
-// 미구현된 보상버튼. Figma 좌표(left/top 절대값) 그대로 사용 — flex 중앙정렬로 하면
-// 컨테이너 폭에 따라 텍스트 위치가 미세하게 밀려서 뷰포트별로 패딩이 달라 보임
 function RewardBadge({ active }) {
   if (active) {
     return (
@@ -126,6 +138,25 @@ export default function HomePage() {
   const [monthItems, setMonthItems] = useState([]);
   const [todayItem, setTodayItem] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
+
+  const themeColor =
+    todayItem?.reward?.status === "COMPLETED"
+      ? todayItem.reward.colorHex
+      : null;
+  const isHighLightness = themeColor ? getLightness(themeColor) >= 0.5 : false;
+  const profileShadowAlpha = isHighLightness ? 0.6 : 0.16;
+  const cardShadowAlpha = isHighLightness ? 0.2 : 0.05;
+  const profileShadowColor = themeColor
+    ? hexToRgba(themeColor, profileShadowAlpha)
+    : "rgba(65, 68, 80, 0.16)";
+  const cardShadowStyle = themeColor
+    ? {
+        boxShadow: `0 0 10px 0 ${hexToRgba(themeColor, cardShadowAlpha)}, 0 0 30px 0 ${hexToRgba(themeColor, cardShadowAlpha)}`,
+      }
+    : {
+        boxShadow:
+          "0 0 10px 0 rgba(77,80,91,0.05), 0 0 30px 0 rgba(65,68,80,0.05)",
+      };
 
   useEffect(() => {
     let alive = true;
@@ -231,13 +262,19 @@ export default function HomePage() {
             <img
               src={profileIcon}
               alt="프로필"
-              className="h-full w-full object-contain [filter:drop-shadow(0_0_9.938px_rgba(65,68,80,0.16))]"
+              className="h-full w-full object-contain"
+              style={{
+                filter: `drop-shadow(0 0 9.938px ${profileShadowColor})`,
+              }}
             />
           </button>
         </div>
 
         <div className="flex w-full items-end justify-between">
-          <p className="text-[22px] font-semibold tracking-[-0.44px] text-grey-90">
+          <p
+            className="text-[22px] font-semibold tracking-[-0.44px] text-grey-90"
+            style={themeColor ? { color: themeColor } : undefined}
+          >
             {viewMonth}월의 기록을
             <br />
             차곡차곡 쌓고 있어요
@@ -251,7 +288,10 @@ export default function HomePage() {
       </div>
 
       <div className="flex w-full flex-col items-center gap-[16px]">
-        <div className="relative w-full rounded-[12px] bg-grey-0 px-[16px] py-[14px] shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">
+        <div
+          className="relative w-full rounded-[12px] bg-grey-0 px-[16px] py-[14px]"
+          style={cardShadowStyle}
+        >
           <div className="flex w-full flex-col gap-[6px]">
             <div className="flex w-full items-center justify-between">
               <button
@@ -360,7 +400,10 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="flex w-full flex-col items-center rounded-[12px] bg-grey-0 px-[16px] py-[12px] shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">
+        <div
+          className="flex w-full flex-col items-center rounded-[12px] bg-grey-0 px-[16px] py-[12px]"
+          style={cardShadowStyle}
+        >
           <div className="flex items-center gap-[47px]">
             <div className="flex w-[66px] flex-col items-center gap-[6px]">
               <p className="whitespace-nowrap text-[16px] font-semibold text-grey-90">
@@ -386,7 +429,10 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="flex w-full flex-col items-start gap-[16px] rounded-[12px] bg-grey-0 px-[16px] py-[20px] shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">
+        <div
+          className="flex w-full flex-col items-start gap-[16px] rounded-[12px] bg-grey-0 px-[16px] py-[20px]"
+          style={cardShadowStyle}
+        >
           <div className="flex items-center gap-[10px]">
             <img
               src={logoImage}
@@ -397,7 +443,6 @@ export default function HomePage() {
               다른 사람의 경험
             </p>
           </div>
-
           {[
             {
               text: "“다이어트”와 관련된 다른사람의 경험이 도착했어요.",
