@@ -14,7 +14,7 @@ const SECTIONS = [
     title: "기록 속 정보 기억하기",
     lines: [
       "기록에  등장한 사람, 관심사, 이슈등을 기억해요.",
-      "새로운 정보를 기억하기 전에는 먼저 물어볼게요:)",
+      "새로운 정보를 기억하기 전에 먼저 물어볼게요:)",
     ],
   },
   {
@@ -25,13 +25,13 @@ const SECTIONS = [
 
 function SpeechBubble({ lines }) {
   return (
-    <div className="relative flex shrink-0 items-center gap-[10px] rounded-[12px] bg-grey-30 px-[16px] py-[10px]">
+    <div className="relative flex shrink-0 items-center gap-[10px] rounded-[12px] bg-grey-20 px-[16px] py-[10px]">
       <img
         src={bubbleTailSvg}
         alt=""
         className="pointer-events-none absolute left-[-4px] top-[-9px] h-[18.739px] w-[15.307px]"
       />
-      <div className="shrink-0 whitespace-nowrap text-[16px] font-medium leading-[19px] tracking-[-0.32px] text-grey-80">
+      <div className="shrink-0 whitespace-nowrap text-[16px] font-medium leading-[19px] tracking-[-0.32px] text-grey-70">
         {lines.map((line, i) => (
           <p key={i}>{line}</p>
         ))}
@@ -40,7 +40,6 @@ function SpeechBubble({ lines }) {
   );
 }
 
-// "오후9시", "오전8시 30분" 같은 라벨을 백엔드가 원하는 "HH:mm"으로 바꿔줌
 function toServerTime(label) {
   if (!label) return null;
 
@@ -110,7 +109,7 @@ export default function OnboardingConsent() {
               key={title}
               className="flex w-full flex-col items-start gap-[8px]"
             >
-              <p className="whitespace-nowrap text-[20px] font-semibold leading-[24px] tracking-[-0.4px] text-grey-90">
+              <p className="whitespace-nowrap text-[18px] font-semibold leading-[24px] tracking-[-0.18px] text-grey-80">
                 {title}
               </p>
               <SpeechBubble lines={lines} />
