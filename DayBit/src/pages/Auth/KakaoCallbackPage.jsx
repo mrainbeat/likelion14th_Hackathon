@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import apiClient from "../../api/apiClient";
+import apiClient, { refreshCsrfToken } from "../../api/apiClient";
 
 function KakaoCallbackPage() {
   const navigate = useNavigate();
@@ -10,6 +10,12 @@ function KakaoCallbackPage() {
       try {
         const response = await apiClient.get("/api/me");
         const user = response.data.result;
+
+        try {
+          await refreshCsrfToken();
+        } catch (csrfError) {
+          console.error("GET /api/auth/csrf 실패:", csrfError);
+        }
 
         if (user.onboardingCompleted) {
           navigate("/home", { replace: true });

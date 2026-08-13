@@ -8,6 +8,8 @@ const apiClient = axios.create({
 });
 
 const REFRESH_URL = "/api/auth/refresh";
+const CSRF_URL = "/api/auth/csrf";
+const MUTATING_METHODS = ["post", "patch", "put", "delete"];
 
 let isRefreshing = false;
 let pendingQueue = [];
@@ -20,12 +22,66 @@ function flushQueue(error) {
   pendingQueue = [];
 }
 
+let csrfHeaderName = "X-XSRF-TOKEN";
+let csrfToken = null;
+let csrfFetchPromise = null;
+
+function fetchCsrfToken() {
+  if (csrfFetchPromise) return csrfFetchPromise;
+
+  csrfFetchPromise = axios
+    .get(CSRF_URL, {
+      baseURL: import.meta.env.VITE_API_BASE_URL,
+      withCredentials: true,
+    })
+    .then((response) => {
+      const result = response.data.result;
+      csrfHeaderName = result.headerName || csrfHeaderName;
+      csrfToken = result.token;
+      return csrfToken;
+    })
+    .finally(() => {
+      csrfFetchPromise = null;
+    });
+
+  return csrfFetchPromise;
+}
+
+export function refreshCsrfToken() {
+  csrfToken = null;
+  return fetchCsrfToken();
+}
+
+apiClient.interceptors.request.use(async (config) => {
+  const method = config.method?.toLowerCase();
+  if (!MUTATING_METHODS.includes(method) || config.url === CSRF_URL) {
+    return config;
+  }
+
+  if (!csrfToken) {
+    await fetchCsrfToken();
+  }
+
+  config.headers[csrfHeaderName] = csrfToken;
+  return config;
+});
+
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const { response, config } = error;
 
-    if (!response || response.status !== 401 || !config || config._retry) {
+    if (!response || !config) {
+      return Promise.reject(error);
+    }
+
+    if (response.data?.code === "AUTH403_2" && !config._csrfRetry) {
+      config._csrfRetry = true;
+      await refreshCsrfToken();
+      return apiClient(config);
+    }
+
+    if (response.status !== 401 || config._retry) {
       return Promise.reject(error);
     }
 
