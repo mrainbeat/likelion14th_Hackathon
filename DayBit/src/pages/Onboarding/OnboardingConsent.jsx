@@ -13,9 +13,10 @@ const SECTIONS = [
   {
     title: "기록 속 정보 기억하기",
     lines: [
-      "기록에  등장한 사람, 관심사, 이슈등을 기억해요.",
+      "기록에 등장한 사람, 관심사, 이슈등을 기억해요.",
       "새로운 정보를 기억하기 전에 먼저 물어볼게요:)",
     ],
+    fullWidth: true,
   },
   {
     title: "이전 기록 활용하기",
@@ -23,9 +24,23 @@ const SECTIONS = [
   },
 ];
 
-function SpeechBubble({ lines }) {
+function renderWithTightSpaces(text) {
+  const words = text.split(" ");
+  return words.map((word, i) => (
+    <span key={i}>
+      {word}
+      {i < words.length - 1 && <span className="tracking-[-0.8px]"> </span>}
+    </span>
+  ));
+}
+
+function SpeechBubble({ lines, fullWidth }) {
   return (
-    <div className="relative flex shrink-0 items-center gap-[10px] rounded-[12px] bg-grey-20 px-[16px] py-[10px]">
+    <div
+      className={`relative flex items-center gap-[10px] rounded-[12px] bg-grey-20 px-[16px] py-[10px] ${
+        fullWidth ? "w-full shrink-0" : "shrink-0"
+      }`}
+    >
       <img
         src={bubbleTailSvg}
         alt=""
@@ -33,7 +48,7 @@ function SpeechBubble({ lines }) {
       />
       <div className="shrink-0 whitespace-nowrap text-[16px] font-medium leading-[19px] tracking-[-0.32px] text-grey-70">
         {lines.map((line, i) => (
-          <p key={i}>{line}</p>
+          <p key={i}>{renderWithTightSpaces(line)}</p>
         ))}
       </div>
     </div>
@@ -104,7 +119,7 @@ export default function OnboardingConsent() {
 
       <div className="absolute inset-x-0 bottom-[115px] top-[244px] overflow-y-auto overscroll-contain pl-[36px] [&::-webkit-scrollbar]:hidden">
         <div className="flex w-[318px] flex-col gap-[16px] pb-[8px]">
-          {SECTIONS.map(({ title, lines }) => (
+          {SECTIONS.map(({ title, lines, fullWidth }) => (
             <div
               key={title}
               className="flex w-full flex-col items-start gap-[8px]"
@@ -112,7 +127,7 @@ export default function OnboardingConsent() {
               <p className="whitespace-nowrap text-[18px] font-semibold leading-[24px] tracking-[-0.18px] text-grey-80">
                 {title}
               </p>
-              <SpeechBubble lines={lines} />
+              <SpeechBubble lines={lines} fullWidth={fullWidth} />
             </div>
           ))}
         </div>
