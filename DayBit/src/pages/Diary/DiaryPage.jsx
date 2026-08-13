@@ -6,6 +6,7 @@ import ExitConfirmModal from "./components/ExitConfirmModal";
 import DiaryTutorial from "./components/DiaryTutorial";
 import CompleteConfirmModal from "./components/CompleteConfirmModal";
 import ReflectionConsentModal from "./components/ReflectionConsentModal";
+import AnonymousShareModal from "./components/AnonymousShareModal";
 import apiClient from "../../api/apiClient";
 import backIcon from "../../assets/icons/back.svg";
 import logoImage from "../../assets/logos/logo-symbol.png";
@@ -75,6 +76,8 @@ export default function DiaryPage() {
 
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
   const [showReflectionConsent, setShowReflectionConsent] = useState(false);
+  const [showAnonymousShare, setShowAnonymousShare] = useState(false);
+  const [pendingUseDiaryContent, setPendingUseDiaryContent] = useState(false);
 
   const [isResetting, setIsResetting] = useState(false);
   const isDevResetEnabled = import.meta.env.VITE_DEV_RESET_ENABLED === "true";
@@ -83,7 +86,6 @@ export default function DiaryPage() {
   const editorRef = useRef(null);
   const scrollContainerRef = useRef(null);
 
-  // 페이지 진입 시 오늘 남은 작성 도움 질문 횟수 조회
   useEffect(() => {
     let alive = true;
     apiClient
@@ -302,14 +304,24 @@ export default function DiaryPage() {
     setShowReflectionConsent(true);
   };
 
-  const goToReflection = (useDiaryContent) => {
+  const handleReflectionChoice = (useDiaryContent) => {
+    setShowReflectionConsent(false);
+    setPendingUseDiaryContent(useDiaryContent);
+    setShowAnonymousShare(true);
+  };
+
+  const handleAnonymousShareChoice = (shareAnonymously) => {
+    setShowAnonymousShare(false);
+    goToReflection(pendingUseDiaryContent, shareAnonymously);
+  };
+
+  const goToReflection = (useDiaryContent, shareAnonymously) => {
     const plainText = htmlToPlainText(content);
     if (!plainText) return;
 
-    setShowReflectionConsent(false);
     saveDraft(content);
     navigate("/diary/reflection", {
-      state: { content: plainText, useDiaryContent },
+      state: { content: plainText, useDiaryContent, shareAnonymously },
     });
   };
 
@@ -460,8 +472,15 @@ export default function DiaryPage() {
 
       {showReflectionConsent && (
         <ReflectionConsentModal
-          onSkip={() => goToReflection(false)}
-          onUse={() => goToReflection(true)}
+          onSkip={() => handleReflectionChoice(false)}
+          onUse={() => handleReflectionChoice(true)}
+        />
+      )}
+
+      {showAnonymousShare && (
+        <AnonymousShareModal
+          onDecline={() => handleAnonymousShareChoice(false)}
+          onShare={() => handleAnonymousShareChoice(true)}
         />
       )}
     </div>
