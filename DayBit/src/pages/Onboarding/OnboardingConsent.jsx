@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import OnboardingHeader from "./components/OnboardingHeader";
 import { ProgressBar, BottomButton } from "./components/OnboardingUi";
-import bubbleTailSvg from "../../assets/icons/tail.svg";
+import tailGrey20Svg from "../../assets/icons/tail-grey20.svg";
 import apiClient from "../../api/apiClient";
 
 const SECTIONS = [
@@ -42,7 +42,7 @@ function SpeechBubble({ lines, fullWidth }) {
       }`}
     >
       <img
-        src={bubbleTailSvg}
+        src={tailGrey20Svg}
         alt=""
         className="pointer-events-none absolute left-[-4px] top-[-9px] h-[18.739px] w-[15.307px]"
       />

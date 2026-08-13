@@ -1,4 +1,5 @@
-import bubbleTailSvg from "../../../assets/icons/tail.svg";
+import tailGrey60Svg from "../../../assets/icons/tail-grey60.svg";
+import tailGrey20Svg from "../../../assets/icons/tail-grey20.svg";
 
 export default function ExperienceNotificationBubble({
   message,
@@ -14,7 +15,7 @@ export default function ExperienceNotificationBubble({
         }`}
       >
         <img
-          src={bubbleTailSvg}
+          src={isToday ? tailGrey60Svg : tailGrey20Svg}
           alt=""
           className="pointer-events-none absolute left-[-4px] top-[-9px] h-[18.739px] w-[15.307px]"
         />

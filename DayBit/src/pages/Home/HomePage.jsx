@@ -162,6 +162,7 @@ export default function HomePage() {
   const cardShadowStyle = {
     boxShadow: `0 0 5px 0 ${cardShadowColor}, 0 0 15px 0 ${cardShadowColor}`,
   };
+  const bubbleColor = surfaceColor ?? "#E7E9EE";
 
   useEffect(() => {
     let alive = true;
@@ -470,12 +471,13 @@ export default function HomePage() {
             <div
               key={text}
               className="relative flex w-full items-center gap-[10px] rounded-[12px] px-[16px] py-[10px]"
-              style={{ backgroundColor: surfaceColor ?? "#E7E9EE" }}
+              style={{ backgroundColor: bubbleColor }}
             >
+              {/* 말풍선 색이 보상 색을 따라가므로 꼬리도 같은 값을 써야 어긋나지 않음 */}
               <div
                 aria-hidden
                 className="pointer-events-none absolute left-[-4px] top-[-9px] h-[18.739px] w-[15.307px]"
-                style={maskedIcon(bubbleTailSvg, surfaceColor ?? "#DFE2EA")}
+                style={maskedIcon(bubbleTailSvg, bubbleColor)}
               />
               <p
                 className="flex-1 text-[16px] font-medium tracking-[-0.32px]"
