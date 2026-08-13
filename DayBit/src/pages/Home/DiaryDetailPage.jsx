@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import apiClient from "../../api/apiClient";
 import DiaryOptionsMenu from "./components/DiaryOptionsMenu";
+import DeleteConfirmModal from "./components/DeleteConfirmModal";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import kebabIcon from "../../assets/icons/menu.svg";
@@ -35,7 +36,7 @@ export default function DiaryDetailPage() {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [showMenu, setShowMenu] = useState(false);
-
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   useEffect(() => {
     let alive = true;
     apiClient
@@ -62,8 +63,7 @@ export default function DiaryDetailPage() {
   }, [diaryId]);
 
   const handleDelete = async () => {
-    setShowMenu(false);
-    if (!window.confirm("이 일기를 삭제할까요?")) return;
+    setShowDeleteConfirm(false);
 
     try {
       await apiClient.delete(`/api/v1/diaries/${diaryId}`);
@@ -139,7 +139,10 @@ export default function DiaryDetailPage() {
               {showMenu && (
                 <DiaryOptionsMenu
                   onClose={() => setShowMenu(false)}
-                  onDelete={handleDelete}
+                  onDelete={() => {
+                    setShowMenu(false);
+                    setShowDeleteConfirm(true);
+                  }}
                 />
               )}
             </div>
@@ -166,6 +169,15 @@ export default function DiaryDetailPage() {
             ))}
           </div>
         </>
+      )}
+
+      {showDeleteConfirm && (
+        <DeleteConfirmModal
+          month={month}
+          day={day}
+          onCancel={() => setShowDeleteConfirm(false)}
+          onDelete={handleDelete}
+        />
       )}
     </div>
   );

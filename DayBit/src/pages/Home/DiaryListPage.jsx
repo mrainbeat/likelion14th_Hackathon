@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/apiClient";
 import MonthYearPickerModal from "./components/MonthYearPickerModal";
 import DiaryOptionsMenu from "./components/DiaryOptionsMenu";
+import DeleteConfirmModal from "./components/DeleteConfirmModal";
 import arrowIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import kebabIcon from "../../assets/icons/menu.svg";
@@ -33,6 +34,7 @@ export default function DiaryListPage() {
   const [items, setItems] = useState([]);
   const [showPicker, setShowPicker] = useState(false);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -82,9 +84,15 @@ export default function DiaryListPage() {
     setShowPicker(false);
   };
 
-  const handleDelete = async (diaryId) => {
+  const handleRequestDelete = (item) => {
     setOpenMenuId(null);
-    if (!window.confirm("이 일기를 삭제할까요?")) return;
+    setDeleteTarget(item);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    const diaryId = deleteTarget.diaryId;
+    setDeleteTarget(null);
 
     try {
       await apiClient.delete(`/api/v1/diaries/${diaryId}`);
@@ -185,7 +193,8 @@ export default function DiaryListPage() {
                       {openMenuId === item.diaryId && (
                         <DiaryOptionsMenu
                           onClose={() => setOpenMenuId(null)}
-                          onDelete={() => handleDelete(item.diaryId)}
+                          onDelete={() => handleRequestDelete(item)}
+                          hideQuestionButton
                         />
                       )}
                     </div>
@@ -216,6 +225,15 @@ export default function DiaryListPage() {
         onConfirm={handleConfirmPicker}
         onClose={() => setShowPicker(false)}
       />
+
+      {deleteTarget && (
+        <DeleteConfirmModal
+          month={Number(deleteTarget.recordedDate.split("-")[1])}
+          day={Number(deleteTarget.recordedDate.split("-")[2])}
+          onCancel={() => setDeleteTarget(null)}
+          onDelete={handleConfirmDelete}
+        />
+      )}
     </div>
   );
 }
