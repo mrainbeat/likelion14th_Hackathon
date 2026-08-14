@@ -5,7 +5,7 @@ import { ProgressBar, Chip, BottomButton } from "./components/OnboardingUi";
 import ClearIcon1 from "../../assets/icons/clear1.svg";
 import ClearIcon2 from "../../assets/icons/clear2.svg";
 
-const PRESET_JOBS = ["직장인", "대학생", "구직중", "쉬는중", "프리랜서"];
+const PRESET_JOBS = ["직장인", "대학생", "구직중", "프리랜서"];
 const CUSTOM = "직접입력";
 const MAX_LENGTH = 40;
 
