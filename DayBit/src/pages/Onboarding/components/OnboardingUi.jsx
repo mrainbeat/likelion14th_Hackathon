@@ -1,6 +1,6 @@
 ﻿export function ProgressBar({ step = 1, total = 4 }) {
   return (
-    <div className="absolute left-[5.13%] right-[5.13%] top-[12px] flex items-center gap-[8px]">
+    <div className="absolute left-[4.10%] right-[4.10%] top-[12px] flex items-center gap-[8px]">
       {" "}
       {Array.from({ length: total }, (_, i) => (
         <div
@@ -34,7 +34,7 @@ export function BottomButton({ children = "다음", disabled = false, onClick })
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`absolute bottom-[30px] left-[5.13%] right-[5.13%] flex h-[49px] items-center justify-center rounded-[12px] text-[18px] font-semibold leading-none tracking-[-0.18px] text-white transition-all ${
+      className={`absolute bottom-[30px] left-[4.10%] right-[4.10%] flex h-[49px] items-center justify-center rounded-[12px] text-[18px] font-semibold leading-none tracking-[-0.18px] text-white transition-all ${
         disabled
           ? "cursor-not-allowed bg-grey-40"
           : "cursor-pointer bg-grey-70 active:scale-[0.98]"
