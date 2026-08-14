@@ -495,8 +495,8 @@ export default function DiaryPage() {
                 <button
                   type="button"
                   onClick={handleComplete}
-                  disabled={!hasUserWritten}
-                  className="w-[118px] h-[48px] rounded-[12px] px-[26px] text-[18px] font-semibold tracking-[-0.18px] bg-grey-70 text-grey-0 disabled:bg-grey-20 disabled:text-grey-0 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                  disabled={!hasUserWritten && tutorialStep !== 2}
+                  className="w-[118px] h-[48px] rounded-[12px] px-[26px] text-[18px] font-semibold tracking-[-0.18px] bg-grey-70 text-grey-0 disabled:bg-grey-20 disabled:text-grey-0 disabled:cursor-not-allowed transition-colors duration-700 delay-200 ease-in-out whitespace-nowrap"
                 >
                   작성 완료
                 </button>
