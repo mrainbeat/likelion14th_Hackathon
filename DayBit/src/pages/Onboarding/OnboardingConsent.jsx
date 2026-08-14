@@ -46,8 +46,7 @@ function SpeechBubble({ lines, fullWidth }) {
         alt=""
         className="pointer-events-none absolute left-[-4px] top-[-9px] h-[18.739px] w-[15.307px]"
       />
-      <div className="shrink-0 whitespace-nowrap text-[14px] font-medium tracking-[-0.28px] text-grey-70">
-        {" "}
+      <div className="shrink-0 whitespace-nowrap text-[16px] font-medium tracking-[-0.32px] text-grey-70">
         {lines.map((line, i) => (
           <p key={i}>{renderWithTightSpaces(line)}</p>
         ))}
@@ -123,9 +122,9 @@ export default function OnboardingConsent() {
           {SECTIONS.map(({ title, lines, fullWidth }) => (
             <div
               key={title}
-              className="flex w-full flex-col items-start gap-[8px]"
+              className="flex w-full flex-col items-start gap-[6px]"
             >
-              <p className="whitespace-nowrap text-[18px] font-semibold leading-[24px] tracking-[-0.18px] text-grey-80">
+              <p className="whitespace-nowrap text-[18px] font-semibold tracking-[-0.36px] text-grey-80">
                 {title}
               </p>
               <SpeechBubble lines={lines} fullWidth={fullWidth} />
