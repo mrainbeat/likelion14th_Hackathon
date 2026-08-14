@@ -1,4 +1,6 @@
-﻿export function ProgressBar({ step = 1, total = 4 }) {
+﻿import arrowIcon from "../../../icons/arrow.svg";
+
+export function ProgressBar({ step = 1, total = 4 }) {
   return (
     <div className="absolute left-[4.10%] right-[4.10%] top-[12px] flex items-center gap-[8px]">
       {" "}
@@ -52,13 +54,25 @@ export function ModalButton({ children = "완료", disabled = false, onClick }) 
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`flex h-[49px] w-full items-center justify-center rounded-[12px] text-[18px] font-semibold leading-none tracking-[-0.18px] text-grey-0 text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)] transition-all ${
+      className={`flex h-[49px] w-full items-center justify-center rounded-[12px] text-[18px] font-semibold leading-none tracking-[-0.36px] text-grey-0 text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)] transition-all ${
         disabled
           ? "cursor-not-allowed bg-grey-40"
           : "cursor-pointer bg-grey-70 active:scale-[0.98]"
       }`}
     >
       {children}
+    </button>
+  );
+}
+export function BackButton({ onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="이전으로"
+      className="absolute left-[4.10%] top-[26px] flex size-[32px] items-center justify-center"
+    >
+      <img src={arrowIcon} alt="" className="size-full" />
     </button>
   );
 }

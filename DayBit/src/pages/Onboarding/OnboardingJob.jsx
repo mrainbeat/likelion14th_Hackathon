@@ -4,6 +4,12 @@ import OnboardingHeader from "./components/OnboardingHeader";
 import { ProgressBar, Chip, BottomButton } from "./components/OnboardingUi";
 import ClearIcon1 from "../../assets/icons/clear1.svg";
 import ClearIcon2 from "../../assets/icons/clear2.svg";
+import {
+  ProgressBar,
+  BackButton,
+  Chip,
+  BottomButton,
+} from "./components/OnboardingUi";
 
 const PRESET_JOBS = ["직장인", "대학생", "구직중", "프리랜서"];
 const CUSTOM = "직접입력";
@@ -68,7 +74,7 @@ export default function OnboardingJob() {
   return (
     <div className="relative h-full w-full select-none overflow-hidden bg-[#F6F8FA]">
       <ProgressBar step={1} />
-
+      <BackButton onClick={() => navigate(-1)} />
       <OnboardingHeader
         lines={[
           `좋아요 ${nickname || "회원"}님!`,

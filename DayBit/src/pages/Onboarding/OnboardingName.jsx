@@ -4,6 +4,11 @@ import OnboardingHeader from "./components/OnboardingHeader";
 import { ProgressBar, BottomButton } from "./components/OnboardingUi";
 import ClearIcon1 from "../../assets/icons/clear1.svg";
 import ClearIcon2 from "../../assets/icons/clear2.svg";
+import {
+  ProgressBar,
+  BackButton,
+  BottomButton,
+} from "./components/OnboardingUi";
 
 export default function OnboardingName() {
   const navigate = useNavigate();
@@ -36,6 +41,7 @@ export default function OnboardingName() {
   return (
     <div className="relative h-full w-full select-none overflow-hidden bg-background">
       <ProgressBar step={0} />
+      <BackButton onClick={() => navigate(-1)} />
 
       <OnboardingHeader
         lines={["안녕하세요, 전 데이빗이에요 :)", "뭐라고 부르면 될까요?"]}

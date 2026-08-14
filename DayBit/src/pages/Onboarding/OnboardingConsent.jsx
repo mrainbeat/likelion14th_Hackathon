@@ -4,6 +4,11 @@ import OnboardingHeader from "./components/OnboardingHeader";
 import { ProgressBar, BottomButton } from "./components/OnboardingUi";
 import tailGrey20Svg from "../../assets/icons/tail-grey20.svg";
 import apiClient from "../../api/apiClient";
+import {
+  ProgressBar,
+  BackButton,
+  BottomButton,
+} from "./components/OnboardingUi";
 
 const SECTIONS = [
   {
@@ -111,7 +116,7 @@ export default function OnboardingConsent() {
   return (
     <div className="relative h-full w-full select-none overflow-hidden bg-[#F6F8FA]">
       <ProgressBar step={3} />
-
+      <BackButton onClick={() => navigate(-1)} />
       <OnboardingHeader
         lines={["더 나다운 질문을 위해", "데이빗은 허락한 정보만 기억해요."]}
         caption="설정에서 언제든지 변경 가능해요."
