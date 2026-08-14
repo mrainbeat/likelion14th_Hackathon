@@ -115,12 +115,11 @@ export default function OnboardingConsent() {
   return (
     <div className="relative h-full w-full select-none overflow-hidden bg-[#F6F8FA]">
       <ProgressBar step={3} />
-      <BackButton onClick={() => navigate(-1)} />
+      <BackButton onClick={() => navigate("/onboarding/alarm")} />{" "}
       <OnboardingHeader
         lines={["더 나다운 질문을 위해", "데이빗은 허락한 정보만 기억해요."]}
         caption="설정에서 언제든지 변경 가능해요."
       />
-
       <div className="absolute inset-x-0 bottom-[115px] top-[244px] overflow-y-auto overscroll-contain pl-[9.23%] pr-[9.23%] [&::-webkit-scrollbar]:hidden">
         <div className="flex w-full flex-col gap-[16px] pb-[8px]">
           {SECTIONS.map(({ title, lines, fullWidth }) => (
@@ -136,13 +135,11 @@ export default function OnboardingConsent() {
           ))}
         </div>
       </div>
-
       {errorMessage && (
         <p className="absolute inset-x-[9.23%] bottom-[95px] text-[13px] font-medium text-red-500">
           {errorMessage}
         </p>
       )}
-
       <BottomButton disabled={isSubmitting} onClick={handleAgree}>
         {isSubmitting ? "저장 중..." : "동의하기"}
       </BottomButton>
