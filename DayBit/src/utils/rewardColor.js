@@ -49,9 +49,34 @@ export function getTodayColorPalette(hex) {
   };
 }
 
+// mainTextColor는 mainColor로 "칠한 면" 위에 얹는 텍스트라 어두운/진한 색일 땐
+// 흰색이 나온다. 흰 페이지 배경 위에 얹는 텍스트(헤드라인, 아이콘 등)는 그 흰색이
+// 그대로 안 보이게 되므로, 이 경우엔 진하면 원본색을 그대로 쓰고 너무 밝을 때만
+// mainTextColor(파생된 진한 동계열)를 쓴다.
+export function getOnPageTextColor(palette) {
+  return palette.mode === "white-text" ? palette.mainColor : palette.mainTextColor;
+}
+
 export function hexToRgba(hex, alpha) {
   const { r, g, b } = hexToRgb(hex);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+// box-shadow 하나에 큰 blur(예: 30px)를 주면 브라우저의 blur 근사 때문에 저알파
+// 구간에서 색 밴딩(계단 현상)이 눈에 띈다. 같은 총량을 작은 blur 여러 겹으로
+// 나눠 쌓으면 각 층의 밴딩이 서로 다른 지점에서 생겨 겹치면서 부드러워진다.
+const SOFT_SHADOW_LAYERS = [
+  { blur: 3, weight: 0.5 },
+  { blur: 8, weight: 0.4 },
+  { blur: 14, weight: 0.3 },
+  { blur: 21, weight: 0.2 },
+  { blur: 30, weight: 0.1 },
+];
+
+export function buildSoftShadow(hex, baseAlpha) {
+  return SOFT_SHADOW_LAYERS.map(
+    ({ blur, weight }) => `0 0 ${blur}px 0 ${hexToRgba(hex, baseAlpha * weight)}`,
+  ).join(", ");
 }
 
 /* ==================================================

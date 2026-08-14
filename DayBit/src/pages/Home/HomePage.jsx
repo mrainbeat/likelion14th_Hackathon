@@ -3,7 +3,12 @@ import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/apiClient";
 import MonthYearPickerModal from "./components/MonthYearPickerModal";
 import ResumeDraftModal from "../Diary/components/ResumeDraftModal";
-import { getTodayColorPalette, hexToRgba } from "../../utils/rewardColor";
+import {
+  buildSoftShadow,
+  getOnPageTextColor,
+  getTodayColorPalette,
+  hexToRgba,
+} from "../../utils/rewardColor";
 import logoImage from "../../assets/logos/logo-symbol.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import bellIcon from "../../assets/icons/notification-bell.svg";
@@ -155,20 +160,21 @@ export default function HomePage() {
   // 메인: 원본 그대로(그림자·글자), 소프트: 같은 색상의 옅은 톤(말풍선 배경)
   const palette = themeColor ? getTodayColorPalette(themeColor) : null;
   const isPale = palette ? palette.mode === "derived-text" : false;
-  const textColor = palette ? palette.mainTextColor : null;
+  // 헤드라인·연필·통계 라벨은 흰 페이지 배경 위라 mainTextColor(흰색 나올 수 있음)를
+  // 그대로 쓰면 안 보임 — 흰 배경용으로 따로 계산
+  const textColor = palette ? getOnPageTextColor(palette) : null;
   const bubbleColor = palette ? palette.softColor : "#E7E9EE";
   const bubbleTextColor = palette ? palette.softTextColor : "#5F6473";
   const profileShadowColor = palette
     ? hexToRgba(palette.mainColor, isPale ? 0.6 : 0.16)
     : "rgba(65, 68, 80, 0.16)";
-  const cardShadowColor = palette
-    ? hexToRgba(palette.mainColor, isPale ? 0.2 : 0.05)
-    : null;
-  // 보상 색이 없는 기본 상태는 피그마 값 그대로 두 톤을 따로 씀
+  // box-shadow에 큰 blur(10px+30px)를 그대로 쓰면 저알파 구간에서 브라우저가
+  // 계단 현상(밴딩)을 보여준다. 같은 시각적 무게를 작은 blur 여러 겹으로 나눠
+  // 부드럽게 만든다 — 보상 색이 없는 기본 상태는 피그마 값 그대로 두 톤을 씀
   const cardShadowStyle = {
     boxShadow: palette
-      ? `0 0 10px 0 ${cardShadowColor}, 0 0 30px 0 ${cardShadowColor}`
-      : "0 0 10px 0 rgba(77, 80, 91, 0.05), 0 0 30px 0 rgba(65, 68, 80, 0.05)",
+      ? buildSoftShadow(palette.mainColor, isPale ? 0.2 : 0.05)
+      : buildSoftShadow("#474A56", 0.05), // 기본값 두 톤(#4D505B/#414450)의 평균
   };
 
   useEffect(() => {
@@ -309,11 +315,13 @@ export default function HomePage() {
             <br />
             차곡차곡 쌓이고 있어요
           </p>
-          <img
-            src={bellIcon}
-            alt="알림"
-            className="h-[24.375px] w-[18.963px] shrink-0 object-contain"
-          />
+          <div className="flex shrink-0 items-center justify-center px-[6px] py-[3px]">
+            <img
+              src={bellIcon}
+              alt="알림"
+              className="h-[24.375px] w-[18.963px] object-contain"
+            />
+          </div>
         </div>
       </div>
 
