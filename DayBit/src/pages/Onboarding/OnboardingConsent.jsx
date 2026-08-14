@@ -46,7 +46,8 @@ function SpeechBubble({ lines, fullWidth }) {
         alt=""
         className="pointer-events-none absolute left-[-4px] top-[-9px] h-[18.739px] w-[15.307px]"
       />
-      <div className="shrink-0 whitespace-nowrap text-[16px] font-medium leading-[19px] tracking-[-0.32px] text-grey-70">
+      <div className="shrink-0 whitespace-nowrap text-[14px] font-medium tracking-[-0.28px] text-grey-70">
+        {" "}
         {lines.map((line, i) => (
           <p key={i}>{renderWithTightSpaces(line)}</p>
         ))}
