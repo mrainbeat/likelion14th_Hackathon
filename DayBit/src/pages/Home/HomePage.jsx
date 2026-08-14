@@ -5,7 +5,7 @@ import MonthYearPickerModal from "./components/MonthYearPickerModal";
 import ResumeDraftModal from "../Diary/components/ResumeDraftModal";
 import SpeechBubble from "../../components/SpeechBubble";
 import { getTodayColorPalette, hexToRgba } from "../../utils/rewardColor";
-import logoImage from "../../assets/logos/logo-symbol.svg";
+import LogoSymbol from "../../assets/icons/LogoSymbol.jsx";
 import profileIcon from "../../assets/icons/profile.svg";
 import bellIcon from "../../assets/icons/notification-bell.svg";
 import arrowIcon from "../../assets/icons/back.svg";
@@ -268,10 +268,9 @@ export default function HomePage() {
       <div className="flex w-full flex-col items-start gap-[8px]">
         <div className="flex w-full items-center justify-between">
           <div className="flex items-end gap-[4px]">
-            <div
-              aria-hidden
+            <LogoSymbol
+              dotColor={accentColor ?? "#414450"}
               className="h-[25px] w-[20px] shrink-0"
-              style={maskedIcon(logoImage, accentColor ?? "#414450")}
             />
             <p className="whitespace-nowrap text-[14px] font-bold tracking-[1.12px] text-grey-95">
               DAY BIT
@@ -481,10 +480,9 @@ export default function HomePage() {
           style={{ boxShadow: cardShadow }}
         >
           <div className="flex items-center gap-[10px]">
-            <div
-              aria-hidden
+            <LogoSymbol
+              dotColor={accentColor ?? "#414450"}
               className="h-[28px] w-[22px] shrink-0"
-              style={maskedIcon(logoImage, accentColor ?? "#414450")}
             />
             <p className="whitespace-nowrap text-[20px] font-semibold tracking-[-0.4px] text-grey-90">
               경험조각 주고받기
