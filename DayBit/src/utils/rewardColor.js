@@ -37,29 +37,36 @@ function getHue(hex) {
   return hue < 0 ? hue + 360 : hue;
 }
 
-function tint(hex, floor) {
-  const segment = getHue(hex) / 60;
-  const span = 255 - floor;
-  const mid = span * (1 - Math.abs((segment % 2) - 1));
+function fromHsl(hue, saturation, lightness) {
+  const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
+  const segment = hue / 60;
+  const mid = chroma * (1 - Math.abs((segment % 2) - 1));
+  const base = lightness - chroma / 2;
   const wheel = [
-    [span, mid, 0],
-    [mid, span, 0],
-    [0, span, mid],
-    [0, mid, span],
-    [mid, 0, span],
-    [span, 0, mid],
+    [chroma, mid, 0],
+    [mid, chroma, 0],
+    [0, chroma, mid],
+    [0, mid, chroma],
+    [mid, 0, chroma],
+    [chroma, 0, mid],
   ];
   const toHex = (channel) =>
-    Math.round(channel + floor)
+    Math.round((channel + base) * 255)
       .toString(16)
       .padStart(2, "0");
   return `#${wheel[Math.floor(segment) % 6].map(toHex).join("")}`;
 }
 
-export function getFillTint(hex) {
-  return tint(hex, 0xef);
+// 밝은 색은 흰 배경에서 글자가 안 읽혀서 색상만 남기고 중간 톤으로 낮춘다.
+// #FFEFEF -> #BE6363 (피그마 시안 기준)
+export function getReadableColor(hex) {
+  if (!isHighLightness(hex)) return hex;
+  return fromHsl(getHue(hex), 0.412, 0.567);
 }
 
-export function getGlowTint(hex) {
-  return tint(hex, 0xe0);
+// 밝은 색은 그림자로 깔면 안 보여서 한 단계만 진하게 쓴다.
+// #FFEFEF -> #FFE0E0 (피그마 시안 기준)
+export function getGlowColor(hex) {
+  if (!isHighLightness(hex)) return hex;
+  return fromHsl(getHue(hex), 1, 0.939);
 }

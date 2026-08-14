@@ -2,8 +2,8 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
 import {
-  getFillTint,
-  getGlowTint,
+  getGlowColor,
+  getReadableColor,
   hexToRgba,
   isHighLightness,
 } from "../../utils/rewardColor";
@@ -62,11 +62,11 @@ export default function TodayColorPage() {
   const isPending = reward?.status === "PENDING";
   const isReady = reward?.status === "COMPLETED" && reward?.colorHex;
   const rawColor = isReady ? reward.colorHex : FALLBACK_COLOR;
-  // 명도 높은 색은 흰 배경에 묻혀서 면/번짐을 옅은 톤으로 바꿔 씀
+  // 받은 색은 그대로 칠하고, 글자만 안 읽힐 때 톤을 낮춰 씀
   const isPale = isReady && isHighLightness(rawColor);
-  const accentColor = isPale ? getFillTint(rawColor) : rawColor;
-  const glowColor = isPale ? getGlowTint(rawColor) : rawColor;
-  const buttonTextColor = isPale ? rawColor : "#FFFFFF";
+  const textColor = getReadableColor(rawColor);
+  const glowColor = getGlowColor(rawColor);
+  const buttonTextColor = isPale ? textColor : "#FFFFFF";
   const keywords = reward?.keywords ?? [];
 
   // 성찰질문 페이지를 거치지 않고 직접 접근한 경우
@@ -117,7 +117,7 @@ export default function TodayColorPage() {
         </div>
         <p
           className="text-[28px] font-bold tracking-[-0.56px]"
-          style={{ color: isReady ? rawColor : "#4F5563" }}
+          style={{ color: isReady ? textColor : "#4F5563" }}
         >
           {dateStr}
         </p>
@@ -167,15 +167,15 @@ export default function TodayColorPage() {
           <div className="relative z-10 flex w-full flex-col items-start gap-[6px] px-[16px]">
             <div
               className="aspect-square w-full"
-              style={{ backgroundColor: accentColor }}
+              style={{ backgroundColor: rawColor }}
             />
-            <p className="text-[24px] font-bold" style={{ color: rawColor }}>
+            <p className="text-[24px] font-bold" style={{ color: textColor }}>
               {rawColor}
             </p>
             {keywords.length > 0 && (
               <div
                 className="flex items-center gap-[10px] text-[16px] font-semibold"
-                style={{ color: rawColor }}
+                style={{ color: textColor }}
               >
                 {keywords.map((keyword) => (
                   <p key={keyword}>{keyword}</p>
@@ -201,7 +201,7 @@ export default function TodayColorPage() {
           type="button"
           onClick={handleFinish}
           className="relative z-10 w-[350px] max-w-full self-center rounded-[12px] px-[26px] py-[14px] text-[18px] font-semibold tracking-[-0.18px]"
-          style={{ backgroundColor: accentColor, color: buttonTextColor }}
+          style={{ backgroundColor: rawColor, color: buttonTextColor }}
         >
           완료
         </button>

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/apiClient";
 import MonthYearPickerModal from "./components/MonthYearPickerModal";
 import {
-  getFillTint,
+  getReadableColor,
   hexToRgba,
   isHighLightness,
 } from "../../utils/rewardColor";
@@ -148,21 +148,20 @@ export default function HomePage() {
     todayItem?.reward?.status === "COMPLETED"
       ? todayItem.reward.colorHex
       : null;
-  // 명도 높은 색은 흰 배경에 묻혀서 면·그림자를 옅은 톤으로 바꾸고 불투명도를 올림
+  // 받은 색은 그대로 칠하고, 글자·아이콘만 안 읽힐 때 톤을 낮춰 씀
   const isPale = themeColor ? isHighLightness(themeColor) : false;
-  const surfaceColor =
-    themeColor && isPale ? getFillTint(themeColor) : themeColor;
-  const onSurfaceColor = isPale ? themeColor : "#FFFFFF";
-  const profileShadowColor = surfaceColor
-    ? hexToRgba(surfaceColor, isPale ? 0.6 : 0.16)
+  const textColor = themeColor ? getReadableColor(themeColor) : null;
+  const onThemeColor = isPale ? textColor : "#FFFFFF";
+  const profileShadowColor = themeColor
+    ? hexToRgba(themeColor, isPale ? 0.6 : 0.16)
     : "rgba(65, 68, 80, 0.16)";
-  const cardShadowColor = surfaceColor
-    ? hexToRgba(surfaceColor, isPale ? 0.2 : 0.05)
+  const cardShadowColor = themeColor
+    ? hexToRgba(themeColor, isPale ? 0.2 : 0.05)
     : "rgba(65, 68, 80, 0.05)";
   const cardShadowStyle = {
     boxShadow: `0 0 5px 0 ${cardShadowColor}, 0 0 15px 0 ${cardShadowColor}`,
   };
-  const bubbleColor = surfaceColor ?? "#E7E9EE";
+  const bubbleColor = themeColor ?? "#E7E9EE";
 
   useEffect(() => {
     let alive = true;
@@ -279,7 +278,7 @@ export default function HomePage() {
         <div className="flex w-full items-end justify-between">
           <p
             className="text-[22px] font-semibold tracking-[-0.44px] text-grey-90"
-            style={themeColor ? { color: themeColor } : undefined}
+            style={textColor ? { color: textColor } : undefined}
           >
             {viewMonth}월의 조각이
             <br />
@@ -390,7 +389,7 @@ export default function HomePage() {
                   <div
                     aria-hidden
                     className="size-[26px]"
-                    style={maskedIcon(editIcon, themeColor ?? "#858C9C")}
+                    style={maskedIcon(editIcon, textColor ?? "#858C9C")}
                   />
                 </button>
                 <button
@@ -426,9 +425,7 @@ export default function HomePage() {
                   isTodayWritten ? "text-grey-70" : "text-grey-40"
                 }`}
                 style={
-                  isTodayWritten && themeColor
-                    ? { color: themeColor }
-                    : undefined
+                  isTodayWritten && textColor ? { color: textColor } : undefined
                 }
               >
                 {isTodayWritten ? "작성완료" : "작성전"}
@@ -481,7 +478,7 @@ export default function HomePage() {
               />
               <p
                 className="flex-1 text-[16px] font-medium tracking-[-0.32px]"
-                style={{ color: surfaceColor ? onSurfaceColor : "#5F6473" }}
+                style={{ color: themeColor ? onThemeColor : "#5F6473" }}
               >
                 {text}
               </p>
