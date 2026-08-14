@@ -2,7 +2,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
 import {
-  buildSoftShadow,
   getOnPageTextColor,
   getTodayColorPalette,
   hexToRgba,
@@ -124,38 +123,39 @@ export default function TodayColorPage() {
         </p>
       </div>
 
-      <div
-        className="absolute inset-x-0 top-[115px] bottom-0 z-10 flex flex-col justify-between overflow-hidden rounded-[12px] bg-grey-0 px-[20px] pb-[50px] pt-[36px]"
-        style={{
-          // box-shadow에 큰 blur를 그대로 쓰면 저알파 구간에서 계단현상(밴딩)이 보여서
-          // 같은 시각적 무게를 작은 blur 여러 겹으로 나눠 부드럽게 만듦
-          boxShadow: buildSoftShadow(glowColor, 0.05),
-        }}
-      >
+      <div className="absolute inset-x-0 top-[115px] bottom-0 z-10">
+        {/* box-shadow에 큰 blur를 그대로 쓰면 저알파 구간에서 계단현상(밴딩)이 보여서,
+            카드 뒤에 같은 색 판을 깔고 filter: blur()로 흐리는 방식으로 대체함 */}
         <div
-          className="pointer-events-none absolute rounded-[50%]"
-          style={{
-            left: 86,
-            top: 44,
-            width: 473,
-            height: 573,
-            backgroundColor: hexToRgba(glowColor, 0.1),
-            filter: "blur(81px)",
-          }}
+          aria-hidden
+          className="pointer-events-none absolute inset-0 rounded-[12px]"
+          style={{ backgroundColor: hexToRgba(glowColor, 0.15), filter: "blur(20px)" }}
         />
-        <div
-          className="pointer-events-none absolute rounded-[50%]"
-          style={{
-            left: -199,
-            top: 302,
-            width: 473,
-            height: 573,
-            backgroundColor: hexToRgba(glowColor, 0.1),
-            filter: "blur(81px)",
-          }}
-        />
+        <div className="relative flex h-full flex-col justify-between overflow-hidden rounded-[12px] bg-grey-0 px-[20px] pb-[50px] pt-[36px]">
+          <div
+            className="pointer-events-none absolute rounded-[50%]"
+            style={{
+              left: 86,
+              top: 44,
+              width: 473,
+              height: 573,
+              backgroundColor: hexToRgba(glowColor, 0.1),
+              filter: "blur(81px)",
+            }}
+          />
+          <div
+            className="pointer-events-none absolute rounded-[50%]"
+            style={{
+              left: -199,
+              top: 302,
+              width: 473,
+              height: 573,
+              backgroundColor: hexToRgba(glowColor, 0.1),
+              filter: "blur(81px)",
+            }}
+          />
 
-        <div className="relative z-10 flex w-full items-start gap-[6px]">
+          <div className="relative z-10 flex w-full items-start gap-[6px]">
           <img
             src={logoImage}
             alt=""
@@ -200,14 +200,15 @@ export default function TodayColorPage() {
           </div>
         )}
 
-        <button
-          type="button"
-          onClick={handleFinish}
-          className="relative z-10 w-[350px] max-w-full self-center rounded-[12px] px-[26px] py-[14px] text-[18px] font-semibold tracking-[-0.18px]"
-          style={{ backgroundColor: rawColor, color: buttonTextColor }}
-        >
-          완료
-        </button>
+          <button
+            type="button"
+            onClick={handleFinish}
+            className="relative z-10 w-[350px] max-w-full self-center rounded-[12px] px-[26px] py-[14px] text-[18px] font-semibold tracking-[-0.18px]"
+            style={{ backgroundColor: rawColor, color: buttonTextColor }}
+          >
+            완료
+          </button>
+        </div>
       </div>
     </div>
   );
