@@ -43,7 +43,7 @@ export default function OnboardingName() {
         caption="설정에서 언제든지 변경 가능해요."
       />
 
-      <div className="absolute left-[36px] top-[292px] flex w-[318px] flex-col gap-[8px]">
+      <div className="absolute left-[9.23%] right-[9.23%] top-[292px] flex flex-col gap-[8px]">
         <div className="flex w-full flex-col gap-[6px]">
           <label className="w-full text-[14px] font-medium leading-[1.19] text-grey-70">
             닉네임
@@ -76,7 +76,6 @@ export default function OnboardingName() {
             <div className="h-px w-full bg-grey-30" />
           </div>
         </div>
-
         <p className="w-full text-[14px] font-normal leading-[1.19] text-grey-50">
           2~ 8자로 입력해주세요.
         </p>

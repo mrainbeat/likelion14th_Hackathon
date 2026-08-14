@@ -65,7 +65,7 @@ export default function OnboardingAlarm() {
         caption="설정에서 언제든지 변경 가능해요"
       />
 
-      <div className="absolute left-[36px] top-[288px] flex w-[318px] flex-col gap-[16px]">
+      <div className="absolute left-[9.23%] right-[9.23%] top-[288px] flex flex-col gap-[16px]">
         <div className="flex flex-col items-start gap-[6px]">
           <p className="whitespace-nowrap text-[20px] font-semibold leading-[1.19] tracking-[-0.4px] text-grey-90">
             하루를 잊기 전에 가볍게 알려드릴게요.
@@ -74,7 +74,6 @@ export default function OnboardingAlarm() {
             정한 시간에 알림을 보내드려요 :)
           </p>
         </div>
-
         <div className="flex w-full flex-wrap items-center gap-[8px]">
           {[...PRESET_TIMES, CUSTOM].map((time) => (
             <Chip

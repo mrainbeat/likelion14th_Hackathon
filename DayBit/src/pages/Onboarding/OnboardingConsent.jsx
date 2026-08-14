@@ -117,8 +117,8 @@ export default function OnboardingConsent() {
         caption="설정에서 언제든지 변경 가능해요."
       />
 
-      <div className="absolute inset-x-0 bottom-[115px] top-[244px] overflow-y-auto overscroll-contain pl-[36px] [&::-webkit-scrollbar]:hidden">
-        <div className="flex w-[318px] flex-col gap-[16px] pb-[8px]">
+      <div className="absolute inset-x-0 bottom-[115px] top-[244px] overflow-y-auto overscroll-contain pl-[9.23%] pr-[9.23%] [&::-webkit-scrollbar]:hidden">
+        <div className="flex w-full flex-col gap-[16px] pb-[8px]">
           {SECTIONS.map(({ title, lines, fullWidth }) => (
             <div
               key={title}
@@ -134,7 +134,7 @@ export default function OnboardingConsent() {
       </div>
 
       {errorMessage && (
-        <p className="absolute inset-x-[36px] bottom-[95px] text-[13px] font-medium text-red-500">
+        <p className="absolute inset-x-[9.23%] bottom-[95px] text-[13px] font-medium text-red-500">
           {errorMessage}
         </p>
       )}
