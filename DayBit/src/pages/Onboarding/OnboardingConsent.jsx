@@ -40,7 +40,7 @@ function renderWithTightSpaces(text) {
 function SpeechBubble({ lines, fullWidth }) {
   return (
     <div
-      className={`relative flex items-center rounded-tr-[12px] rounded-br-[12px] rounded-bl-[12px] bg-grey-10 px-[16px] py-[10px] drop-shadow-[0px_0px_5px_rgba(0,0,0,0.1)] ${
+      className={`relative flex items-center rounded-tr-[12px] rounded-br-[12px] rounded-bl-[12px] border border-solid border-[#DFE2EA] bg-[#EFF1F6] px-[16px] py-[10px] ${
         fullWidth ? "w-full shrink-0" : "shrink-0"
       }`}
     >
