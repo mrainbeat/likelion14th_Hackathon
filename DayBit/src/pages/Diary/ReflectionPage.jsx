@@ -5,8 +5,7 @@ import apiClient from "../../api/apiClient";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
-import tailGrey60Svg from "../../assets/icons/tail-grey60.svg";
-import tailGrey20Svg from "../../assets/icons/tail-grey20.svg";
+import BubbleTail from "../../components/BubbleTail";
 
 const BLOBS = [
   {
@@ -275,10 +274,9 @@ export default function ReflectionPage() {
             </div>
 
             <div className="relative flex w-full items-center gap-[10px] rounded-[12px] bg-grey-60 px-[16px] py-[10px]">
-              <img
-                src={tailGrey60Svg}
-                alt=""
-                className="pointer-events-none absolute left-[-4px] top-[-9px] h-[18.739px] w-[15.307px]"
+              <BubbleTail
+                color="#858C9C"
+                className="!left-[-1.5px] !top-[-8px]"
               />
               <p className="flex-1 text-[16px] font-medium tracking-[-0.32px] text-grey-0">
                 {question}
@@ -286,10 +284,10 @@ export default function ReflectionPage() {
             </div>
 
             <div className="relative w-full">
-              <img
-                src={tailGrey20Svg}
-                alt=""
-                className="pointer-events-none absolute right-[-4.31px] top-[-9px] h-[18.739px] w-[15.307px] -scale-x-100"
+              <BubbleTail
+                color="#E7E9EE"
+                mirror
+                className="!right-[-1.5px] !top-[-8px]"
               />
               <textarea
                 value={answer}

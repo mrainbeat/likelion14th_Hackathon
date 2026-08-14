@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import OnboardingHeader from "./components/OnboardingHeader";
-import tailGrey20Svg from "../../assets/icons/tail-grey20.svg";
+import BubbleTail from "../../components/BubbleTail";
 import apiClient from "../../api/apiClient";
 import {
   ProgressBar,
@@ -45,11 +45,7 @@ function SpeechBubble({ lines, fullWidth }) {
         fullWidth ? "w-full shrink-0" : "shrink-0"
       }`}
     >
-      <img
-        src={tailGrey20Svg}
-        alt=""
-        className="pointer-events-none absolute left-[-4px] top-[-9px] h-[18.739px] w-[15.307px]"
-      />
+      <BubbleTail color="#E7E9EE" className="!left-[-4.5px] !top-[-11px]" />
       <div className="shrink-0 whitespace-nowrap text-[16px] font-medium tracking-[-0.32px] text-grey-70">
         {lines.map((line, i) => (
           <p key={i}>{renderWithTightSpaces(line)}</p>

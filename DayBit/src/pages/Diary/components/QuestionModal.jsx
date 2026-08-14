@@ -1,4 +1,4 @@
-﻿import bubbleTail from "../../../assets/icons/tail.svg";
+import BubbleTail from "../../../components/BubbleTail";
 
 export default function QuestionModal({ questions }) {
   if (!questions || !Array.isArray(questions) || questions.length === 0)
@@ -21,10 +21,9 @@ export default function QuestionModal({ questions }) {
             key={index}
             className="relative w-fit max-w-full bg-grey-30 rounded-[12px] px-[16px] py-[10px] text-grey-80 text-[16px] font-medium tracking-[-0.32px] leading-normal break-words whitespace-pre-wrap"
           >
-            <img
-              src={bubbleTail}
-              alt=""
-              className="absolute -top-[7px] left-0 w-[9px] h-[13px]"
+            <BubbleTail
+              color="#DFE2EA"
+              className="!left-[-1.5px] !top-[-8px]"
             />
             <span className="relative z-10">{questionText}</span>
           </div>
