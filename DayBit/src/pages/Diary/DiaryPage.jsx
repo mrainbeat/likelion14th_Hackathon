@@ -1,12 +1,11 @@
 ﻿import { useState, useEffect, useRef, useMemo } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
 import QuestionModal from "./components/QuestionModal";
 import ExitConfirmModal from "./components/ExitConfirmModal";
 import DiaryTutorial from "./components/DiaryTutorial";
 import ReflectionConsentModal from "./components/ReflectionConsentModal";
 import AnonymousShareModal from "./components/AnonymousShareModal";
-import ResumeDraftModal from "./components/ResumeDraftModal";
 import apiClient from "../../api/apiClient";
 import backIcon from "../../assets/icons/back.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
@@ -29,7 +28,6 @@ function htmlToPlainText(html) {
 
 export default function DiaryPage() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { dateStr } = useCurrentTime() || {};
   const [content, setContent] = useState("");
   const [initialText, setInitialText] = useState("");
@@ -56,7 +54,6 @@ export default function DiaryPage() {
   const [showReflectionConsent, setShowReflectionConsent] = useState(false);
   const [showAnonymousShare, setShowAnonymousShare] = useState(false);
   const [pendingUseDiaryContent, setPendingUseDiaryContent] = useState(false);
-  const [showResumeDraft, setShowResumeDraft] = useState(false);
 
   const [isResetting, setIsResetting] = useState(false);
   const isDevResetEnabled = import.meta.env.VITE_DEV_RESET_ENABLED === "true";
@@ -64,7 +61,6 @@ export default function DiaryPage() {
   const isTimeAppended = useRef(false);
   const editorRef = useRef(null);
   const scrollContainerRef = useRef(null);
-  const pendingDraftRef = useRef(null);
 
   useEffect(() => {
     let alive = true;
@@ -146,30 +142,12 @@ export default function DiaryPage() {
     const timeStr = getFormattedTime();
     const timeHtml = `<span style="color: #5F6473; font-weight: 500;">${timeStr}</span><br><span style="color: #2D3038;">\u200B</span>`;
     const savedDiary = loadTodayDraft();
-    const skipPrompt = Boolean(location.state?.skipResumePrompt);
 
     let priorText = "";
     if (savedDiary) {
       const tempPrior = document.createElement("div");
       tempPrior.innerHTML = savedDiary;
       priorText = (tempPrior.textContent || tempPrior.innerText || "").trim();
-    }
-
-    if (priorText.length > 0 && !skipPrompt) {
-      pendingDraftRef.current = savedDiary;
-      setShowResumeDraft(true);
-
-      if (editorRef.current) {
-        editorRef.current.innerHTML = timeHtml;
-        setContent(timeHtml);
-
-        const temp = document.createElement("div");
-        temp.innerHTML = timeHtml;
-        setInitialText(temp.textContent || temp.innerText || "");
-      }
-
-      isTimeAppended.current = true;
-      return;
     }
 
     const newContent = savedDiary
@@ -202,58 +180,6 @@ export default function DiaryPage() {
 
     isTimeAppended.current = true;
   }, []);
-
-  const handleResumeDraft = () => {
-    const savedDiary = pendingDraftRef.current;
-    const timeStr = getFormattedTime();
-    const timeHtml = `<span style="color: #5F6473; font-weight: 500;">${timeStr}</span><br><span style="color: #2D3038;">\u200B</span>`;
-    const newContent = savedDiary
-      ? `${savedDiary}<br><br>${timeHtml}`
-      : timeHtml;
-
-    setHadPriorContent(true);
-
-    if (editorRef.current) {
-      editorRef.current.innerHTML = newContent;
-      setContent(newContent);
-
-      const temp = document.createElement("div");
-      temp.innerHTML = newContent;
-      setInitialText(temp.textContent || temp.innerText || "");
-
-      setTimeout(() => {
-        try {
-          const range = document.createRange();
-          const sel = window.getSelection();
-          range.selectNodeContents(editorRef.current);
-          range.collapse(false);
-          sel.removeAllRanges();
-          sel.addRange(range);
-          editorRef.current.focus();
-        } catch (e) {}
-      }, 10);
-    }
-
-    setShowResumeDraft(false);
-  };
-
-  const handleDiscardDraft = () => {
-    clearDraft();
-    pendingDraftRef.current = null;
-    setShowResumeDraft(false);
-
-    setTimeout(() => {
-      try {
-        const range = document.createRange();
-        const sel = window.getSelection();
-        range.selectNodeContents(editorRef.current);
-        range.collapse(false);
-        sel.removeAllRanges();
-        sel.addRange(range);
-        editorRef.current.focus();
-      } catch (e) {}
-    }, 10);
-  };
 
   const handleInput = (e) => {
     setContent(e.currentTarget.innerHTML);
@@ -424,7 +350,7 @@ export default function DiaryPage() {
             <button
               type="button"
               onClick={() => navigate("/mypage")}
-              className="w-[38px] h-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0"
+              className="w-[38px] h-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0 transition-opacity active:opacity-60"
             >
               <img
                 src={profileIcon}
@@ -548,13 +474,6 @@ export default function DiaryPage() {
         <AnonymousShareModal
           onDecline={() => handleAnonymousShareChoice(false)}
           onShare={() => handleAnonymousShareChoice(true)}
-        />
-      )}
-
-      {showResumeDraft && (
-        <ResumeDraftModal
-          onDiscard={handleDiscardDraft}
-          onResume={handleResumeDraft}
         />
       )}
     </div>

@@ -55,7 +55,9 @@ function MenuRow({ icon, label, onClick, disabled }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex w-full items-center justify-between bg-transparent p-0 text-left disabled:cursor-not-allowed"
+      className={`flex w-full items-center justify-between bg-transparent p-0 text-left transition-opacity ${
+        disabled ? "cursor-not-allowed" : "cursor-pointer active:opacity-60"
+      }`}
     >
       <div className="flex items-center gap-[17px]">
         {icon}
@@ -122,7 +124,7 @@ export default function MyPage() {
         <button
           type="button"
           onClick={() => navigate("/home")}
-          className="size-[32px] shrink-0 bg-transparent p-0"
+          className="size-[32px] shrink-0 cursor-pointer bg-transparent p-0 transition-opacity active:opacity-60"
         >
           <img src={backIcon} alt="뒤로가기" className="h-full w-full" />
         </button>
