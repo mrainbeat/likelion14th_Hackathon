@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import OnboardingHeader from "./components/OnboardingHeader";
-import { ProgressBar, Chip, BottomButton } from "./components/OnboardingUi";
 import AlarmTimeModal, { formatAlarmLabel } from "./components/AlarmTimeModal";
 import {
   ProgressBar,
@@ -9,6 +8,7 @@ import {
   Chip,
   BottomButton,
 } from "./components/OnboardingUi";
+
 const PRESET_TIMES = ["오후8시", "오후9시", "오후10시", "오후11시"];
 const CUSTOM = "직접입력";
 
