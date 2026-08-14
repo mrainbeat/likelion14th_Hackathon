@@ -62,7 +62,7 @@ export default function OnboardingAlarm() {
           `좋아요 ${nickname || "회원"}님!`,
           "일기작성을 돕기 위한 질문을 몇개 할게요!",
         ]}
-        caption="설정에서 언제든지 변경 가능해요"
+        caption="설정에서 언제든지 변경 가능해요."
       />
 
       <div className="absolute left-[9.23%] right-[9.23%] top-[288px] flex flex-col gap-[16px]">
