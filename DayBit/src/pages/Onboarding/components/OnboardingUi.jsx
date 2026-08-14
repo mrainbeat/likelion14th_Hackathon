@@ -36,7 +36,7 @@ export function BottomButton({ children = "다음", disabled = false, onClick })
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`absolute bottom-[30px] left-[4.10%] right-[4.10%] flex h-[49px] items-center justify-center rounded-[12px] text-[18px] font-semibold leading-none tracking-[-0.18px] text-white transition-all ${
+      className={`absolute bottom-[30px] left-[4.10%] right-[4.10%] flex h-[49px] items-center justify-center rounded-[12px] text-[18px] font-semibold leading-none tracking-[-0.36px] text-white text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)] transition-all ${
         disabled
           ? "cursor-not-allowed bg-grey-40"
           : "cursor-pointer bg-grey-70 active:scale-[0.98]"
@@ -46,7 +46,6 @@ export function BottomButton({ children = "다음", disabled = false, onClick })
     </button>
   );
 }
-
 export function ModalButton({ children = "완료", disabled = false, onClick }) {
   return (
     <button
