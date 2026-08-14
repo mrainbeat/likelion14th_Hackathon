@@ -1,4 +1,4 @@
-import BubbleTail from "../../../components/BubbleTail";
+import SpeechBubble from "../../../components/SpeechBubble";
 
 export default function ExperienceNotificationBubble({
   message,
@@ -8,15 +8,12 @@ export default function ExperienceNotificationBubble({
 }) {
   return (
     <div className="flex w-full flex-col items-end gap-[4px]">
-      <div
-        className={`relative flex w-full items-center gap-[10px] rounded-[12px] px-[16px] py-[10px] ${
-          isToday ? "bg-grey-60" : "bg-grey-20"
-        }`}
+      <SpeechBubble
+        color={isToday ? "#858C9C" : "#EFF1F6"}
+        direction="left"
+        bordered={!isToday}
+        className="flex w-full items-center gap-[10px] px-[16px] py-[10px]"
       >
-        <BubbleTail
-          color={isToday ? "#858C9C" : "#E7E9EE"}
-          className="!left-[-1.5px] !top-[-8px]"
-        />
         <p
           className={`text-[16px] font-medium tracking-[-0.32px] ${
             isToday ? "text-grey-0" : "text-grey-70"
@@ -24,7 +21,7 @@ export default function ExperienceNotificationBubble({
         >
           {message}
         </p>
-      </div>
+      </SpeechBubble>
       <div className="flex w-full items-start justify-between">
         <p className="whitespace-nowrap text-[14px] font-semibold text-grey-60">
           {relativeTime}

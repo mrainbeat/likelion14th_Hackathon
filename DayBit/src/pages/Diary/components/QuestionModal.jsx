@@ -1,4 +1,4 @@
-import BubbleTail from "../../../components/BubbleTail";
+import SpeechBubble from "../../../components/SpeechBubble";
 
 export default function QuestionModal({ questions, remainingQuestions }) {
   if (!questions || !Array.isArray(questions) || questions.length === 0)
@@ -22,10 +22,14 @@ export default function QuestionModal({ questions, remainingQuestions }) {
         const isLast = index === questions.length - 1;
 
         const bubble = (
-          <div className="relative w-fit max-w-full bg-grey-30 rounded-[12px] px-[16px] py-[10px] text-grey-80 text-[16px] font-medium tracking-[-0.32px] leading-normal break-words whitespace-pre-wrap">
-            <BubbleTail color="#DFE2EA" className="!left-[-1.5px] !top-[-8px]" />
-            <span className="relative z-10">{questionText}</span>
-          </div>
+          <SpeechBubble
+            color="#EFF1F6"
+            direction="left"
+            bordered
+            className="w-fit max-w-full px-[16px] py-[10px] text-grey-80 text-[16px] font-medium tracking-[-0.32px] leading-normal break-words whitespace-pre-wrap"
+          >
+            {questionText}
+          </SpeechBubble>
         );
 
         if (!isLast || !showRemaining) {

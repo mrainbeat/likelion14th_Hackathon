@@ -4,7 +4,7 @@ import apiClient from "../../api/apiClient";
 import MonthYearPickerModal from "./components/MonthYearPickerModal";
 import ResumeDraftModal from "../Diary/components/ResumeDraftModal";
 import GlowCard from "../../components/GlowCard";
-import BubbleTail from "../../components/BubbleTail";
+import SpeechBubble from "../../components/SpeechBubble";
 import {
   getOnPageTextColor,
   getTodayColorPalette,
@@ -121,19 +121,10 @@ function DayCell({ cell, item, onClick }) {
   );
 }
 
-function RewardBadge({ active }) {
-  if (active) {
-    return (
-      <div className="relative size-[38px] shrink-0 overflow-clip rounded-[4px] border-[1.5px] border-solid border-grey-60">
-        <p className="absolute left-[7.5px] top-[10.5px] whitespace-nowrap text-[12px] font-semibold tracking-[-0.12px] text-grey-70">
-          보상
-        </p>
-      </div>
-    );
-  }
+function RewardBadge() {
   return (
-    <div className="relative size-[38px] shrink-0 overflow-clip rounded-[4px] bg-grey-30">
-      <p className="absolute left-[9px] top-[12px] whitespace-nowrap text-[12px] font-semibold tracking-[-0.12px] text-grey-0">
+    <div className="relative flex size-[38px] shrink-0 items-center justify-center overflow-clip rounded-[4px] bg-grey-30">
+      <p className="whitespace-nowrap text-[12px] font-semibold tracking-[-0.12px] text-grey-0">
         보상
       </p>
     </div>
@@ -159,7 +150,7 @@ export default function HomePage() {
   const isPale = palette ? palette.mode === "derived-text" : false;
 
   const textColor = palette ? getOnPageTextColor(palette) : null;
-  const bubbleColor = palette ? palette.mainColor : "#E7E9EE";
+  const bubbleColor = palette ? palette.mainColor : "#EFF1F6";
   const bubbleTextColor = palette ? palette.mainTextColor : "#5F6473";
   const profileShadowColor = palette
     ? hexToRgba(palette.mainColor, isPale ? 0.6 : 0.16)
@@ -181,12 +172,13 @@ export default function HomePage() {
 
   const handleResumeDraft = () => {
     setShowResumeDraft(false);
-    navigate("/diary", { state: { skipResumePrompt: true } });
+    navigate("/diary");
   };
 
   const handleDiscardDraft = () => {
     clearDraft();
     setShowResumeDraft(false);
+    navigate("/diary");
   };
 
   useEffect(() => {
@@ -244,7 +236,6 @@ export default function HomePage() {
     monthItems.map((item) => [item.recordedDate, item]),
   );
 
-  const isCurrentMonth = viewYear === today.year && viewMonth === today.month;
   const isTodayWritten = Boolean(todayItem);
 
   const weeks = buildCalendarWeeks(viewYear, viewMonth);
@@ -292,7 +283,7 @@ export default function HomePage() {
           <button
             type="button"
             onClick={() => navigate("/mypage")}
-            className="size-[38px] shrink-0 rounded-full border-none bg-transparent p-0"
+            className="size-[38px] shrink-0 cursor-pointer rounded-full border-none bg-transparent p-0 transition-opacity active:opacity-60"
           >
             <img
               src={profileIcon}
@@ -377,11 +368,6 @@ export default function HomePage() {
 
                 <div className="flex flex-col gap-[2px]">
                   {weeks.map((week, weekIdx) => {
-                    const isCurrentWeek =
-                      isCurrentMonth &&
-                      week.some(
-                        (cell) => cell.inMonth && cell.day === today.day,
-                      );
                     const daysInMonthCount = week.filter(
                       (cell) => cell.inMonth,
                     ).length;
@@ -408,9 +394,7 @@ export default function HomePage() {
                             );
                           })}
                         </div>
-                        {canEarnReward && (
-                          <RewardBadge active={isCurrentWeek} />
-                        )}
+                        {canEarnReward && <RewardBadge />}
                       </div>
                     );
                   })}
@@ -506,22 +490,20 @@ export default function HomePage() {
               "“다이어트”와 관련된 다른사람의 경험이 도착했어요.",
               "“수능공부”와 관련된 다른사람의 경험이 도착했어요.",
             ].map((text) => (
-              <div
+              <SpeechBubble
                 key={text}
-                className="relative flex w-full items-center gap-[10px] rounded-[12px] px-[16px] py-[10px]"
-                style={{ backgroundColor: bubbleColor }}
+                color={bubbleColor}
+                direction="left"
+                bordered={!palette}
+                className="flex w-full items-center gap-[10px] px-[16px] py-[10px]"
               >
-                <BubbleTail
-                  color={bubbleColor}
-                  className="!left-[-4.5px] !top-[-11px]"
-                />
                 <p
                   className="flex-1 text-[16px] font-medium tracking-[-0.32px]"
                   style={{ color: bubbleTextColor }}
                 >
                   {text}
                 </p>
-              </div>
+              </SpeechBubble>
             ))}
           </button>
         </div>

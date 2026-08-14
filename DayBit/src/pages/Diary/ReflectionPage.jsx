@@ -5,7 +5,7 @@ import apiClient from "../../api/apiClient";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
-import BubbleTail from "../../components/BubbleTail";
+import SpeechBubble from "../../components/SpeechBubble";
 
 const BLOBS = [
   {
@@ -303,30 +303,30 @@ export default function ReflectionPage() {
                   </p>
                 </div>
 
-                <div className="relative flex w-full items-center gap-[10px] rounded-[12px] bg-grey-60 px-[16px] py-[10px]">
-                  <BubbleTail
-                    color="#858C9C"
-                    className="!left-[-1.5px] !top-[-8px]"
-                  />
+                <SpeechBubble
+                  color="#858C9C"
+                  direction="left"
+                  className="flex w-full items-center gap-[10px] px-[16px] py-[10px]"
+                >
                   <p className="flex-1 text-[16px] font-medium tracking-[-0.32px] text-grey-0">
                     {question}
                   </p>
-                </div>
+                </SpeechBubble>
 
-                <div className="relative w-full">
-                  <BubbleTail
-                    color="#E7E9EE"
-                    mirror
-                    className="!right-[-1.5px] !top-[-8px]"
-                  />
+                <SpeechBubble
+                  color="#EFF1F6"
+                  direction="right"
+                  bordered
+                  className="w-full"
+                >
                   <textarea
                     value={answer}
                     onChange={handleAnswerChange}
                     placeholder="답변을 입력해주세요"
                     rows={1}
-                    className="w-full resize-none overflow-hidden rounded-[12px] bg-grey-20 px-[16px] py-[10px] text-[16px] font-medium tracking-[-0.32px] text-grey-80 placeholder:text-grey-50 focus:outline-none"
+                    className="w-full resize-none overflow-hidden bg-transparent px-[16px] py-[10px] text-[16px] font-medium tracking-[-0.32px] text-grey-80 placeholder:text-grey-50 focus:outline-none"
                   />
-                </div>
+                </SpeechBubble>
 
                 {answerError && (
                   <p className="text-[13px] font-medium text-red-500">
