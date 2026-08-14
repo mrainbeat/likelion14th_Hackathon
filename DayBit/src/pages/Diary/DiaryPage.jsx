@@ -382,7 +382,7 @@ export default function DiaryPage() {
   };
 
   const handleTutorialNext = () => {
-    if (tutorialStep === 2) {
+    if (tutorialStep === 3) {
       localStorage.setItem("diary_tutorial_seen", "true");
       setTutorialStep(null);
       return;
