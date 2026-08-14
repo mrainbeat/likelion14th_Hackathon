@@ -1,32 +1,34 @@
 import { useNavigate } from "react-router-dom";
-import LogoFull from "../assets/logos/logo-full.png";
+import LogoSymbol from "../assets/logos/logo-symbol.svg";
+import LogoText from "../assets/logos/logo-text.svg";
 import KakaoLoginButton from "../assets/buttons/kakaologinbutton.svg";
 import OtherLoginButton from "../assets/buttons/otherloginbutton.svg";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const BASE_URL = import.meta.env.VITE_BASE_URL;
 
-  //  카카오 로그인
   const handleKakaoLogin = (e) => {
     e.preventDefault();
     window.location.href = `${import.meta.env.VITE_API_BASE_URL}/oauth2/authorization/kakao`;
   };
 
-  // 다른 방법으로 시작하기->테스트용
   const handleOtherLogin = () => {
     navigate("/onboarding", { replace: true });
   };
 
   return (
     <div className="relative h-full w-full select-none overflow-hidden bg-[#F6F8FA]">
-      <img
-        src={LogoFull}
-        alt="DAY BIT"
-        className="pointer-events-none absolute left-1/2 top-[205px] w-[134px] -translate-x-1/2 object-contain"
-      />
+      <div className="pointer-events-none absolute left-1/2 top-[205px] flex -translate-x-1/2 flex-col items-center gap-[14px]">
+        <img src={LogoSymbol} alt="" className="w-[82px] object-contain" />
+        <img
+          src={LogoText}
+          alt="DAY BIT"
+          className="w-[131px] object-contain"
+        />
+      </div>
 
       <div className="absolute left-[20px] top-[471px] flex w-[350px] flex-col gap-[12px]">
-        {/* 카카오 로그인 버튼 */}
         <button
           type="button"
           onClick={handleKakaoLogin}
@@ -39,7 +41,6 @@ export default function LoginPage() {
           />
         </button>
 
-        {/* 다른 방법으로 시작하기 버튼 */}
         <button
           type="button"
           onClick={handleOtherLogin}

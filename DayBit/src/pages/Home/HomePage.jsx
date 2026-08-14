@@ -8,7 +8,7 @@ import {
   hexToRgba,
   isHighLightness,
 } from "../../utils/rewardColor";
-import logoImage from "../../assets/logos/logo-symbol.png";
+import logoImage from "../../assets/logos/logo-symbol.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import bellIcon from "../../assets/icons/notification-bell.svg";
 import arrowIcon from "../../assets/icons/back.svg";

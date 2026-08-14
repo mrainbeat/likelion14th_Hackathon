@@ -9,7 +9,7 @@ import AnonymousShareModal from "./components/AnonymousShareModal";
 import ResumeDraftModal from "./components/ResumeDraftModal";
 import apiClient from "../../api/apiClient";
 import backIcon from "../../assets/icons/back.svg";
-import logoImage from "../../assets/logos/logo-symbol.png";
+import logoImage from "../../assets/logos/logo-symbol.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import { saveDraft, clearDraft, loadTodayDraft } from "../../utils/diaryDraft";
 

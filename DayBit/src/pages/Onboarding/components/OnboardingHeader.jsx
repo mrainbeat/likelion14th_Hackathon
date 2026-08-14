@@ -1,5 +1,4 @@
-﻿import LogoSymbol from "../../../assets/logos/logo-symbol.png";
-
+﻿import LogoSymbol from "../../../assets/logos/logo-symbol.svg";
 export default function OnboardingHeader({
   lines = [],
   caption,
