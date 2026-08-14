@@ -487,7 +487,7 @@ export default function HomePage() {
               style={maskedIcon(logoImage, accentColor ?? "#414450")}
             />
             <p className="whitespace-nowrap text-[20px] font-semibold tracking-[-0.4px] text-grey-90">
-              다른 사람의 경험
+              경험조각 주고받기
             </p>
           </div>
           {[
