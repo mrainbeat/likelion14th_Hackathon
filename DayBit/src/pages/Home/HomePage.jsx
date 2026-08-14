@@ -3,13 +3,8 @@ import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/apiClient";
 import MonthYearPickerModal from "./components/MonthYearPickerModal";
 import ResumeDraftModal from "../Diary/components/ResumeDraftModal";
-import GlowCard from "../../components/GlowCard";
 import SpeechBubble from "../../components/SpeechBubble";
-import {
-  getOnPageTextColor,
-  getTodayColorPalette,
-  hexToRgba,
-} from "../../utils/rewardColor";
+import { getTodayColorPalette, hexToRgba } from "../../utils/rewardColor";
 import logoImage from "../../assets/logos/logo-symbol.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import bellIcon from "../../assets/icons/notification-bell.svg";
@@ -147,18 +142,19 @@ export default function HomePage() {
       ? todayItem.reward.colorHex
       : null;
   const palette = themeColor ? getTodayColorPalette(themeColor) : null;
-  const isPale = palette ? palette.mode === "derived-text" : false;
 
-  const textColor = palette ? getOnPageTextColor(palette) : null;
-  const bubbleColor = palette ? palette.mainColor : "#EFF1F6";
-  const bubbleTextColor = palette ? palette.mainTextColor : "#5F6473";
-  const profileShadowColor = palette
-    ? hexToRgba(palette.mainColor, isPale ? 0.6 : 0.16)
+  const accentColor = palette ? palette.uiAccentColor : null;
+  const profileShadowColor = accentColor
+    ? hexToRgba(accentColor, 0.16)
     : "rgba(65, 68, 80, 0.16)";
 
-  const cardGlowColor = palette
-    ? hexToRgba(palette.mainColor, isPale ? 0.5 : 0.15)
-    : "rgba(71, 74, 86, 0.15)";
+  const cardShadow = accentColor
+    ? `0 0 10px 0 ${hexToRgba(accentColor, 0.05)}, 0 0 30px 0 ${hexToRgba(accentColor, 0.05)}`
+    : "0 0 10px 0 rgba(77, 80, 91, 0.05), 0 0 30px 0 rgba(65, 68, 80, 0.05)";
+
+  const [hasTodayDraft, setHasTodayDraft] = useState(() =>
+    draftHasContent(loadTodayDraft()),
+  );
 
   useEffect(() => {
     if (resumeCheckedThisSession) return;
@@ -176,6 +172,7 @@ export default function HomePage() {
   };
 
   const handleDiscardDraft = () => {
+    setHasTodayDraft(false);
     clearDraft();
     setShowResumeDraft(false);
     navigate("/diary");
@@ -271,10 +268,10 @@ export default function HomePage() {
       <div className="flex w-full flex-col items-start gap-[8px]">
         <div className="flex w-full items-center justify-between">
           <div className="flex items-end gap-[4px]">
-            <img
-              src={logoImage}
-              alt=""
-              className="h-[25px] w-[20px] object-contain"
+            <div
+              aria-hidden
+              className="h-[25px] w-[20px] shrink-0"
+              style={maskedIcon(logoImage, accentColor ?? "#414450")}
             />
             <p className="whitespace-nowrap text-[14px] font-bold tracking-[1.12px] text-grey-95">
               DAY BIT
@@ -297,10 +294,7 @@ export default function HomePage() {
         </div>
 
         <div className="flex w-full items-end justify-between">
-          <p
-            className="text-[22px] font-semibold leading-[normal] tracking-[-0.66px] text-grey-90"
-            style={textColor ? { color: textColor } : undefined}
-          >
+          <p className="text-[22px] font-semibold leading-[normal] tracking-[-0.66px] text-grey-90">
             {viewMonth}월의 조각이
             <br />
             차곡차곡 쌓이고 있어요
@@ -316,9 +310,9 @@ export default function HomePage() {
       </div>
 
       <div className="flex w-full flex-col items-center gap-[16px]">
-        <GlowCard
-          color={cardGlowColor}
-          className="rounded-[12px] bg-grey-0 px-[16px] py-[14px]"
+        <div
+          className="w-full rounded-[12px] bg-grey-0 px-[16px] py-[14px]"
+          style={{ boxShadow: cardShadow }}
         >
           <div className="flex w-full flex-col gap-[6px]">
             <div className="flex w-full items-center justify-between">
@@ -388,7 +382,14 @@ export default function HomePage() {
                                 cell={cell}
                                 item={item}
                                 onClick={() =>
-                                  navigate(`/home/diaries/${item.diaryId}`)
+                                  navigate("/diary/today-color", {
+                                    state: {
+                                      reward: item.reward,
+                                      diaryId: item.diaryId,
+                                      recordedDate: item.recordedDate,
+                                      mode: "review",
+                                    },
+                                  })
                                 }
                               />
                             );
@@ -411,7 +412,7 @@ export default function HomePage() {
                   <div
                     aria-hidden
                     className="size-[19.503px]"
-                    style={maskedIcon(editIcon, textColor ?? "#858C9C")}
+                    style={maskedIcon(editIcon, "#5F6473")}
                   />
                 </button>
                 <button
@@ -431,11 +432,11 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-        </GlowCard>
+        </div>
 
-        <GlowCard
-          color={cardGlowColor}
+        <div
           className="flex w-full flex-col items-center rounded-[12px] bg-grey-0 px-[16px] py-[12px]"
+          style={{ boxShadow: cardShadow }}
         >
           <div className="flex items-center gap-[47px]">
             <div className="flex w-[66px] flex-col items-center gap-[6px]">
@@ -443,14 +444,24 @@ export default function HomePage() {
                 오늘 작성
               </p>
               <p
-                className={`whitespace-nowrap text-[12px] font-semibold tracking-[-0.12px] ${
-                  isTodayWritten ? "text-grey-70" : "text-grey-40"
+                className={`whitespace-nowrap text-[12px] font-semibold leading-[normal] tracking-[-0.12px] ${
+                  isTodayWritten
+                    ? "text-grey-70"
+                    : hasTodayDraft
+                      ? "text-[#787E8C]"
+                      : "text-grey-40"
                 }`}
                 style={
-                  isTodayWritten && textColor ? { color: textColor } : undefined
+                  isTodayWritten && accentColor
+                    ? { color: accentColor }
+                    : undefined
                 }
               >
-                {isTodayWritten ? "작성완료" : "작성 전"}
+                {isTodayWritten
+                  ? "작성 완료"
+                  : hasTodayDraft
+                    ? "작성 중"
+                    : "작성 전"}
               </p>
             </div>
             <div className="h-full w-px shrink-0 bg-grey-20" />
@@ -463,49 +474,38 @@ export default function HomePage() {
               </p>
             </div>
           </div>
-        </GlowCard>
+        </div>
 
-        <div className="relative w-full">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 rounded-[12px]"
-            style={{ backgroundColor: cardGlowColor, filter: "blur(20px)" }}
-          />
-          <button
-            type="button"
-            onClick={() => navigate("/experience")}
-            className="relative flex w-full cursor-pointer flex-col items-start gap-[16px] rounded-[12px] bg-grey-0 px-[16px] py-[20px] text-left"
-          >
-            <div className="flex items-center gap-[10px]">
-              <img
-                src={logoImage}
-                alt=""
-                className="h-[28px] w-[22px] object-contain"
-              />
-              <p className="whitespace-nowrap text-[20px] font-semibold tracking-[-0.4px] text-grey-90">
-                경험조각 주고받기
+        <div
+          className="flex w-full flex-col items-start gap-[16px] rounded-[12px] bg-grey-0 px-[16px] py-[20px] text-left"
+          style={{ boxShadow: cardShadow }}
+        >
+          <div className="flex items-center gap-[10px]">
+            <div
+              aria-hidden
+              className="h-[28px] w-[22px] shrink-0"
+              style={maskedIcon(logoImage, accentColor ?? "#414450")}
+            />
+            <p className="whitespace-nowrap text-[20px] font-semibold tracking-[-0.4px] text-grey-90">
+              다른 사람의 경험
+            </p>
+          </div>
+          {[
+            "“다이어트”와 관련된 다른사람의 경험이 도착했어요.",
+            "“수능공부”와 관련된 다른사람의 경험이 도착했어요.",
+          ].map((text) => (
+            <SpeechBubble
+              key={text}
+              color="#EFF1F6"
+              direction="left"
+              bordered
+              className="flex w-full items-center gap-[10px] px-[16px] py-[10px]"
+            >
+              <p className="flex-1 text-[16px] font-medium tracking-[-0.32px] text-grey-80">
+                {text}
               </p>
-            </div>
-            {[
-              "“다이어트”와 관련된 다른사람의 경험이 도착했어요.",
-              "“수능공부”와 관련된 다른사람의 경험이 도착했어요.",
-            ].map((text) => (
-              <SpeechBubble
-                key={text}
-                color={bubbleColor}
-                direction="left"
-                bordered={!palette}
-                className="flex w-full items-center gap-[10px] px-[16px] py-[10px]"
-              >
-                <p
-                  className="flex-1 text-[16px] font-medium tracking-[-0.32px]"
-                  style={{ color: bubbleTextColor }}
-                >
-                  {text}
-                </p>
-              </SpeechBubble>
-            ))}
-          </button>
+            </SpeechBubble>
+          ))}
         </div>
       </div>
 

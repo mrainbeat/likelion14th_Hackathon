@@ -218,12 +218,16 @@ export default function ReflectionPage() {
         ))}
       </div>
 
-      <div className="absolute left-0 top-0 z-10 flex w-full flex-col gap-[12px] px-[20px] py-[16px]">
+      <div className="absolute left-0 top-0 z-10 flex w-full flex-col gap-[24px] px-[20px] py-[16px]">
         <div className="flex w-full items-center justify-between">
-          <button type="button" onClick={handleBack}>
+          <button type="button" onClick={handleBack} className="cursor-pointer">
             <img src={backIcon} alt="뒤로가기" className="size-[32px]" />
           </button>
-          <button className="w-[38px] h-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0">
+          <button
+            type="button"
+            onClick={() => navigate("/mypage")}
+            className="w-[38px] h-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0 transition-opacity active:opacity-60"
+          >
             <img
               src={profileIcon}
               alt="프로필"
@@ -231,7 +235,7 @@ export default function ReflectionPage() {
             />
           </button>
         </div>
-        <p className="text-[28px] font-bold tracking-[-0.56px] text-grey-80">
+        <p className="text-[28px] font-bold leading-[normal] tracking-[-0.56px] text-grey-80">
           {dateStr}
         </p>
       </div>
@@ -269,7 +273,7 @@ export default function ReflectionPage() {
               }`}
               style={{
                 background:
-                  "linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0) 100%)",
+                  "linear-gradient(180deg, #F6F8FA 0%, rgba(246, 248, 250, 0) 100%)",
               }}
             ></div>
 
@@ -277,7 +281,7 @@ export default function ReflectionPage() {
               className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-[92px]"
               style={{
                 background:
-                  "linear-gradient(0deg, #FFFFFF 0%, rgba(255, 255, 255, 0) 100%)",
+                  "linear-gradient(0deg, #F6F8FA 0%, rgba(246, 248, 250, 0) 100%)",
               }}
             ></div>
 
@@ -304,11 +308,11 @@ export default function ReflectionPage() {
                 </div>
 
                 <SpeechBubble
-                  color="#858C9C"
+                  color="#787E8C"
                   direction="left"
-                  className="flex w-full items-center gap-[10px] px-[16px] py-[10px]"
+                  className="flex w-full items-center px-[16px] py-[10px]"
                 >
-                  <p className="flex-1 text-[16px] font-medium tracking-[-0.32px] text-grey-0">
+                  <p className="flex-1 text-[16px] font-medium leading-[normal] tracking-[-0.32px] text-grey-0">
                     {question}
                   </p>
                 </SpeechBubble>
@@ -322,9 +326,9 @@ export default function ReflectionPage() {
                   <textarea
                     value={answer}
                     onChange={handleAnswerChange}
-                    placeholder="답변을 입력해주세요"
+                    placeholder="내용을 입력해주세요."
                     rows={1}
-                    className="w-full resize-none overflow-hidden bg-transparent px-[16px] py-[10px] text-[16px] font-medium tracking-[-0.32px] text-grey-80 placeholder:text-grey-50 focus:outline-none"
+                    className="w-full resize-none overflow-hidden bg-transparent px-[16px] py-[10px] text-[16px] font-medium leading-[normal] tracking-[-0.32px] text-grey-80 placeholder:text-grey-40 focus:outline-none"
                   />
                 </SpeechBubble>
 
@@ -337,14 +341,14 @@ export default function ReflectionPage() {
             </div>
           </div>
 
-          <div className="flex shrink-0 justify-center px-[20px] pb-[50px] pt-[16px]">
+          <div className="flex shrink-0 justify-center bg-grey-0 px-[20px] pb-[30px] pt-[16px]">
             <button
               type="button"
               onClick={handleFinish}
               disabled={isSubmitting}
-              className="flex h-[49px] w-full max-w-[350px] items-center justify-center whitespace-nowrap rounded-[12px] bg-grey-70 px-[26px] text-[18px] font-semibold tracking-[-0.18px] text-grey-0 text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)] disabled:opacity-50"
+              className="flex w-full max-w-[350px] cursor-pointer items-center justify-center whitespace-nowrap rounded-[12px] bg-grey-80 px-[26px] py-[14px] text-[18px] font-semibold leading-[normal] tracking-[-0.36px] text-grey-0 text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)] disabled:opacity-50"
             >
-              {isSubmitting ? "제출 중..." : "작성완료"}
+              {isSubmitting ? "제출 중..." : "완료"}
             </button>
           </div>
         </div>

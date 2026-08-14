@@ -121,7 +121,11 @@ export default function DiaryListPage() {
             className="h-full w-full object-contain"
           />
         </button>
-        <button className="size-[38px] shrink-0 rounded-full border-none bg-transparent p-0">
+        <button
+          type="button"
+          onClick={() => navigate("/mypage")}
+          className="size-[38px] shrink-0 cursor-pointer rounded-full border-none bg-transparent p-0 transition-opacity active:opacity-60"
+        >
           <img
             src={profileIcon}
             alt="프로필"
@@ -169,9 +173,9 @@ export default function DiaryListPage() {
             const [, month, day] = item.recordedDate.split("-").map(Number);
             return (
               <div key={item.diaryId} className="flex flex-col gap-[12px]">
-                <div className="flex flex-col items-start gap-[12px]">
+                <div className="flex flex-col items-start gap-[8px]">
                   <div className="flex w-full items-center justify-between">
-                    <p className="whitespace-nowrap text-[18px] font-semibold tracking-[-0.18px] text-grey-90">
+                    <p className="whitespace-nowrap text-[18px] font-semibold leading-[normal] tracking-[-0.36px] text-grey-90">
                       {month}월 {day}일
                     </p>
                     <div className="relative">

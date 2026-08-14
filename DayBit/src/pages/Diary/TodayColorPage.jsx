@@ -1,14 +1,12 @@
-﻿import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
-import {
-  getOnPageTextColor,
-  getTodayColorPalette,
-  hexToRgba,
-} from "../../utils/rewardColor";
+import apiClient from "../../api/apiClient";
+import { getTodayColorPalette, hexToRgba } from "../../utils/rewardColor";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
+
 const BLOBS = [
   {
     cx: 131.5,
@@ -54,34 +52,72 @@ export default function TodayColorPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { dateStr } = useCurrentTime() || {};
+  const [isScrolled, setIsScrolled] = useState(false);
 
-  const reward = location.state?.reward ?? null;
+  const isReview = location.state?.mode === "review";
+  const diaryId = location.state?.diaryId ?? null;
+  const [reward, setReward] = useState(location.state?.reward ?? null);
 
   const isPending = reward?.status === "PENDING";
   const isReady = reward?.status === "COMPLETED" && reward?.colorHex;
-  const rawColor = isReady ? reward.colorHex : FALLBACK_COLOR;
-  // 받은 색은 그대로 칠하고, 버튼·굵은 글자만 안 읽힐 때 진한 동계열로 바꿈.
-  // 그림자·번짐은 같은 색상의 옅은 소프트 컬러를 씀
-  const palette = isReady ? getTodayColorPalette(rawColor) : null;
-  // 날짜·색코드·키워드는 흰 배경(페이지/카드) 위라 mainTextColor를 그대로 못 씀
-  const textColor = palette ? getOnPageTextColor(palette) : "#4F5563";
-  const buttonTextColor = palette ? palette.mainTextColor : "#FFFFFF";
-  const glowColor = palette ? palette.softColor : FALLBACK_COLOR;
+
+  const palette = isReady ? getTodayColorPalette(reward.colorHex) : null;
+  const todayColor = palette ? palette.todayColor : FALLBACK_COLOR;
+  const accentColor = palette ? palette.uiAccentColor : FALLBACK_COLOR;
+
   const keywords = reward?.keywords ?? [];
+  const colorComment = reward?.colorComment ?? "";
 
-  // 성찰질문 페이지를 거치지 않고 직접 접근한 경우
+  const recordedDate = location.state?.recordedDate ?? null;
+  const reviewDateStr =
+    isReview && recordedDate
+      ? `${Number(recordedDate.slice(5, 7))}월 ${Number(recordedDate.slice(8, 10))}일`
+      : null;
+
   useEffect(() => {
-    if (!reward) navigate("/diary", { replace: true });
-  }, [reward, navigate]);
+    if (!location.state?.reward) navigate("/diary", { replace: true });
+  }, [location.state, navigate]);
 
-  const handleBack = () => navigate("/diary", { replace: true });
-  const handleFinish = () => navigate("/home", { replace: true });
+  useEffect(() => {
+    if (!isReview || !diaryId || colorComment) return;
+
+    let alive = true;
+    apiClient
+      .get(`/api/v1/diaries/${diaryId}`)
+      .then((response) => {
+        if (!alive) return;
+        const detail = response.data.result?.reward;
+        if (detail) setReward((prev) => ({ ...prev, ...detail }));
+      })
+      .catch((error) => {
+        console.error(
+          "GET /api/v1/diaries/{diaryId} 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [isReview, diaryId, colorComment]);
+
+  const handleBack = () =>
+    navigate(isReview ? "/home" : "/diary", { replace: true });
+  const handleFinish = () => {
+    if (isReview && diaryId) {
+      navigate(`/home/diaries/${diaryId}`);
+      return;
+    }
+    navigate("/home", { replace: true });
+  };
+  const handleScroll = (e) => setIsScrolled(e.target.scrollTop > 10);
 
   if (!reward) return null;
 
   return (
     <div className="relative h-full w-full select-none overflow-hidden bg-[#F6F8FA]">
-      <div className="pointer-none absolute inset-0 overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {BLOBS.map(({ cx, cy, w, h, rotate, blur, color: blobColor }, i) => (
           <div
             key={i}
@@ -97,117 +133,168 @@ export default function TodayColorPage() {
             }}
           />
         ))}
+        <div
+          className="absolute rounded-[50%]"
+          style={{
+            left: -199,
+            top: 253,
+            width: 473,
+            height: 573,
+            backgroundColor: hexToRgba(accentColor, 0.1),
+            filter: "blur(81px)",
+          }}
+        />
       </div>
 
-      <div className="absolute left-0 top-0 z-10 flex w-full flex-col gap-[12px] px-[20px] py-[16px]">
+      <div className="absolute left-0 top-0 z-10 flex w-full flex-col gap-[24px] px-[20px] py-[16px]">
         <div className="flex w-full items-center justify-between">
-          <button type="button" onClick={handleBack}>
+          <button type="button" onClick={handleBack} className="cursor-pointer">
             <img src={backIcon} alt="뒤로가기" className="size-[32px]" />
           </button>
-          <button className="w-[38px] h-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0">
+          <button
+            type="button"
+            onClick={() => navigate("/mypage")}
+            className="size-[38px] shrink-0 cursor-pointer border-none bg-transparent p-0 transition-opacity active:opacity-60"
+          >
             <img
               src={profileIcon}
               alt="프로필"
-              className="w-full h-full object-contain"
+              className="h-full w-full object-contain"
               style={{
-                filter: `drop-shadow(0 0 9.938px ${hexToRgba(glowColor, 0.16)})`,
+                filter: `drop-shadow(0 0 9.938px ${hexToRgba(accentColor, 0.16)})`,
               }}
             />
           </button>
         </div>
         <p
-          className="text-[28px] font-bold tracking-[-0.56px]"
-          style={{ color: textColor }}
+          className="text-[28px] font-bold leading-[normal] tracking-[-0.56px]"
+          style={{ color: accentColor }}
         >
-          {dateStr}
+          {reviewDateStr ?? dateStr}
         </p>
       </div>
 
-      <div className="absolute inset-x-0 top-[115px] bottom-0 z-10">
-        {/* box-shadow에 큰 blur를 그대로 쓰면 저알파 구간에서 계단현상(밴딩)이 보여서,
-            카드 뒤에 같은 색 판을 깔고 filter: blur()로 흐리는 방식으로 대체함 */}
+      <div className="absolute inset-x-0 bottom-0 top-[143px] z-10">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 rounded-[12px]"
-          style={{ backgroundColor: hexToRgba(glowColor, 0.15), filter: "blur(20px)" }}
+          style={{
+            backgroundColor: hexToRgba(accentColor, 0.05),
+            filter: "blur(15px)",
+          }}
         />
-        <div className="relative flex h-full flex-col justify-between overflow-hidden rounded-[12px] bg-grey-0 px-[20px] pb-[50px] pt-[36px]">
+
+        <div className="relative flex h-full flex-col overflow-hidden rounded-t-[12px] bg-grey-0">
           <div
             className="pointer-events-none absolute rounded-[50%]"
             style={{
-              left: 86,
-              top: 44,
-              width: 473,
-              height: 573,
-              backgroundColor: hexToRgba(glowColor, 0.1),
-              filter: "blur(81px)",
-            }}
-          />
-          <div
-            className="pointer-events-none absolute rounded-[50%]"
-            style={{
-              left: -199,
-              top: 302,
-              width: 473,
-              height: 573,
-              backgroundColor: hexToRgba(glowColor, 0.1),
+              left: 131,
+              top: 82,
+              width: 354,
+              height: 429,
+              backgroundColor: hexToRgba(accentColor, 0.1),
               filter: "blur(81px)",
             }}
           />
 
-          <div className="relative z-10 flex w-full items-start gap-[6px]">
-          <img
-            src={logoImage}
-            alt=""
-            className="h-[28px] w-[22px] shrink-0 object-cover"
-          />
-          <p className="text-[24px] font-bold tracking-[-0.48px] text-grey-80">
-            오늘의 색
-          </p>
-        </div>
-
-        {isReady ? (
-          <div className="relative z-10 flex w-full flex-col items-start gap-[6px] px-[16px]">
-            <div
-              className="aspect-square w-full"
-              style={{ backgroundColor: rawColor }}
+          <div className="relative z-10 flex w-full shrink-0 items-start gap-[6px] px-[20px] pt-[32px]">
+            <img
+              src={logoImage}
+              alt=""
+              className="h-[27.872px] w-[22px] shrink-0 object-contain"
             />
-            <p className="text-[24px] font-bold" style={{ color: textColor }}>
-              {rawColor}
+            <p className="text-[24px] font-bold leading-[normal] tracking-[-0.48px] text-grey-80">
+              오늘의 색
             </p>
-            {keywords.length > 0 && (
-              <div
-                className="flex items-center gap-[10px] text-[16px] font-semibold"
-                style={{ color: textColor }}
-              >
-                {keywords.map((keyword) => (
-                  <p key={keyword}>{keyword}</p>
-                ))}
-              </div>
-            )}
           </div>
-        ) : (
-          <div className="relative z-10 flex w-full flex-col items-start gap-[6px] px-[16px]">
-            <div className="flex aspect-square w-full items-center justify-center bg-[#F6F8FA]">
-              <p className="whitespace-pre-line px-[24px] text-center text-[16px] font-medium text-grey-60">
-                {isPending
-                  ? "오늘의 색을 만들고 있어요.\n잠시만 기다려주세요."
-                  : reward.status === "FAILED"
-                    ? "오늘은 색을 만드는 데 실패했어요.\n일기는 안전하게 저장됐어요."
-                    : "색은 아직 준비되지 않았어요.\n홈에서 다시 확인해주세요."}
-              </p>
+
+          <div className="relative z-10 min-h-0 flex-1">
+            <div
+              className={`pointer-events-none absolute left-0 right-0 top-0 z-10 h-[56px] transition-opacity duration-200 ${
+                isScrolled ? "opacity-100" : "opacity-0"
+              }`}
+              style={{
+                background:
+                  "linear-gradient(180deg, #FFF 0%, rgba(255, 255, 255, 0) 100%)",
+              }}
+            />
+            <div
+              className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-[56px]"
+              style={{
+                background:
+                  "linear-gradient(0deg, #FFF 0%, rgba(255, 255, 255, 0) 100%)",
+              }}
+            />
+
+            <div
+              onScroll={handleScroll}
+              className="h-full overflow-y-auto scrollbar-hide px-[36px] pb-[24px] pt-[32px]"
+            >
+              {isReady ? (
+                <div className="flex w-full flex-col items-start gap-[20px]">
+                  <div className="flex w-full flex-col items-start gap-[4px]">
+                    <div
+                      className="aspect-square w-full rounded-[4px]"
+                      style={{ backgroundColor: todayColor }}
+                    />
+                    <p
+                      className="text-[24px] font-bold leading-[normal]"
+                      style={{ color: accentColor }}
+                    >
+                      {todayColor}
+                    </p>
+                  </div>
+
+                  {(keywords.length > 0 || colorComment) && (
+                    <div className="flex w-full flex-col items-start justify-center gap-[12px] rounded-[4px] border border-solid border-[#E8EBF0] bg-[#F8F9FC] px-[16px] py-[20px]">
+                      {keywords.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-[4px]">
+                          {keywords.map((keyword) => (
+                            <div
+                              key={keyword}
+                              className="flex items-center justify-center rounded-[100px] border border-solid border-[#AFB6C4] px-[8px] py-[4px]"
+                            >
+                              <p className="whitespace-nowrap text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-grey-80">
+                                {keyword}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {colorComment && (
+                        <p className="w-full text-[14px] font-normal leading-[1.45] tracking-[-0.35px] text-grey-80">
+                          {colorComment}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex w-full flex-col items-start gap-[4px]">
+                  <div className="flex aspect-square w-full items-center justify-center rounded-[4px] bg-[#F6F8FA]">
+                    <p className="whitespace-pre-line px-[24px] text-center text-[16px] font-medium text-grey-60">
+                      {isPending
+                        ? "오늘의 색을 만들고 있어요.\n잠시만 기다려주세요."
+                        : reward.status === "FAILED"
+                          ? "오늘은 색을 만드는 데 실패했어요.\n일기는 안전하게 저장됐어요."
+                          : "색은 아직 준비되지 않았어요.\n홈에서 다시 확인해주세요."}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        )}
 
-          <button
-            type="button"
-            onClick={handleFinish}
-            className="relative z-10 w-[350px] max-w-full self-center rounded-[12px] px-[26px] py-[14px] text-[18px] font-semibold tracking-[-0.18px]"
-            style={{ backgroundColor: rawColor, color: buttonTextColor }}
-          >
-            완료
-          </button>
+          <div className="relative z-20 flex w-full shrink-0 justify-center bg-grey-0 px-[20px] pb-[30px] pt-[16px]">
+            <button
+              type="button"
+              onClick={handleFinish}
+              className="flex w-full max-w-[350px] cursor-pointer items-center justify-center rounded-[12px] px-[26px] py-[14px] text-[18px] font-semibold leading-[normal] tracking-[-0.36px] text-grey-0 text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)] transition-opacity active:opacity-80"
+              style={{ backgroundColor: accentColor }}
+            >
+              {isReview ? "일기 보러가기" : "완료"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
