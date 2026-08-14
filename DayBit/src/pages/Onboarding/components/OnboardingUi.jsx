@@ -38,7 +38,7 @@ export function BottomButton({ children = "다음", disabled = false, onClick })
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`absolute bottom-[50px] left-[20px] flex h-[49px] w-[350px] items-center justify-center rounded-[12px] text-[18px] font-semibold leading-none tracking-[-0.18px] text-grey-0 transition-all ${
+      className={`absolute bottom-[30px] left-[20px] flex h-[49px] w-[350px] items-center justify-center rounded-[12px] text-[18px] font-semibold leading-none tracking-[-0.18px] text-grey-0 transition-all ${
         disabled
           ? "cursor-not-allowed bg-grey-40"
           : "cursor-pointer bg-grey-70 active:scale-[0.98]"
