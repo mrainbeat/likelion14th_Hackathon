@@ -19,8 +19,10 @@ export function Chip({ label, selected = false, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`flex h-[35px] shrink-0 items-center rounded-[17px] border border-solid px-[12px] text-[16px] font-medium leading-none tracking-[-0.32px] transition-colors ${
-        selected ? "border-grey-70 text-grey-80" : "border-grey-30 text-grey-50"
+      className={`flex h-[35px] shrink-0 items-center rounded-[17px] border border-solid px-[12px] text-[16px] leading-none transition-colors ${
+        selected
+          ? "border-grey-80 font-semibold text-grey-90"
+          : "border-grey-30 font-medium tracking-[-0.32px] text-grey-50"
       }`}
     >
       {label}
