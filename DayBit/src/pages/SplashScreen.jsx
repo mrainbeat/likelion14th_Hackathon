@@ -1,16 +1,52 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import apiClient, { refreshCsrfToken } from "../api/apiClient";
 import LogoSymbol from "../assets/logos/logo-symbol.svg";
 import LogoText from "../assets/logos/logo-text.svg";
+
+const SPLASH_MIN_MS = 2500;
 
 export default function SplashScreen() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      navigate("/login", { replace: true });
-    }, 2500);
-    return () => clearTimeout(timer);
+    let alive = true;
+
+    const resolveDestination = async () => {
+      try {
+        const response = await apiClient.get("/api/me");
+        const user = response.data.result;
+
+        try {
+          await refreshCsrfToken();
+        } catch (csrfError) {
+          console.error("GET /api/auth/csrf 실패:", csrfError);
+        }
+
+        return user.onboardingCompleted ? "/home" : "/onboarding";
+      } catch (error) {
+        if (error.response?.status !== 401) {
+          console.error(
+            "GET /api/me 실패:",
+            error.response?.status,
+            error.response?.data,
+          );
+        }
+        return "/login";
+      }
+    };
+
+    const minDelay = new Promise((resolve) =>
+      setTimeout(resolve, SPLASH_MIN_MS),
+    );
+
+    Promise.all([resolveDestination(), minDelay]).then(([destination]) => {
+      if (alive) navigate(destination, { replace: true });
+    });
+
+    return () => {
+      alive = false;
+    };
   }, [navigate]);
 
   return (

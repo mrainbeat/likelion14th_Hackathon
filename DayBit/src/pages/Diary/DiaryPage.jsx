@@ -10,6 +10,7 @@ import ResumeDraftModal from "./components/ResumeDraftModal";
 import apiClient from "../../api/apiClient";
 import backIcon from "../../assets/icons/back.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
+import logoImageDisabled from "../../assets/logos/logo-symbol-disabled.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import { saveDraft, clearDraft, loadTodayDraft } from "../../utils/diaryDraft";
 
@@ -457,7 +458,7 @@ export default function DiaryPage() {
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-[20px] relative z-0"
+          className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-[20px] relative"
         >
           <div className="flex flex-col gap-[16px] pb-[170px]">
             <div className="w-full bg-grey-0 rounded-[12px] px-[16px] py-[20px] flex flex-col shrink-0 shadow-[0_0_30px_0_rgba(65,68,80,0.05),0_0_10px_0_rgba(77,80,91,0.05)] min-h-[91px] ">
@@ -477,10 +478,14 @@ export default function DiaryPage() {
                   type="button"
                   onClick={handleGetQuestions}
                   disabled={isAllQuestionsLoaded || isAskingQuestion}
-                  className="w-[217px] h-[48px] border-[1.5px] border-grey-60 bg-grey-0 rounded-[12px] px-[26px] text-[18px] font-semibold text-grey-95 tracking-[-0.18px] flex items-center justify-center gap-[4px] whitespace-nowrap active:bg-gray-50 disabled:opacity-50 transition-all"
+                  className={`w-[217px] h-[48px] border-[1.5px] bg-grey-0 rounded-[12px] px-[26px] text-[18px] font-semibold tracking-[-0.36px] flex items-center justify-center gap-[6px] whitespace-nowrap active:bg-gray-50 transition-all ${
+                    isAllQuestionsLoaded
+                      ? "border-[#E8EBF0] text-grey-30"
+                      : "border-grey-60 text-grey-95"
+                  }`}
                 >
                   <img
-                    src={logoImage}
+                    src={isAllQuestionsLoaded ? logoImageDisabled : logoImage}
                     alt="로고"
                     className="w-[16px] h-[20px] object-contain shrink-0"
                   />
@@ -488,7 +493,7 @@ export default function DiaryPage() {
                     {isAskingQuestion
                       ? "질문 받는 중..."
                       : isAllQuestionsLoaded
-                        ? "질문 완료"
+                        ? "질문 받기 완료"
                         : "데이빗에게 질문 받기"}
                   </span>
                 </button>
@@ -508,7 +513,10 @@ export default function DiaryPage() {
                 </p>
               )}
 
-              <QuestionModal questions={questions} />
+              <QuestionModal
+                questions={questions}
+                remainingQuestions={remainingQuestions}
+              />
             </div>
           </div>
         </div>
