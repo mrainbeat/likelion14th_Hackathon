@@ -6,10 +6,15 @@ import { VitePWA } from "vite-plugin-pwa";
 export default defineConfig({
   plugins: [
     react(),
-    tailwindcss(), //테일윈드 css 플러그인 추가
+    tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.png", "apple-touch-icon.png", "icon.svg"],
+      includeAssets: [
+        "favicon.png",
+        "apple-touch-icon.png",
+        "icon.svg",
+        "icon-512-maskable.png",
+      ],
       manifest: {
         name: "DAYBIT",
         short_name: "DAYBIT",
@@ -17,7 +22,7 @@ export default defineConfig({
         lang: "ko",
         start_url: "/",
         scope: "/",
-        // 홈 화면에서 실행하면 주소창 없이 앱처럼 뜸
+
         display: "standalone",
         orientation: "portrait",
         background_color: "#F6F8FA",
@@ -26,7 +31,7 @@ export default defineConfig({
           { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
           { src: "/icon-512.png", sizes: "512x512", type: "image/png" },
           {
-            src: "/icon-512.png",
+            src: "/icon-512-maskable.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "maskable",
