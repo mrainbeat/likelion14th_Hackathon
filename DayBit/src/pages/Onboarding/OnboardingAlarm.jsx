@@ -8,6 +8,7 @@ import {
   Chip,
   BottomButton,
 } from "./components/OnboardingUi";
+
 const PRESET_TIMES = ["오후8시", "오후9시", "오후10시", "오후11시"];
 const CUSTOM = "직접입력";
 

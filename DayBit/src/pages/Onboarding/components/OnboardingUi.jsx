@@ -1,5 +1,4 @@
 ﻿import arrowIcon from "../../../assets/icons/arrow.svg";
-
 export function ProgressBar({ step = 1, total = 4 }) {
   return (
     <div className="absolute left-[4.10%] right-[4.10%] top-[12px] flex items-center gap-[8px]">
