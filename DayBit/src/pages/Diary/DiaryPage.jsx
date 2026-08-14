@@ -421,7 +421,11 @@ export default function DiaryPage() {
                 {isResetting ? "초기화 중..." : "오늘 일기 초기화"}
               </button>
             )}
-            <button className="w-[38px] h-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0">
+            <button
+              type="button"
+              onClick={() => navigate("/mypage")}
+              className="w-[38px] h-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0"
+            >
               <img
                 src={profileIcon}
                 alt="프로필"

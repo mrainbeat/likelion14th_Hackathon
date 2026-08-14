@@ -64,8 +64,10 @@ export default function ReflectionPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [answerError, setAnswerError] = useState("");
+  const [isScrolled, setIsScrolled] = useState(false);
 
   const isSavedRef = useRef(false);
+  const scrollContainerRef = useRef(null);
 
   useEffect(() => {
     if (isSavedRef.current) return;
@@ -115,6 +117,10 @@ export default function ReflectionPage() {
   }, [diaryContent, useDiaryContent, navigate]);
 
   const handleBack = () => navigate("/diary", { replace: true });
+
+  const handleScroll = (e) => {
+    setIsScrolled(e.target.scrollTop > 10);
+  };
 
   // 색 생성이 비동기라 PENDING이면 완료(or 실패)될 때까지 여기서 기다린 뒤 넘어감 —
   // 오늘의 색 페이지에서는 로딩 없이 바로 결과가 보여야 하기 때문
@@ -255,64 +261,92 @@ export default function ReflectionPage() {
           </button>
         </div>
       ) : (
-        <div className="absolute inset-x-0 top-[115px] bottom-0 z-10 flex flex-col items-center justify-between rounded-[12px] bg-grey-0 px-[20px] pb-[50px] pt-[36px] shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">
-          <div className="flex w-full flex-col items-start gap-[16px]">
-            <div className="flex w-full flex-col items-start gap-[8px]">
-              <div className="flex items-start gap-[6px]">
-                <img
-                  src={logoImage}
-                  alt=""
-                  className="h-[28px] w-[22px] shrink-0 object-cover"
-                />
-                <p className="text-[24px] font-bold tracking-[-0.48px] text-grey-90">
-                  성찰질문
-                </p>
+        <div className="absolute inset-x-0 top-[115px] bottom-0 z-10 flex flex-col overflow-hidden rounded-[12px] bg-grey-0 shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">
+          <div className="relative min-h-0 flex-1 overflow-hidden">
+            <div
+              className={`pointer-events-none absolute left-0 right-0 top-0 z-10 h-[92px] rounded-t-[12px] transition-opacity duration-200 ${
+                isScrolled ? "opacity-100" : "opacity-0"
+              }`}
+              style={{
+                background:
+                  "linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0) 100%)",
+              }}
+            ></div>
+
+            <div
+              className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-[92px]"
+              style={{
+                background:
+                  "linear-gradient(0deg, #FFFFFF 0%, rgba(255, 255, 255, 0) 100%)",
+              }}
+            ></div>
+
+            <div
+              ref={scrollContainerRef}
+              onScroll={handleScroll}
+              className="h-full overflow-y-auto scrollbar-hide px-[20px] pb-[24px] pt-[36px]"
+            >
+              <div className="flex w-full flex-col items-start gap-[16px]">
+                <div className="flex w-full flex-col items-start gap-[8px]">
+                  <div className="flex items-start gap-[6px]">
+                    <img
+                      src={logoImage}
+                      alt=""
+                      className="h-[28px] w-[22px] shrink-0 object-cover"
+                    />
+                    <p className="text-[24px] font-bold tracking-[-0.48px] text-grey-90">
+                      성찰질문
+                    </p>
+                  </div>
+                  <p className="w-full text-[14px] font-medium tracking-[-0.28px] text-grey-50">
+                    작성하지 않고 넘어가도 괜찮아요.
+                  </p>
+                </div>
+
+                <div className="relative flex w-full items-center gap-[10px] rounded-[12px] bg-grey-60 px-[16px] py-[10px]">
+                  <BubbleTail
+                    color="#858C9C"
+                    className="!left-[-1.5px] !top-[-8px]"
+                  />
+                  <p className="flex-1 text-[16px] font-medium tracking-[-0.32px] text-grey-0">
+                    {question}
+                  </p>
+                </div>
+
+                <div className="relative w-full">
+                  <BubbleTail
+                    color="#E7E9EE"
+                    mirror
+                    className="!right-[-1.5px] !top-[-8px]"
+                  />
+                  <textarea
+                    value={answer}
+                    onChange={handleAnswerChange}
+                    placeholder="답변을 입력해주세요"
+                    rows={1}
+                    className="w-full resize-none overflow-hidden rounded-[12px] bg-grey-20 px-[16px] py-[10px] text-[16px] font-medium tracking-[-0.32px] text-grey-80 placeholder:text-grey-50 focus:outline-none"
+                  />
+                </div>
+
+                {answerError && (
+                  <p className="text-[13px] font-medium text-red-500">
+                    {answerError}
+                  </p>
+                )}
               </div>
-              <p className="w-full text-[14px] font-medium tracking-[-0.28px] text-grey-50">
-                작성하지 않고 넘어가도 괜찮아요.
-              </p>
             </div>
-
-            <div className="relative flex w-full items-center gap-[10px] rounded-[12px] bg-grey-60 px-[16px] py-[10px]">
-              <BubbleTail
-                color="#858C9C"
-                className="!left-[-1.5px] !top-[-8px]"
-              />
-              <p className="flex-1 text-[16px] font-medium tracking-[-0.32px] text-grey-0">
-                {question}
-              </p>
-            </div>
-
-            <div className="relative w-full">
-              <BubbleTail
-                color="#E7E9EE"
-                mirror
-                className="!right-[-1.5px] !top-[-8px]"
-              />
-              <textarea
-                value={answer}
-                onChange={handleAnswerChange}
-                placeholder="답변을 입력해주세요"
-                rows={1}
-                className="w-full resize-none overflow-hidden rounded-[12px] bg-grey-20 px-[16px] py-[10px] text-[16px] font-medium tracking-[-0.32px] text-grey-80 placeholder:text-grey-50 focus:outline-none"
-              />
-            </div>
-
-            {answerError && (
-              <p className="text-[13px] font-medium text-red-500">
-                {answerError}
-              </p>
-            )}
           </div>
 
-          <button
-            type="button"
-            onClick={handleFinish}
-            disabled={isSubmitting}
-            className="flex h-[49px] w-full max-w-[350px] items-center justify-center whitespace-nowrap rounded-[12px] bg-grey-70 px-[26px] text-[18px] font-semibold tracking-[-0.18px] text-grey-0 text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)] disabled:opacity-50"
-          >
-            {isSubmitting ? "제출 중..." : "작성완료"}
-          </button>
+          <div className="flex shrink-0 justify-center px-[20px] pb-[50px] pt-[16px]">
+            <button
+              type="button"
+              onClick={handleFinish}
+              disabled={isSubmitting}
+              className="flex h-[49px] w-full max-w-[350px] items-center justify-center whitespace-nowrap rounded-[12px] bg-grey-70 px-[26px] text-[18px] font-semibold tracking-[-0.18px] text-grey-0 text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)] disabled:opacity-50"
+            >
+              {isSubmitting ? "제출 중..." : "작성완료"}
+            </button>
+          </div>
         </div>
       )}
     </div>

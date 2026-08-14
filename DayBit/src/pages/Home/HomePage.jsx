@@ -289,7 +289,11 @@ export default function HomePage() {
               DAY BIT
             </p>
           </div>
-          <button className="size-[38px] shrink-0 rounded-full border-none bg-transparent p-0">
+          <button
+            type="button"
+            onClick={() => navigate("/mypage")}
+            className="size-[38px] shrink-0 rounded-full border-none bg-transparent p-0"
+          >
             <img
               src={profileIcon}
               alt="프로필"
@@ -462,7 +466,7 @@ export default function HomePage() {
                   isTodayWritten && textColor ? { color: textColor } : undefined
                 }
               >
-                {isTodayWritten ? "작성완료" : "작성전"}
+                {isTodayWritten ? "작성완료" : "작성 전"}
               </p>
             </div>
             <div className="h-full w-px shrink-0 bg-grey-20" />

@@ -20,6 +20,7 @@ import ExperienceGottenListPage from "./pages/Experience/ExperienceGottenListPag
 import ExperienceSentListPage from "./pages/Experience/ExperienceSentListPage";
 import ExperienceSentDetailPage from "./pages/Experience/ExperienceSentDetailPage";
 import ExperienceDiaryPage from "./pages/Experience/ExperienceDiaryPage";
+import MyPage from "./pages/MyPage/MyPage";
 
 function App() {
   return (
@@ -55,6 +56,7 @@ function App() {
             path="/experience/diary/:pieceId"
             element={<ExperienceDiaryPage />}
           />
+          <Route path="/mypage" element={<MyPage />} />
           <Route path="/diary" element={<DiaryPage />} />
           <Route path="/diary/reflection" element={<ReflectionPage />} />
           <Route path="/diary/today-color" element={<TodayColorPage />} />
