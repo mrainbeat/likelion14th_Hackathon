@@ -15,7 +15,6 @@ export default function JobInputModal({
   const [value, setValue] = useState(initialValue);
   const textareaRef = useRef(null);
 
-  // 모달 부드럽게
   useEffect(() => {
     if (open) {
       setMounted(true);
@@ -28,7 +27,6 @@ export default function JobInputModal({
     return () => clearTimeout(timer);
   }, [open]);
 
-  // 줄 수에 맞춰 높이 자동 확장
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -41,14 +39,13 @@ export default function JobInputModal({
   const isValid = value.trim().length > 0;
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center">
+    <div className="absolute inset-0 z-50 flex items-start justify-center pt-[100px]">
       <div
         onClick={onClose}
         className={`absolute inset-0 bg-grey-90/25 backdrop-blur-[1px] transition-opacity duration-200 ease-out ${
           shown ? "opacity-100" : "opacity-0"
         }`}
       />
-
       <div
         className={`relative flex w-[350px] flex-col items-start gap-[16px] overflow-hidden rounded-[12px] bg-[#F6F8FA] px-[16px] py-[16px] transition-all duration-200 ease-out ${
           shown ? "scale-100 opacity-100" : "scale-95 opacity-0"

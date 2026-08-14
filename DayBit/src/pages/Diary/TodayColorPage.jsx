@@ -4,8 +4,7 @@ import { useCurrentTime } from "../../hooks/useCurrentTime";
 import { getTodayColorPalette, hexToRgba } from "../../utils/rewardColor";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
-import logoImage from "../../assets/logos/logo-symbol.png";
-
+import logoImage from "../../assets/logos/logo-symbol.svg";
 const BLOBS = [
   {
     cx: 131.5,
@@ -186,8 +185,8 @@ export default function TodayColorPage() {
                 {isPending
                   ? "오늘의 색을 만들고 있어요.\n잠시만 기다려주세요."
                   : reward.status === "FAILED"
-                  ? "오늘은 색을 만드는 데 실패했어요.\n일기는 안전하게 저장됐어요."
-                  : "색은 아직 준비되지 않았어요.\n홈에서 다시 확인해주세요."}
+                    ? "오늘은 색을 만드는 데 실패했어요.\n일기는 안전하게 저장됐어요."
+                    : "색은 아직 준비되지 않았어요.\n홈에서 다시 확인해주세요."}
               </p>
             </div>
           </div>

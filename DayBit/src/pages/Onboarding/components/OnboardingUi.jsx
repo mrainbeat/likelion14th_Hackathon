@@ -1,7 +1,7 @@
-﻿/* 진행 바 */
-export function ProgressBar({ step = 1, total = 4 }) {
+﻿export function ProgressBar({ step = 1, total = 4 }) {
   return (
-    <div className="absolute left-[20px] top-[12px] flex w-[350px] items-center gap-[8px]">
+    <div className="absolute left-[5.13%] right-[5.13%] top-[12px] flex items-center gap-[8px]">
+      {" "}
       {Array.from({ length: total }, (_, i) => (
         <div
           key={i}
@@ -14,16 +14,13 @@ export function ProgressBar({ step = 1, total = 4 }) {
   );
 }
 
-/* 알약 상자 */
 export function Chip({ label, selected = false, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex h-[35px] shrink-0 items-center rounded-[17px] px-[12px] text-[16px] font-medium leading-none tracking-[-0.32px] transition-colors ${
-        selected
-          ? "border-2 border-solid border-grey-60 text-grey-80"
-          : "border border-solid border-grey-30 text-grey-50"
+      className={`flex h-[35px] shrink-0 items-center rounded-[17px] border border-solid px-[12px] text-[16px] font-medium leading-none tracking-[-0.32px] transition-colors ${
+        selected ? "border-grey-70 text-grey-80" : "border-grey-30 text-grey-50"
       }`}
     >
       {label}
@@ -31,14 +28,13 @@ export function Chip({ label, selected = false, onClick }) {
   );
 }
 
-/* 하단 버튼 */
 export function BottomButton({ children = "다음", disabled = false, onClick }) {
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`absolute bottom-[50px] left-[20px] flex h-[49px] w-[350px] items-center justify-center rounded-[12px] text-[18px] font-semibold leading-none tracking-[-0.18px] text-grey-0 transition-all ${
+      className={`absolute bottom-[30px] left-[5.13%] right-[5.13%] flex h-[49px] items-center justify-center rounded-[12px] text-[18px] font-semibold leading-none tracking-[-0.18px] text-white transition-all ${
         disabled
           ? "cursor-not-allowed bg-grey-40"
           : "cursor-pointer bg-grey-70 active:scale-[0.98]"
@@ -49,7 +45,6 @@ export function BottomButton({ children = "다음", disabled = false, onClick })
   );
 }
 
-/* 모달 내부 확인 버튼 */
 export function ModalButton({ children = "완료", disabled = false, onClick }) {
   return (
     <button

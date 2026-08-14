@@ -4,7 +4,7 @@ import { useCurrentTime } from "../../hooks/useCurrentTime";
 import apiClient from "../../api/apiClient";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
-import logoImage from "../../assets/logos/logo-symbol.png";
+import logoImage from "../../assets/logos/logo-symbol.svg";
 import tailGrey60Svg from "../../assets/icons/tail-grey60.svg";
 import tailGrey20Svg from "../../assets/icons/tail-grey20.svg";
 

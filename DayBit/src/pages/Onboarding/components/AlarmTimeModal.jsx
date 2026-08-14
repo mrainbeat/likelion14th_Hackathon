@@ -36,10 +36,8 @@ function WheelColumn({ items, value, onChange, label, className }) {
 
   useEffect(() => {
     scrollToIndex(items.indexOf(value), false);
-    // 처음 1회만 위치 세팅
   }, []);
 
-  // 스크롤이 멈추면 가운데 값으로 확정
   const handleScroll = () => {
     clearTimeout(timer.current);
     timer.current = setTimeout(() => {
@@ -67,7 +65,6 @@ function WheelColumn({ items, value, onChange, label, className }) {
     return () => el.removeEventListener("wheel", handleWheel);
   }, [items]);
 
-  // 위아래 화살표로 한 칸씩
   const handleKeyDown = (e) => {
     if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
     e.preventDefault();
@@ -117,7 +114,6 @@ export default function AlarmTimeModal({
   const [hour, setHour] = useState(initial.hour);
   const [minute, setMinute] = useState(initial.minute);
 
-  // 모달 애니메이션
   useEffect(() => {
     if (open) {
       setMounted(true);
@@ -160,7 +156,6 @@ export default function AlarmTimeModal({
           }}
         />
 
-        {/* 피커 영역 */}
         <div className="absolute left-[16px] top-[50px] h-[138px] w-[318px]">
           <WheelColumn
             items={PERIODS}
@@ -190,9 +185,8 @@ export default function AlarmTimeModal({
           </div>
         </div>
 
-        {/* 상·하 그라데이션 */}
-        <div className="pointer-events-none absolute left-[104px] top-[61px] h-[36px] w-[142px] bg-gradient-to-b from-[#F6F8FA] to-transparent" />
-        <div className="pointer-events-none absolute left-[104px] top-[139px] h-[36px] w-[142px] bg-gradient-to-t from-[#F6F8FA] to-transparent" />
+        <div className="pointer-events-none absolute left-[104px] top-[50px] h-[36px] w-[142px] bg-gradient-to-b from-[#F6F8FA] to-transparent" />
+        <div className="pointer-events-none absolute left-[104px] top-[152px] h-[36px] w-[142px] bg-gradient-to-t from-[#F6F8FA] to-transparent" />
 
         <div className="absolute left-[16px] top-[194px] w-[318px]">
           <ModalButton onClick={() => onConfirm({ period, hour, minute })}>

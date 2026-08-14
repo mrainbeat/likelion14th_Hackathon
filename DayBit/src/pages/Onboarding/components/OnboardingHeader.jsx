@@ -1,5 +1,4 @@
-﻿import LogoSymbol from "../../../assets/logos/logo-symbol.png";
-
+﻿import LogoSymbol from "../../../assets/logos/logo-symbol.svg";
 export default function OnboardingHeader({
   lines = [],
   caption,
@@ -11,13 +10,13 @@ export default function OnboardingHeader({
       : "text-[20px] tracking-[-0.4px]";
 
   return (
-    <div className="absolute left-[36px] top-[76px] flex flex-col items-start gap-[17px]">
+    <div className="absolute left-[9.23%] top-[76px] flex flex-col items-start gap-[17px]">
+      {" "}
       <img
         src={LogoSymbol}
         alt="DAY BIT"
         className="h-[61px] w-[48px] shrink-0 object-cover"
       />
-
       <div className="flex flex-col items-start gap-[6px]">
         {lines.map((line, i) => (
           <p

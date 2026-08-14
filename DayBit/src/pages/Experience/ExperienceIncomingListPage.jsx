@@ -4,8 +4,7 @@ import ExperienceNotificationBubble from "./components/ExperienceNotificationBub
 import IncomingConfirmModal from "./components/IncomingConfirmModal";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
-import logoImage from "../../assets/logos/logo-symbol.png";
-
+import logoImage from "../../assets/logos/logo-symbol.svg";
 const MOCK_ALL_NOTIFICATIONS = [
   {
     id: 1,
