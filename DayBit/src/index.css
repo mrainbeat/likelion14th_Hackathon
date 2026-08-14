@@ -28,6 +28,12 @@
   --text-16--font-weight: 400;
 }
 
+html,
+body {
+  background-color: #f6f8fa;
+  overscroll-behavior-y: none;
+}
+
 .scrollbar-hide {
   scrollbar-width: none;
   -ms-overflow-style: none;
