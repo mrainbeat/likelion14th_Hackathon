@@ -2,12 +2,18 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/apiClient";
 import MonthYearPickerModal from "./components/MonthYearPickerModal";
+import ResumeDraftModal from "../Diary/components/ResumeDraftModal";
 import logoImage from "../../assets/logos/logo-symbol.png";
 import profileIcon from "../../assets/icons/profile.svg";
 import bubbleTailSvg from "../../assets/icons/tail.svg";
 import bellIcon from "../../assets/icons/notification-bell.svg";
 import arrowIcon from "../../assets/icons/back.svg";
 import editIcon from "../../assets/icons/edit-pencil.svg";
+import {
+  loadTodayDraft,
+  clearDraft,
+  draftHasContent,
+} from "../../utils/diaryDraft";
 
 const WEEKDAYS = ["월", "화", "수", "목", "금", "토", "일"];
 
@@ -138,6 +144,7 @@ export default function HomePage() {
   const [monthItems, setMonthItems] = useState([]);
   const [todayItem, setTodayItem] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
+  const [showResumeDraft, setShowResumeDraft] = useState(false);
 
   const themeColor =
     todayItem?.reward?.status === "COMPLETED"
@@ -157,6 +164,23 @@ export default function HomePage() {
         boxShadow:
           "0 0 10px 0 rgba(77,80,91,0.05), 0 0 30px 0 rgba(65,68,80,0.05)",
       };
+
+  useEffect(() => {
+    const draft = loadTodayDraft();
+    if (draftHasContent(draft)) {
+      setShowResumeDraft(true);
+    }
+  }, []);
+
+  const handleResumeDraft = () => {
+    setShowResumeDraft(false);
+    navigate("/diary", { state: { skipResumePrompt: true } });
+  };
+
+  const handleDiscardDraft = () => {
+    clearDraft();
+    setShowResumeDraft(false);
+  };
 
   useEffect(() => {
     let alive = true;
@@ -490,6 +514,13 @@ export default function HomePage() {
         onConfirm={handleConfirmPicker}
         onClose={() => setShowPicker(false)}
       />
+
+      {showResumeDraft && (
+        <ResumeDraftModal
+          onDiscard={handleDiscardDraft}
+          onResume={handleResumeDraft}
+        />
+      )}
     </div>
   );
 }
