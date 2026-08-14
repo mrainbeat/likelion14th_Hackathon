@@ -61,7 +61,8 @@ export default function OnboardingAlarm() {
   return (
     <div className="relative h-full w-full select-none overflow-hidden bg-background">
       <ProgressBar step={2} />
-      <BackButton onClick={() => navigate("/onboarding/job")} />{" "}
+      <BackButton onClick={() => navigate("/onboarding/job")} />
+
       <OnboardingHeader
         lines={[
           `좋아요 ${nickname || "회원"}님!`,
@@ -69,12 +70,13 @@ export default function OnboardingAlarm() {
         ]}
         caption="설정에서 언제든지 변경 가능해요."
       />
+
       <div className="absolute left-[9.23%] right-[9.23%] top-[288px] flex flex-col gap-[16px]">
         <div className="flex flex-col items-start gap-[6px]">
           <p className="whitespace-nowrap text-[20px] font-semibold leading-[1.19] tracking-[-0.4px] text-grey-90">
             하루를 잊기 전에 가볍게 알려드릴게요.
           </p>
-          <p className="whitespace-nowrap text-[12px] font-normal leading-[1.19] tracking-[-0.12px] text-grey-60">
+          <p className="whitespace-nowrap text-[12px] font-normal leading-[1.19] tracking-[-0.12px] text-[#808694]">
             정한 시간에 알림을 보내드려요 :)
           </p>
         </div>
@@ -89,9 +91,11 @@ export default function OnboardingAlarm() {
           ))}
         </div>
       </div>
+
       <BottomButton disabled={!isValid} onClick={handleNext}>
         다음
       </BottomButton>
+
       <AlarmTimeModal
         open={modalOpen}
         onConfirm={handleConfirm}

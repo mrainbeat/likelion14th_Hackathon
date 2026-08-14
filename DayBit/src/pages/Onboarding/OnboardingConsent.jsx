@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import OnboardingHeader from "./components/OnboardingHeader";
-import BubbleTail from "../../components/BubbleTail";
 import apiClient from "../../api/apiClient";
 import {
   ProgressBar,
@@ -17,8 +16,8 @@ const SECTIONS = [
   {
     title: "기록 속 정보 기억하기",
     lines: [
-      "기록에 등장한 사람, 관심사, 이슈등을 기억해요.",
-      "새로운 정보를 기억하기 전에 먼저 물어볼게요:)",
+      "기록에  등장한 사람, 관심사, 이슈등을 기억해요.",
+      "새로운 정보를 기억하기 전에는 먼저 물어볼게요:)",
     ],
     fullWidth: true,
   },
@@ -41,12 +40,11 @@ function renderWithTightSpaces(text) {
 function SpeechBubble({ lines, fullWidth }) {
   return (
     <div
-      className={`relative flex items-center gap-[10px] rounded-[12px] bg-grey-20 px-[16px] py-[10px] ${
+      className={`relative flex items-center rounded-tr-[12px] rounded-br-[12px] rounded-bl-[12px] bg-grey-10 px-[16px] py-[10px] drop-shadow-[0px_0px_5px_rgba(0,0,0,0.1)] ${
         fullWidth ? "w-full shrink-0" : "shrink-0"
       }`}
     >
-      <BubbleTail color="#E7E9EE" className="!left-[-4.5px] !top-[-11px]" />
-      <div className="shrink-0 whitespace-nowrap text-[16px] font-medium tracking-[-0.32px] text-grey-70">
+      <div className="shrink-0 whitespace-nowrap text-[16px] font-medium tracking-[-0.32px] text-grey-80">
         {lines.map((line, i) => (
           <p key={i}>{renderWithTightSpaces(line)}</p>
         ))}
@@ -111,11 +109,13 @@ export default function OnboardingConsent() {
   return (
     <div className="relative h-full w-full select-none overflow-hidden bg-[#F6F8FA]">
       <ProgressBar step={3} />
-      <BackButton onClick={() => navigate("/onboarding/alarm")} />{" "}
+      <BackButton onClick={() => navigate("/onboarding/alarm")} />
+
       <OnboardingHeader
         lines={["더 나다운 질문을 위해", "데이빗은 허락한 정보만 기억해요."]}
         caption="설정에서 언제든지 변경 가능해요."
       />
+
       <div className="absolute inset-x-0 bottom-[115px] top-[244px] overflow-y-auto overscroll-contain pl-[9.23%] pr-[9.23%] [&::-webkit-scrollbar]:hidden">
         <div className="flex w-full flex-col gap-[16px] pb-[8px]">
           {SECTIONS.map(({ title, lines, fullWidth }) => (
@@ -131,11 +131,13 @@ export default function OnboardingConsent() {
           ))}
         </div>
       </div>
+
       {errorMessage && (
         <p className="absolute inset-x-[9.23%] bottom-[95px] text-[13px] font-medium text-red-500">
           {errorMessage}
         </p>
       )}
+
       <BottomButton disabled={isSubmitting} onClick={handleAgree}>
         {isSubmitting ? "저장 중..." : "동의하기"}
       </BottomButton>
