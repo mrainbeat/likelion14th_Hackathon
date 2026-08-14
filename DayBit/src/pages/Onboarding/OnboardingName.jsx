@@ -38,7 +38,6 @@ export default function OnboardingName() {
       <ProgressBar step={0} />
 
       <OnboardingHeader
-        titleSize={22}
         lines={["안녕하세요, 전 데이빗이에요 :)", "뭐라고 부르면 될까요?"]}
         caption="설정에서 언제든지 변경 가능해요."
       />
