@@ -71,7 +71,7 @@ export function BackButton({ onClick }) {
       aria-label="이전으로"
       className="absolute left-[4.10%] top-[26px] flex size-[32px] items-center justify-center"
     >
-      <img src={arrowIcon} alt="" className="size-full" />
+      <img src={arrowIcon} alt="" className="h-[16px] w-[10px]" />
     </button>
   );
 }
