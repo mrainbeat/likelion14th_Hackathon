@@ -3,11 +3,7 @@ import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/apiClient";
 import MonthYearPickerModal from "./components/MonthYearPickerModal";
 import ResumeDraftModal from "../Diary/components/ResumeDraftModal";
-import {
-  getReadableColor,
-  hexToRgba,
-  isHighLightness,
-} from "../../utils/rewardColor";
+import { getTodayColorPalette, hexToRgba } from "../../utils/rewardColor";
 import logoImage from "../../assets/logos/logo-symbol.png";
 import profileIcon from "../../assets/icons/profile.svg";
 import bellIcon from "../../assets/icons/notification-bell.svg";
@@ -155,20 +151,25 @@ export default function HomePage() {
     todayItem?.reward?.status === "COMPLETED"
       ? todayItem.reward.colorHex
       : null;
-  // 받은 색은 그대로 칠하고, 글자·아이콘만 안 읽힐 때 톤을 낮춰 씀
-  const isPale = themeColor ? isHighLightness(themeColor) : false;
-  const textColor = themeColor ? getReadableColor(themeColor) : null;
-  const onThemeColor = isPale ? textColor : "#FFFFFF";
-  const profileShadowColor = themeColor
-    ? hexToRgba(themeColor, isPale ? 0.6 : 0.16)
+  // 받은 색 하나로 메인/소프트 배경과 그 위 텍스트 색까지 한 세트로 만듦.
+  // 메인: 원본 그대로(그림자·글자), 소프트: 같은 색상의 옅은 톤(말풍선 배경)
+  const palette = themeColor ? getTodayColorPalette(themeColor) : null;
+  const isPale = palette ? palette.mode === "derived-text" : false;
+  const textColor = palette ? palette.mainTextColor : null;
+  const bubbleColor = palette ? palette.softColor : "#E7E9EE";
+  const bubbleTextColor = palette ? palette.softTextColor : "#5F6473";
+  const profileShadowColor = palette
+    ? hexToRgba(palette.mainColor, isPale ? 0.6 : 0.16)
     : "rgba(65, 68, 80, 0.16)";
-  const cardShadowColor = themeColor
-    ? hexToRgba(themeColor, isPale ? 0.2 : 0.05)
-    : "rgba(65, 68, 80, 0.05)";
+  const cardShadowColor = palette
+    ? hexToRgba(palette.mainColor, isPale ? 0.2 : 0.05)
+    : null;
+  // 보상 색이 없는 기본 상태는 피그마 값 그대로 두 톤을 따로 씀
   const cardShadowStyle = {
-    boxShadow: `0 0 5px 0 ${cardShadowColor}, 0 0 15px 0 ${cardShadowColor}`,
+    boxShadow: palette
+      ? `0 0 10px 0 ${cardShadowColor}, 0 0 30px 0 ${cardShadowColor}`
+      : "0 0 10px 0 rgba(77, 80, 91, 0.05), 0 0 30px 0 rgba(65, 68, 80, 0.05)",
   };
-  const bubbleColor = themeColor ?? "#E7E9EE";
 
   useEffect(() => {
     const draft = loadTodayDraft();
@@ -274,7 +275,7 @@ export default function HomePage() {
   const handleGoToWrite = () => navigate("/diary");
 
   return (
-    <div className="relative flex h-full w-full select-none flex-col items-center gap-[20px] overflow-y-auto bg-[#f6f8fa] px-[20px] py-[16px] scrollbar-hide">
+    <div className="relative flex h-full w-full select-none flex-col items-center gap-[20px] overflow-y-auto bg-[#f6f8fa] px-[16px] py-[16px] scrollbar-hide">
       <div className="flex w-full flex-col items-start gap-[8px]">
         <div className="flex w-full items-center justify-between">
           <div className="flex items-end gap-[4px]">
@@ -301,7 +302,7 @@ export default function HomePage() {
 
         <div className="flex w-full items-end justify-between">
           <p
-            className="text-[22px] font-semibold tracking-[-0.44px] text-grey-90"
+            className="text-[22px] font-semibold leading-[normal] tracking-[-0.66px] text-grey-90"
             style={textColor ? { color: textColor } : undefined}
           >
             {viewMonth}월의 조각이
@@ -311,7 +312,7 @@ export default function HomePage() {
           <img
             src={bellIcon}
             alt="알림"
-            className="size-[30px] shrink-0 object-contain"
+            className="h-[24.375px] w-[18.963px] shrink-0 object-contain"
           />
         </div>
       </div>
@@ -374,6 +375,11 @@ export default function HomePage() {
                       week.some(
                         (cell) => cell.inMonth && cell.day === today.day,
                       );
+                    // 이번 달에 속한 날이 3일 미만이면 어차피 보상을 못 받으므로 버튼 자체를 없앰
+                    const daysInMonthCount = week.filter(
+                      (cell) => cell.inMonth,
+                    ).length;
+                    const canEarnReward = daysInMonthCount >= 3;
                     return (
                       <div
                         key={weekIdx}
@@ -396,7 +402,9 @@ export default function HomePage() {
                             );
                           })}
                         </div>
-                        <RewardBadge active={isCurrentWeek} />
+                        {canEarnReward && (
+                          <RewardBadge active={isCurrentWeek} />
+                        )}
                       </div>
                     );
                   })}
@@ -410,9 +418,11 @@ export default function HomePage() {
                   aria-label="일기 목록"
                   className="flex size-[40px] shrink-0 cursor-pointer items-center justify-center"
                 >
+                  {/* 피그마 create 컴포넌트: 26px 프레임 안에 19.5px 벡터가
+                      3.25px 여백을 두고 들어있음 — 26px로 채우면 실제보다 커짐 */}
                   <div
                     aria-hidden
-                    className="size-[26px]"
+                    className="size-[19.503px]"
                     style={maskedIcon(editIcon, textColor ?? "#858C9C")}
                   />
                 </button>
@@ -467,24 +477,22 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div
-          className="flex w-full flex-col items-start gap-[16px] rounded-[12px] bg-grey-0 px-[16px] py-[20px]"
+        <button
+          type="button"
+          onClick={() => navigate("/experience")}
+          className="flex w-full cursor-pointer flex-col items-start gap-[16px] rounded-[12px] bg-grey-0 px-[16px] py-[20px] text-left"
           style={cardShadowStyle}
         >
-          <button
-            type="button"
-            onClick={() => navigate("/experience")}
-            className="flex cursor-pointer items-center gap-[10px]"
-          >
+          <div className="flex items-center gap-[10px]">
             <img
               src={logoImage}
               alt=""
               className="h-[28px] w-[22px] object-contain"
             />
             <p className="whitespace-nowrap text-[20px] font-semibold tracking-[-0.4px] text-grey-90">
-              다른 사람의 경험
+              경험조각 주고받기
             </p>
-          </button>
+          </div>
           {[
             "“다이어트”와 관련된 다른사람의 경험이 도착했어요.",
             "“수능공부”와 관련된 다른사람의 경험이 도착했어요.",
@@ -502,13 +510,13 @@ export default function HomePage() {
               />
               <p
                 className="flex-1 text-[16px] font-medium tracking-[-0.32px]"
-                style={{ color: themeColor ? onThemeColor : "#5F6473" }}
+                style={{ color: bubbleTextColor }}
               >
                 {text}
               </p>
             </div>
           ))}
-        </div>
+        </button>
       </div>
 
       <MonthYearPickerModal

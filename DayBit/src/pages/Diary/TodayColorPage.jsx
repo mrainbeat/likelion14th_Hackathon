@@ -1,12 +1,7 @@
 ﻿import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
-import {
-  getGlowColor,
-  getReadableColor,
-  hexToRgba,
-  isHighLightness,
-} from "../../utils/rewardColor";
+import { getTodayColorPalette, hexToRgba } from "../../utils/rewardColor";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.png";
@@ -62,11 +57,12 @@ export default function TodayColorPage() {
   const isPending = reward?.status === "PENDING";
   const isReady = reward?.status === "COMPLETED" && reward?.colorHex;
   const rawColor = isReady ? reward.colorHex : FALLBACK_COLOR;
-  // 받은 색은 그대로 칠하고, 글자만 안 읽힐 때 톤을 낮춰 씀
-  const isPale = isReady && isHighLightness(rawColor);
-  const textColor = getReadableColor(rawColor);
-  const glowColor = getGlowColor(rawColor);
-  const buttonTextColor = isPale ? textColor : "#FFFFFF";
+  // 받은 색은 그대로 칠하고, 버튼·굵은 글자만 안 읽힐 때 진한 동계열로 바꿈.
+  // 그림자·번짐은 같은 색상의 옅은 소프트 컬러를 씀
+  const palette = isReady ? getTodayColorPalette(rawColor) : null;
+  const textColor = palette ? palette.mainTextColor : "#4F5563";
+  const buttonTextColor = palette ? palette.mainTextColor : "#FFFFFF";
+  const glowColor = palette ? palette.softColor : FALLBACK_COLOR;
   const keywords = reward?.keywords ?? [];
 
   // 성찰질문 페이지를 거치지 않고 직접 접근한 경우
@@ -117,7 +113,7 @@ export default function TodayColorPage() {
         </div>
         <p
           className="text-[28px] font-bold tracking-[-0.56px]"
-          style={{ color: isReady ? textColor : "#4F5563" }}
+          style={{ color: textColor }}
         >
           {dateStr}
         </p>
