@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/apiClient";
 import MonthYearPickerModal from "./components/MonthYearPickerModal";
 import ResumeDraftModal from "../Diary/components/ResumeDraftModal";
+import GlowCard from "../../components/GlowCard";
 import {
-  buildSoftShadow,
   getOnPageTextColor,
   getTodayColorPalette,
   hexToRgba,
@@ -157,26 +157,22 @@ export default function HomePage() {
     todayItem?.reward?.status === "COMPLETED"
       ? todayItem.reward.colorHex
       : null;
-  // 받은 색 하나로 메인/소프트 배경과 그 위 텍스트 색까지 한 세트로 만듦.
-  // 메인: 원본 그대로(그림자·글자), 소프트: 같은 색상의 옅은 톤(말풍선 배경)
   const palette = themeColor ? getTodayColorPalette(themeColor) : null;
   const isPale = palette ? palette.mode === "derived-text" : false;
-  // 헤드라인·연필·통계 라벨은 흰 페이지 배경 위라 mainTextColor(흰색 나올 수 있음)를
-  // 그대로 쓰면 안 보임 — 흰 배경용으로 따로 계산
+  // 헤드라인·연필·"작성완료" 라벨은 흰 페이지 배경 위: 명도 낮으면 원본색 그대로,
+  // 명도 높으면 원본이 흰 배경에서 안 읽히니 색 보정 로직으로 만든 진한 동계열을 씀
   const textColor = palette ? getOnPageTextColor(palette) : null;
-  const bubbleColor = palette ? palette.softColor : "#E7E9EE";
-  const bubbleTextColor = palette ? palette.softTextColor : "#5F6473";
+  // 말풍선 배경은 명도 상관없이 항상 오늘의 색 원본을 그대로 씀
+  const bubbleColor = palette ? palette.mainColor : "#E7E9EE";
+  const bubbleTextColor = palette ? palette.mainTextColor : "#5F6473";
   const profileShadowColor = palette
     ? hexToRgba(palette.mainColor, isPale ? 0.6 : 0.16)
     : "rgba(65, 68, 80, 0.16)";
-  // box-shadow에 큰 blur(10px+30px)를 그대로 쓰면 저알파 구간에서 브라우저가
-  // 계단 현상(밴딩)을 보여준다. 같은 시각적 무게를 작은 blur 여러 겹으로 나눠
-  // 부드럽게 만든다 — 보상 색이 없는 기본 상태는 피그마 값 그대로 두 톤을 씀
-  const cardShadowStyle = {
-    boxShadow: palette
-      ? buildSoftShadow(palette.mainColor, isPale ? 0.2 : 0.05)
-      : buildSoftShadow("#474A56", 0.05), // 기본값 두 톤(#4D505B/#414450)의 평균
-  };
+  // box-shadow의 큰 blur는 브라우저에서 계단 현상(밴딩)이 생겨서, 카드 뒤에
+  // 같은 색 판을 깔고 filter: blur()로 흐리는 방식(GlowCard)으로 대체함
+  const cardGlowColor = palette
+    ? hexToRgba(palette.mainColor, isPale ? 0.5 : 0.15)
+    : "rgba(71, 74, 86, 0.15)";
 
   // 앱 새로 켰을때(이번 세션에 아직 한 번도 체크 안 했을때)만 초안 있는지 확인
   useEffect(() => {
@@ -331,9 +327,9 @@ export default function HomePage() {
       </div>
 
       <div className="flex w-full flex-col items-center gap-[16px]">
-        <div
-          className="relative w-full rounded-[12px] bg-grey-0 px-[16px] py-[14px]"
-          style={cardShadowStyle}
+        <GlowCard
+          color={cardGlowColor}
+          className="rounded-[12px] bg-grey-0 px-[16px] py-[14px]"
         >
           <div className="flex w-full flex-col gap-[6px]">
             <div className="flex w-full items-center justify-between">
@@ -456,11 +452,11 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-        </div>
+        </GlowCard>
 
-        <div
+        <GlowCard
+          color={cardGlowColor}
           className="flex w-full flex-col items-center rounded-[12px] bg-grey-0 px-[16px] py-[12px]"
-          style={cardShadowStyle}
         >
           <div className="flex items-center gap-[47px]">
             <div className="flex w-[66px] flex-col items-center gap-[6px]">
@@ -488,15 +484,20 @@ export default function HomePage() {
               </p>
             </div>
           </div>
-        </div>
+        </GlowCard>
 
-        <button
-          type="button"
-          onClick={() => navigate("/experience")}
-          className="flex w-full cursor-pointer flex-col items-start gap-[16px] rounded-[12px] bg-grey-0 px-[16px] py-[20px] text-left"
-          style={cardShadowStyle}
-        >
-          <div className="flex items-center gap-[10px]">
+        <div className="relative w-full">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 rounded-[12px]"
+            style={{ backgroundColor: cardGlowColor, filter: "blur(20px)" }}
+          />
+          <button
+            type="button"
+            onClick={() => navigate("/experience")}
+            className="relative flex w-full cursor-pointer flex-col items-start gap-[16px] rounded-[12px] bg-grey-0 px-[16px] py-[20px] text-left"
+          >
+            <div className="flex items-center gap-[10px]">
             <img
               src={logoImage}
               alt=""
@@ -529,7 +530,8 @@ export default function HomePage() {
               </p>
             </div>
           ))}
-        </button>
+          </button>
+        </div>
       </div>
 
       <MonthYearPickerModal

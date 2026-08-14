@@ -62,23 +62,6 @@ export function hexToRgba(hex, alpha) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-// box-shadow 하나에 큰 blur(예: 30px)를 주면 브라우저의 blur 근사 때문에 저알파
-// 구간에서 색 밴딩(계단 현상)이 눈에 띈다. 같은 총량을 작은 blur 여러 겹으로
-// 나눠 쌓으면 각 층의 밴딩이 서로 다른 지점에서 생겨 겹치면서 부드러워진다.
-const SOFT_SHADOW_LAYERS = [
-  { blur: 3, weight: 0.5 },
-  { blur: 8, weight: 0.4 },
-  { blur: 14, weight: 0.3 },
-  { blur: 21, weight: 0.2 },
-  { blur: 30, weight: 0.1 },
-];
-
-export function buildSoftShadow(hex, baseAlpha) {
-  return SOFT_SHADOW_LAYERS.map(
-    ({ blur, weight }) => `0 0 ${blur}px 0 ${hexToRgba(hex, baseAlpha * weight)}`,
-  ).join(", ");
-}
-
 /* ==================================================
    메인 텍스트 컬러 생성
    ================================================== */
