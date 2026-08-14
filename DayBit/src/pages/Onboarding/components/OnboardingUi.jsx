@@ -1,4 +1,4 @@
-﻿import arrowIcon from "../../../icons/arrow.svg";
+﻿import arrowIcon from "../../../assets/icons/arrow.svg";
 
 export function ProgressBar({ step = 1, total = 4 }) {
   return (

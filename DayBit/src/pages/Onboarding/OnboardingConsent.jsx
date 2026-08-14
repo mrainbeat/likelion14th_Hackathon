@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import OnboardingHeader from "./components/OnboardingHeader";
-import { ProgressBar, BottomButton } from "./components/OnboardingUi";
 import tailGrey20Svg from "../../assets/icons/tail-grey20.svg";
 import apiClient from "../../api/apiClient";
 import {

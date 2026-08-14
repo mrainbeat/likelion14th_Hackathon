@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import OnboardingHeader from "./components/OnboardingHeader";
-import { ProgressBar, Chip, BottomButton } from "./components/OnboardingUi";
 import AlarmTimeModal, { formatAlarmLabel } from "./components/AlarmTimeModal";
 import {
   ProgressBar,

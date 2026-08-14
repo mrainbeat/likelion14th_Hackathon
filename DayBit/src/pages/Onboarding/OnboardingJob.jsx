@@ -1,7 +1,6 @@
 ﻿import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import OnboardingHeader from "./components/OnboardingHeader";
-import { ProgressBar, Chip, BottomButton } from "./components/OnboardingUi";
 import ClearIcon1 from "../../assets/icons/clear1.svg";
 import ClearIcon2 from "../../assets/icons/clear2.svg";
 import {
