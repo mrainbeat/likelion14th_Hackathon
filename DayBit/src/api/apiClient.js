@@ -22,8 +22,7 @@ function flushQueue(error) {
   pendingQueue = [];
 }
 
-let csrfHeaderName = "X-XSRF-TOKEN";
-let csrfToken = null;
+let defaultCsrfHeaderName = "X-XSRF-TOKEN";
 let csrfFetchPromise = null;
 
 function fetchCsrfToken() {
@@ -36,9 +35,8 @@ function fetchCsrfToken() {
     })
     .then((response) => {
       const result = response.data.result;
-      csrfHeaderName = result.headerName || csrfHeaderName;
-      csrfToken = result.token;
-      return csrfToken;
+      defaultCsrfHeaderName = result.headerName || defaultCsrfHeaderName;
+      return { token: result.token, headerName: defaultCsrfHeaderName };
     })
     .finally(() => {
       csrfFetchPromise = null;
@@ -48,7 +46,6 @@ function fetchCsrfToken() {
 }
 
 export function refreshCsrfToken() {
-  csrfToken = null;
   return fetchCsrfToken();
 }
 
@@ -58,11 +55,9 @@ apiClient.interceptors.request.use(async (config) => {
     return config;
   }
 
-  if (!csrfToken) {
-    await fetchCsrfToken();
-  }
-
-  config.headers[csrfHeaderName] = csrfToken;
+  const { token, headerName } = await fetchCsrfToken();
+  config.headers = config.headers ?? {};
+  config.headers[headerName] = token;
   return config;
 });
 
@@ -77,7 +72,6 @@ apiClient.interceptors.response.use(
 
     if (response.data?.code === "AUTH403_2" && !config._csrfRetry) {
       config._csrfRetry = true;
-      await refreshCsrfToken();
       return apiClient(config);
     }
 
@@ -85,6 +79,8 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // 재발급 자체가 실패하면 그대로 에러를 던짐 — 호출한 쪽에서 처리(리다이렉트 등)하도록 맡김.
+    // 여기서 강제로 리다이렉트하면 콜백 페이지 같은 곳의 재시도 로직을 가로채 버림
     if (config.url === REFRESH_URL) {
       return Promise.reject(error);
     }

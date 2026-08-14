@@ -3,9 +3,13 @@ import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/apiClient";
 import MonthYearPickerModal from "./components/MonthYearPickerModal";
 import ResumeDraftModal from "../Diary/components/ResumeDraftModal";
+import {
+  getReadableColor,
+  hexToRgba,
+  isHighLightness,
+} from "../../utils/rewardColor";
 import logoImage from "../../assets/logos/logo-symbol.png";
 import profileIcon from "../../assets/icons/profile.svg";
-import bubbleTailSvg from "../../assets/icons/tail.svg";
 import bellIcon from "../../assets/icons/notification-bell.svg";
 import arrowIcon from "../../assets/icons/back.svg";
 import editIcon from "../../assets/icons/edit-pencil.svg";
@@ -14,23 +18,24 @@ import {
   clearDraft,
   draftHasContent,
 } from "../../utils/diaryDraft";
+import bubbleTailSvg from "../../assets/icons/tail.svg";
 
 const WEEKDAYS = ["월", "화", "수", "목", "금", "토", "일"];
 
-function hexToRgba(hex, alpha) {
-  const clean = hex.replace("#", "");
-  const r = parseInt(clean.substring(0, 2), 16);
-  const g = parseInt(clean.substring(2, 4), 16);
-  const b = parseInt(clean.substring(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
-function getLightness(hex) {
-  const clean = hex.replace("#", "");
-  const r = parseInt(clean.substring(0, 2), 16) / 255;
-  const g = parseInt(clean.substring(2, 4), 16) / 255;
-  const b = parseInt(clean.substring(4, 6), 16) / 255;
-  return (Math.max(r, g, b) + Math.min(r, g, b)) / 2;
+// svg 에셋은 img로 두면 색을 못 바꿔서, 보상 색을 따라가야 하는 아이콘만 mask로 씌운다.
+// img의 기본 동작(비율 유지 + 가운데 정렬)을 그대로 맞춰야 모양이 안 찌그러진다.
+function maskedIcon(src, color) {
+  return {
+    backgroundColor: color,
+    maskImage: `url("${src}")`,
+    WebkitMaskImage: `url("${src}")`,
+    maskRepeat: "no-repeat",
+    WebkitMaskRepeat: "no-repeat",
+    maskPosition: "center",
+    WebkitMaskPosition: "center",
+    maskSize: "contain",
+    WebkitMaskSize: "contain",
+  };
 }
 
 function pad2(n) {
@@ -150,20 +155,20 @@ export default function HomePage() {
     todayItem?.reward?.status === "COMPLETED"
       ? todayItem.reward.colorHex
       : null;
-  const isHighLightness = themeColor ? getLightness(themeColor) >= 0.5 : false;
-  const profileShadowAlpha = isHighLightness ? 0.6 : 0.16;
-  const cardShadowAlpha = isHighLightness ? 0.2 : 0.05;
+  // 받은 색은 그대로 칠하고, 글자·아이콘만 안 읽힐 때 톤을 낮춰 씀
+  const isPale = themeColor ? isHighLightness(themeColor) : false;
+  const textColor = themeColor ? getReadableColor(themeColor) : null;
+  const onThemeColor = isPale ? textColor : "#FFFFFF";
   const profileShadowColor = themeColor
-    ? hexToRgba(themeColor, profileShadowAlpha)
+    ? hexToRgba(themeColor, isPale ? 0.6 : 0.16)
     : "rgba(65, 68, 80, 0.16)";
-  const cardShadowStyle = themeColor
-    ? {
-        boxShadow: `0 0 10px 0 ${hexToRgba(themeColor, cardShadowAlpha)}, 0 0 30px 0 ${hexToRgba(themeColor, cardShadowAlpha)}`,
-      }
-    : {
-        boxShadow:
-          "0 0 10px 0 rgba(77,80,91,0.05), 0 0 30px 0 rgba(65,68,80,0.05)",
-      };
+  const cardShadowColor = themeColor
+    ? hexToRgba(themeColor, isPale ? 0.2 : 0.05)
+    : "rgba(65, 68, 80, 0.05)";
+  const cardShadowStyle = {
+    boxShadow: `0 0 5px 0 ${cardShadowColor}, 0 0 15px 0 ${cardShadowColor}`,
+  };
+  const bubbleColor = themeColor ?? "#E7E9EE";
 
   useEffect(() => {
     const draft = loadTodayDraft();
@@ -297,11 +302,11 @@ export default function HomePage() {
         <div className="flex w-full items-end justify-between">
           <p
             className="text-[22px] font-semibold tracking-[-0.44px] text-grey-90"
-            style={themeColor ? { color: themeColor } : undefined}
+            style={textColor ? { color: textColor } : undefined}
           >
-            {viewMonth}월의 기록을
+            {viewMonth}월의 조각이
             <br />
-            차곡차곡 쌓고 있어요
+            차곡차곡 쌓이고 있어요
           </p>
           <img
             src={bellIcon}
@@ -402,21 +407,27 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => navigate("/home/diaries")}
+                  aria-label="일기 목록"
                   className="flex size-[40px] shrink-0 cursor-pointer items-center justify-center"
                 >
-                  <img
-                    src={editIcon}
-                    alt="일기 수정"
-                    className="size-[26px] object-contain"
+                  <div
+                    aria-hidden
+                    className="size-[26px]"
+                    style={maskedIcon(editIcon, textColor ?? "#858C9C")}
                   />
                 </button>
                 <button
                   type="button"
                   onClick={handleGoToWrite}
-                  className="flex cursor-pointer items-center justify-center rounded-[12px] bg-grey-70 px-[20px] py-[12px]"
+                  disabled={isTodayWritten}
+                  className={`flex items-center justify-center rounded-[12px] px-[20px] py-[12px] ${
+                    isTodayWritten
+                      ? "cursor-default bg-grey-20"
+                      : "cursor-pointer bg-grey-70"
+                  }`}
                 >
                   <p className="whitespace-nowrap text-[16px] font-semibold text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)] text-grey-0">
-                    일기 작성하기
+                    {isTodayWritten ? "작성 완료" : "일기 작성하기"}
                   </p>
                 </button>
               </div>
@@ -437,6 +448,9 @@ export default function HomePage() {
                 className={`whitespace-nowrap text-[12px] font-semibold tracking-[-0.12px] ${
                   isTodayWritten ? "text-grey-70" : "text-grey-40"
                 }`}
+                style={
+                  isTodayWritten && textColor ? { color: textColor } : undefined
+                }
               >
                 {isTodayWritten ? "작성완료" : "작성전"}
               </p>
@@ -472,36 +486,25 @@ export default function HomePage() {
             </p>
           </button>
           {[
-            {
-              text: "“다이어트”와 관련된 다른사람의 경험이 도착했어요.",
-              tone: "light",
-            },
-            {
-              text: "8/27에 전달한 나의 경험에 대한 피드백이 도착했어요.",
-              tone: "dark",
-            },
-            {
-              text: "“수능공부”와 관련된 다른사람의 경험이 도착했어요.",
-              tone: "light",
-            },
-          ].map((item, i) => (
+            "“다이어트”와 관련된 다른사람의 경험이 도착했어요.",
+            "“수능공부”와 관련된 다른사람의 경험이 도착했어요.",
+          ].map((text) => (
             <div
-              key={i}
-              className={`relative flex w-full items-center gap-[10px] rounded-[12px] px-[16px] py-[10px] ${
-                item.tone === "dark" ? "bg-grey-60" : "bg-grey-20"
-              }`}
+              key={text}
+              className="relative flex w-full items-center gap-[10px] rounded-[12px] px-[16px] py-[10px]"
+              style={{ backgroundColor: bubbleColor }}
             >
-              <img
-                src={bubbleTailSvg}
-                alt=""
+              {/* 말풍선 색이 보상 색을 따라가므로 꼬리도 같은 값을 써야 어긋나지 않음 */}
+              <div
+                aria-hidden
                 className="pointer-events-none absolute left-[-4px] top-[-9px] h-[18.739px] w-[15.307px]"
+                style={maskedIcon(bubbleTailSvg, bubbleColor)}
               />
               <p
-                className={`flex-1 text-[16px] font-medium tracking-[-0.32px] ${
-                  item.tone === "dark" ? "text-grey-0" : "text-grey-70"
-                }`}
+                className="flex-1 text-[16px] font-medium tracking-[-0.32px]"
+                style={{ color: themeColor ? onThemeColor : "#5F6473" }}
               >
-                {item.text}
+                {text}
               </p>
             </div>
           ))}

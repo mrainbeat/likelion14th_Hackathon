@@ -5,7 +5,8 @@ import apiClient from "../../api/apiClient";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.png";
-import bubbleTailSvg from "../../assets/icons/tail.svg";
+import tailGrey60Svg from "../../assets/icons/tail-grey60.svg";
+import tailGrey20Svg from "../../assets/icons/tail-grey20.svg";
 
 const BLOBS = [
   {
@@ -45,6 +46,9 @@ const BLOBS = [
     color: "#FFCFCF",
   },
 ];
+
+const POLL_INTERVAL_MS = 2000;
+const MAX_POLL_ATTEMPTS = 15; // 약 30초
 
 export default function ReflectionPage() {
   const navigate = useNavigate();
@@ -113,6 +117,30 @@ export default function ReflectionPage() {
 
   const handleBack = () => navigate("/diary", { replace: true });
 
+  // 색 생성이 비동기라 PENDING이면 완료(or 실패)될 때까지 여기서 기다린 뒤 넘어감 —
+  // 오늘의 색 페이지에서는 로딩 없이 바로 결과가 보여야 하기 때문
+  const waitForReward = async (id, initialReward) => {
+    if (!id || initialReward?.status !== "PENDING") return initialReward;
+
+    for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+      try {
+        const response = await apiClient.get(`/api/v1/diaries/${id}`);
+        const nextReward = response.data.result?.reward;
+        if (nextReward && nextReward.status !== "PENDING") {
+          return nextReward;
+        }
+      } catch (error) {
+        console.error(
+          "GET /api/v1/diaries/{diaryId} 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      }
+    }
+    return { ...initialReward, status: "FAILED" };
+  };
+
   const handleAnswerChange = (e) => {
     setAnswer(e.target.value);
     const el = e.target;
@@ -127,9 +155,11 @@ export default function ReflectionPage() {
 
     // 답변 없이 넘어가면 추가 API를 호출하지 않음
     if (!trimmed || !diaryId) {
+      setIsSubmitting(true);
+      const finalReward = await waitForReward(diaryId, reward);
       navigate("/diary/today-color", {
         replace: true,
-        state: { reward, diaryId },
+        state: { reward: finalReward, diaryId },
       });
       return;
     }
@@ -139,15 +169,17 @@ export default function ReflectionPage() {
       await apiClient.post(`/api/v1/diaries/${diaryId}/reflection-answer`, {
         answerText: trimmed,
       });
+      const finalReward = await waitForReward(diaryId, reward);
       navigate("/diary/today-color", {
         replace: true,
-        state: { reward, diaryId },
+        state: { reward: finalReward, diaryId },
       });
     } catch (error) {
       if (error.response?.data?.code === "QUESTION409_1") {
+        const finalReward = await waitForReward(diaryId, reward);
         navigate("/diary/today-color", {
           replace: true,
-          state: { reward, diaryId },
+          state: { reward: finalReward, diaryId },
         });
         return;
       }
@@ -224,27 +256,27 @@ export default function ReflectionPage() {
           </button>
         </div>
       ) : (
-        <div className="absolute inset-x-0 top-[164px] bottom-0 z-10 flex flex-col justify-between rounded-[12px] bg-grey-0 px-[36px] pb-[50px] pt-[36px] shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">
+        <div className="absolute inset-x-0 top-[115px] bottom-0 z-10 flex flex-col items-center justify-between rounded-[12px] bg-grey-0 px-[20px] pb-[50px] pt-[36px] shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">
           <div className="flex w-full flex-col items-start gap-[16px]">
             <div className="flex w-full flex-col items-start gap-[8px]">
               <div className="flex items-start gap-[6px]">
                 <img
                   src={logoImage}
                   alt=""
-                  className="h-[28px] w-[22px] object-cover"
+                  className="h-[28px] w-[22px] shrink-0 object-cover"
                 />
                 <p className="text-[24px] font-bold tracking-[-0.48px] text-grey-90">
                   성찰질문
                 </p>
               </div>
-              <p className="text-[14px] font-medium text-grey-50">
+              <p className="w-full text-[14px] font-medium tracking-[-0.28px] text-grey-50">
                 작성하지 않고 넘어가도 괜찮아요.
               </p>
             </div>
 
             <div className="relative flex w-full items-center gap-[10px] rounded-[12px] bg-grey-60 px-[16px] py-[10px]">
               <img
-                src={bubbleTailSvg}
+                src={tailGrey60Svg}
                 alt=""
                 className="pointer-events-none absolute left-[-4px] top-[-9px] h-[18.739px] w-[15.307px]"
               />
@@ -253,13 +285,20 @@ export default function ReflectionPage() {
               </p>
             </div>
 
-            <textarea
-              value={answer}
-              onChange={handleAnswerChange}
-              placeholder="답변을 입력해주세요"
-              rows={1}
-              className="w-full resize-none overflow-hidden rounded-[12px] bg-grey-30 px-[16px] py-[10px] text-[16px] font-medium tracking-[-0.32px] text-grey-80 placeholder:text-grey-50 focus:outline-none"
-            />
+            <div className="relative w-full">
+              <img
+                src={tailGrey20Svg}
+                alt=""
+                className="pointer-events-none absolute right-[-4.31px] top-[-9px] h-[18.739px] w-[15.307px] -scale-x-100"
+              />
+              <textarea
+                value={answer}
+                onChange={handleAnswerChange}
+                placeholder="답변을 입력해주세요"
+                rows={1}
+                className="w-full resize-none overflow-hidden rounded-[12px] bg-grey-20 px-[16px] py-[10px] text-[16px] font-medium tracking-[-0.32px] text-grey-80 placeholder:text-grey-50 focus:outline-none"
+              />
+            </div>
 
             {answerError && (
               <p className="text-[13px] font-medium text-red-500">
@@ -272,7 +311,7 @@ export default function ReflectionPage() {
             type="button"
             onClick={handleFinish}
             disabled={isSubmitting}
-            className="w-full rounded-[12px] bg-grey-70 px-[26px] py-[14px] text-[18px] font-semibold tracking-[-0.18px] text-grey-0 disabled:opacity-50"
+            className="flex h-[49px] w-full max-w-[350px] items-center justify-center whitespace-nowrap rounded-[12px] bg-grey-70 px-[26px] text-[18px] font-semibold tracking-[-0.18px] text-grey-0 text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)] disabled:opacity-50"
           >
             {isSubmitting ? "제출 중..." : "작성완료"}
           </button>

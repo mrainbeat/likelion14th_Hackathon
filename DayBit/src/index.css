@@ -28,8 +28,6 @@
   --text-16--font-weight: 400;
 }
 
-/* 데스크탑처럼 스크롤바가 항상 보이는 환경에서 레이아웃 폭을 먹지 않도록 숨김
-   (모바일/터치 기기는 오버레이 스크롤바라 원래 문제 없었음) */
 .scrollbar-hide {
   scrollbar-width: none;
   -ms-overflow-style: none;
