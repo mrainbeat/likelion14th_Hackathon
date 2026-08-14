@@ -15,6 +15,7 @@ import {
   draftHasContent,
 } from "../../utils/diaryDraft";
 import bubbleTailSvg from "../../assets/icons/tail.svg";
+let resumeCheckedThisSession = false;
 
 const WEEKDAYS = ["월", "화", "수", "목", "금", "토", "일"];
 
@@ -171,7 +172,11 @@ export default function HomePage() {
       : "0 0 10px 0 rgba(77, 80, 91, 0.05), 0 0 30px 0 rgba(65, 68, 80, 0.05)",
   };
 
+  // 앱 새로 켰을때(이번 세션에 아직 한 번도 체크 안 했을때)만 초안 있는지 확인
   useEffect(() => {
+    if (resumeCheckedThisSession) return;
+    resumeCheckedThisSession = true;
+
     const draft = loadTodayDraft();
     if (draftHasContent(draft)) {
       setShowResumeDraft(true);
