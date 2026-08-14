@@ -4,6 +4,7 @@ import apiClient from "../../api/apiClient";
 import MonthYearPickerModal from "./components/MonthYearPickerModal";
 import ResumeDraftModal from "../Diary/components/ResumeDraftModal";
 import GlowCard from "../../components/GlowCard";
+import BubbleTail from "../../components/BubbleTail";
 import {
   getOnPageTextColor,
   getTodayColorPalette,
@@ -19,13 +20,10 @@ import {
   clearDraft,
   draftHasContent,
 } from "../../utils/diaryDraft";
-import bubbleTailSvg from "../../assets/icons/tail.svg";
 let resumeCheckedThisSession = false;
 
 const WEEKDAYS = ["월", "화", "수", "목", "금", "토", "일"];
 
-// svg 에셋은 img로 두면 색을 못 바꿔서, 보상 색을 따라가야 하는 아이콘만 mask로 씌운다.
-// img의 기본 동작(비율 유지 + 가운데 정렬)을 그대로 맞춰야 모양이 안 찌그러진다.
 function maskedIcon(src, color) {
   return {
     backgroundColor: color,
@@ -159,22 +157,18 @@ export default function HomePage() {
       : null;
   const palette = themeColor ? getTodayColorPalette(themeColor) : null;
   const isPale = palette ? palette.mode === "derived-text" : false;
-  // 헤드라인·연필·"작성완료" 라벨은 흰 페이지 배경 위: 명도 낮으면 원본색 그대로,
-  // 명도 높으면 원본이 흰 배경에서 안 읽히니 색 보정 로직으로 만든 진한 동계열을 씀
+
   const textColor = palette ? getOnPageTextColor(palette) : null;
-  // 말풍선 배경은 명도 상관없이 항상 오늘의 색 원본을 그대로 씀
   const bubbleColor = palette ? palette.mainColor : "#E7E9EE";
   const bubbleTextColor = palette ? palette.mainTextColor : "#5F6473";
   const profileShadowColor = palette
     ? hexToRgba(palette.mainColor, isPale ? 0.6 : 0.16)
     : "rgba(65, 68, 80, 0.16)";
-  // box-shadow의 큰 blur는 브라우저에서 계단 현상(밴딩)이 생겨서, 카드 뒤에
-  // 같은 색 판을 깔고 filter: blur()로 흐리는 방식(GlowCard)으로 대체함
+
   const cardGlowColor = palette
     ? hexToRgba(palette.mainColor, isPale ? 0.5 : 0.15)
     : "rgba(71, 74, 86, 0.15)";
 
-  // 앱 새로 켰을때(이번 세션에 아직 한 번도 체크 안 했을때)만 초안 있는지 확인
   useEffect(() => {
     if (resumeCheckedThisSession) return;
     resumeCheckedThisSession = true;
@@ -384,7 +378,6 @@ export default function HomePage() {
                       week.some(
                         (cell) => cell.inMonth && cell.day === today.day,
                       );
-                    // 이번 달에 속한 날이 3일 미만이면 어차피 보상을 못 받으므로 버튼 자체를 없앰
                     const daysInMonthCount = week.filter(
                       (cell) => cell.inMonth,
                     ).length;
@@ -427,8 +420,6 @@ export default function HomePage() {
                   aria-label="일기 목록"
                   className="flex size-[40px] shrink-0 cursor-pointer items-center justify-center"
                 >
-                  {/* 피그마 create 컴포넌트: 26px 프레임 안에 19.5px 벡터가
-                      3.25px 여백을 두고 들어있음 — 26px로 채우면 실제보다 커짐 */}
                   <div
                     aria-hidden
                     className="size-[19.503px]"
@@ -439,13 +430,13 @@ export default function HomePage() {
                   type="button"
                   onClick={handleGoToWrite}
                   disabled={isTodayWritten}
-                  className={`flex items-center justify-center rounded-[12px] px-[20px] py-[12px] ${
+                  className={`flex h-[43px] items-center justify-center rounded-[12px] px-[20px] ${
                     isTodayWritten
                       ? "cursor-default bg-grey-20"
                       : "cursor-pointer bg-grey-70"
                   }`}
                 >
-                  <p className="whitespace-nowrap text-[16px] font-semibold text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)] text-grey-0">
+                  <p className="whitespace-nowrap text-[16px] font-semibold leading-[normal] text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)] text-grey-0">
                     {isTodayWritten ? "작성 완료" : "일기 작성하기"}
                   </p>
                 </button>
@@ -498,38 +489,36 @@ export default function HomePage() {
             className="relative flex w-full cursor-pointer flex-col items-start gap-[16px] rounded-[12px] bg-grey-0 px-[16px] py-[20px] text-left"
           >
             <div className="flex items-center gap-[10px]">
-            <img
-              src={logoImage}
-              alt=""
-              className="h-[28px] w-[22px] object-contain"
-            />
-            <p className="whitespace-nowrap text-[20px] font-semibold tracking-[-0.4px] text-grey-90">
-              경험조각 주고받기
-            </p>
-          </div>
-          {[
-            "“다이어트”와 관련된 다른사람의 경험이 도착했어요.",
-            "“수능공부”와 관련된 다른사람의 경험이 도착했어요.",
-          ].map((text) => (
-            <div
-              key={text}
-              className="relative flex w-full items-center gap-[10px] rounded-[12px] px-[16px] py-[10px]"
-              style={{ backgroundColor: bubbleColor }}
-            >
-              {/* 말풍선 색이 보상 색을 따라가므로 꼬리도 같은 값을 써야 어긋나지 않음 */}
-              <div
-                aria-hidden
-                className="pointer-events-none absolute left-[-4px] top-[-9px] h-[18.739px] w-[15.307px]"
-                style={maskedIcon(bubbleTailSvg, bubbleColor)}
+              <img
+                src={logoImage}
+                alt=""
+                className="h-[28px] w-[22px] object-contain"
               />
-              <p
-                className="flex-1 text-[16px] font-medium tracking-[-0.32px]"
-                style={{ color: bubbleTextColor }}
-              >
-                {text}
+              <p className="whitespace-nowrap text-[20px] font-semibold tracking-[-0.4px] text-grey-90">
+                경험조각 주고받기
               </p>
             </div>
-          ))}
+            {[
+              "“다이어트”와 관련된 다른사람의 경험이 도착했어요.",
+              "“수능공부”와 관련된 다른사람의 경험이 도착했어요.",
+            ].map((text) => (
+              <div
+                key={text}
+                className="relative flex w-full items-center gap-[10px] rounded-[12px] px-[16px] py-[10px]"
+                style={{ backgroundColor: bubbleColor }}
+              >
+                <BubbleTail
+                  color={bubbleColor}
+                  className="!left-[-4.5px] !top-[-11px]"
+                />
+                <p
+                  className="flex-1 text-[16px] font-medium tracking-[-0.32px]"
+                  style={{ color: bubbleTextColor }}
+                >
+                  {text}
+                </p>
+              </div>
+            ))}
           </button>
         </div>
       </div>
