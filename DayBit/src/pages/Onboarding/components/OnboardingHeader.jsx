@@ -18,16 +18,18 @@ export default function OnboardingHeader({
         className="h-[61px] w-[48px] shrink-0 object-cover"
       />
       <div className="flex flex-col items-start gap-[6px]">
-        {lines.map((line, i) => (
-          <p
-            key={i}
-            className={`whitespace-nowrap font-semibold leading-[1.19] text-grey-90 ${titleClass}`}
-          >
-            {line}
-          </p>
-        ))}
+        <div className="flex flex-col items-start gap-[2px]">
+          {lines.map((line, i) => (
+            <p
+              key={i}
+              className={`whitespace-nowrap font-semibold leading-[1.19] text-[#2D3038] ${titleClass}`}
+            >
+              {line}
+            </p>
+          ))}
+        </div>
         {caption && (
-          <p className="whitespace-nowrap text-[12px] font-normal leading-[1.19] tracking-[-0.12px] text-grey-60">
+          <p className="whitespace-nowrap text-[12px] font-normal leading-[1.19] tracking-[-0.12px] text-[#858C9C]">
             {caption}
           </p>
         )}
