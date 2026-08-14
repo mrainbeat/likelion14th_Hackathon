@@ -1,7 +1,12 @@
 ﻿import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
-import { getTodayColorPalette, hexToRgba } from "../../utils/rewardColor";
+import {
+  buildSoftShadow,
+  getOnPageTextColor,
+  getTodayColorPalette,
+  hexToRgba,
+} from "../../utils/rewardColor";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
@@ -59,7 +64,8 @@ export default function TodayColorPage() {
   // 받은 색은 그대로 칠하고, 버튼·굵은 글자만 안 읽힐 때 진한 동계열로 바꿈.
   // 그림자·번짐은 같은 색상의 옅은 소프트 컬러를 씀
   const palette = isReady ? getTodayColorPalette(rawColor) : null;
-  const textColor = palette ? palette.mainTextColor : "#4F5563";
+  // 날짜·색코드·키워드는 흰 배경(페이지/카드) 위라 mainTextColor를 그대로 못 씀
+  const textColor = palette ? getOnPageTextColor(palette) : "#4F5563";
   const buttonTextColor = palette ? palette.mainTextColor : "#FFFFFF";
   const glowColor = palette ? palette.softColor : FALLBACK_COLOR;
   const keywords = reward?.keywords ?? [];
@@ -121,7 +127,9 @@ export default function TodayColorPage() {
       <div
         className="absolute inset-x-0 top-[115px] bottom-0 z-10 flex flex-col justify-between overflow-hidden rounded-[12px] bg-grey-0 px-[20px] pb-[50px] pt-[36px]"
         style={{
-          boxShadow: `0 0 10px 0 ${hexToRgba(glowColor, 0.05)}, 0 0 30px 0 ${hexToRgba(glowColor, 0.05)}`,
+          // box-shadow에 큰 blur를 그대로 쓰면 저알파 구간에서 계단현상(밴딩)이 보여서
+          // 같은 시각적 무게를 작은 blur 여러 겹으로 나눠 부드럽게 만듦
+          boxShadow: buildSoftShadow(glowColor, 0.05),
         }}
       >
         <div
