@@ -144,7 +144,7 @@ export default function TodayColorPage() {
         />
       </div>
 
-      <div className="absolute left-0 top-0 z-10 flex w-full flex-col gap-[24px] px-[20px] py-[16px]">
+      <div className="absolute left-0 top-0 z-10 flex w-full flex-col gap-[24px] px-[16px] py-[16px]">
         <div className="flex w-full items-center justify-between">
           <button type="button" onClick={handleBack} className="cursor-pointer">
             <img src={backIcon} alt="뒤로가기" className="size-[32px]" />
@@ -195,7 +195,7 @@ export default function TodayColorPage() {
             }}
           />
 
-          <div className="relative z-10 flex w-full shrink-0 items-start gap-[6px] px-[20px] pt-[32px]">
+          <div className="relative z-10 flex w-full shrink-0 items-start gap-[6px] px-[16px] pt-[32px]">
             <LogoSymbol
               dotColor={accentColor}
               className="h-[27.872px] w-[22px] shrink-0"
@@ -214,9 +214,7 @@ export default function TodayColorPage() {
               }}
             />
 
-            <div
-              className="h-full overflow-y-auto scrollbar-hide px-[36px] pb-[24px] pt-[32px]"
-            >
+            <div className="h-full overflow-y-auto scrollbar-hide px-[36px] pb-[56px] pt-[32px]">
               {isReady ? (
                 <div className="flex w-full flex-col items-start gap-[20px]">
                   <div className="flex w-full flex-col items-start gap-[4px]">
@@ -272,7 +270,7 @@ export default function TodayColorPage() {
             </div>
           </div>
 
-          <div className="relative z-20 flex w-full shrink-0 justify-center bg-grey-0 px-[20px] pb-[30px] pt-[16px]">
+          <div className="relative z-20 flex w-full shrink-0 justify-center bg-grey-0 px-[16px] pb-[30px] pt-[16px]">
             <button
               type="button"
               onClick={handleFinish}

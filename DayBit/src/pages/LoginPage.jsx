@@ -28,7 +28,7 @@ export default function LoginPage() {
         />
       </div>
 
-      <div className="absolute left-[20px] top-[471px] flex w-[350px] flex-col gap-[12px]">
+      <div className="absolute left-[16px] right-[16px] top-[471px] flex flex-col gap-[12px]">
         <button
           type="button"
           onClick={handleKakaoLogin}

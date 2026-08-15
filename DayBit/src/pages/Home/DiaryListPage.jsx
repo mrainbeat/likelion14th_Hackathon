@@ -108,7 +108,7 @@ export default function DiaryListPage() {
   };
 
   return (
-    <div className="relative flex h-full w-full select-none flex-col gap-[12px] overflow-y-auto bg-[#f6f8fa] px-[20px] py-[16px] scrollbar-hide">
+    <div className="relative flex h-full w-full select-none flex-col gap-[12px] overflow-y-auto bg-[#f6f8fa] px-[16px] py-[16px] scrollbar-hide">
       <div className="flex w-full items-center justify-between">
         <button
           type="button"

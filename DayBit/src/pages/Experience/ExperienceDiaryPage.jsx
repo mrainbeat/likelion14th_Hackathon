@@ -38,7 +38,7 @@ export default function ExperienceDiaryPage() {
   };
 
   return (
-    <div className="relative flex h-full w-full select-none flex-col overflow-y-auto bg-[#f6f8fa] px-[20px] py-[16px] scrollbar-hide">
+    <div className="relative flex h-full w-full select-none flex-col overflow-y-auto bg-[#f6f8fa] px-[16px] py-[16px] scrollbar-hide">
       <div className="flex w-full flex-col items-start gap-[12px] pb-[100px]">
         <div className="flex w-full items-center justify-between">
           <button
@@ -120,7 +120,7 @@ export default function ExperienceDiaryPage() {
         <button
           type="button"
           onClick={() => setShowFeedback(true)}
-          className="absolute bottom-[16px] left-[20px] right-[20px] h-[49px] rounded-[12px] bg-grey-70 text-[18px] font-semibold tracking-[-0.18px] text-grey-0"
+          className="absolute bottom-[16px] left-[16px] right-[16px] h-[49px] rounded-[12px] bg-grey-70 text-[18px] font-semibold tracking-[-0.18px] text-grey-0"
         >
           반응 보내기
         </button>

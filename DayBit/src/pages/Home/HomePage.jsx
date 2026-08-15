@@ -608,7 +608,7 @@ export default function HomePage() {
         </div>
 
         <div
-          className="flex w-full flex-col items-start gap-[16px] rounded-[12px] bg-grey-0 px-[16px] py-[20px] text-left"
+          className="flex w-full flex-col items-start gap-[16px] rounded-[12px] bg-grey-0 px-[16px] py-[20px] text-left opacity-30"
           style={{ boxShadow: cardShadow }}
         >
           <div ref={experienceRef} className="flex items-center gap-[10px]">

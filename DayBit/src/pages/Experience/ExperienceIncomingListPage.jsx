@@ -70,7 +70,7 @@ export default function ExperienceIncomingListPage() {
   };
 
   return (
-    <div className="relative flex h-full w-full select-none flex-col overflow-y-auto bg-[#f6f8fa] px-[20px] py-[16px] scrollbar-hide">
+    <div className="relative flex h-full w-full select-none flex-col overflow-y-auto bg-[#f6f8fa] px-[16px] py-[16px] scrollbar-hide">
       <div className="flex w-full flex-col items-start gap-[16px] pb-[16px]">
         <div className="flex w-full items-center justify-between">
           <button

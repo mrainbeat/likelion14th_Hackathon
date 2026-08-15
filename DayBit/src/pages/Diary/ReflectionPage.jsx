@@ -239,7 +239,7 @@ export default function ReflectionPage() {
         ))}
       </div>
 
-      <div className="absolute left-0 top-0 z-10 flex w-full flex-col gap-[24px] px-[20px] py-[16px]">
+      <div className="absolute left-0 top-0 z-10 flex w-full flex-col gap-[24px] px-[16px] py-[16px]">
         <div className="flex w-full items-center justify-between">
           <button type="button" onClick={handleBack} className="cursor-pointer">
             <img src={backIcon} alt="뒤로가기" className="size-[32px]" />
@@ -309,7 +309,7 @@ export default function ReflectionPage() {
             <div
               ref={scrollContainerRef}
               onScroll={handleScroll}
-              className="h-full overflow-y-auto scrollbar-hide px-[20px] pb-[24px] pt-[36px]"
+              className="h-full overflow-y-auto scrollbar-hide px-[16px] pb-[24px] pt-[36px]"
             >
               <div className="flex w-full flex-col items-start gap-[16px]">
                 <div className="flex w-full flex-col items-start gap-[8px]">
@@ -362,7 +362,7 @@ export default function ReflectionPage() {
             </div>
           </div>
 
-          <div className="flex shrink-0 justify-center bg-grey-0 px-[20px] pb-[30px] pt-[16px]">
+          <div className="flex shrink-0 justify-center bg-grey-0 px-[16px] pb-[30px] pt-[16px]">
             <button
               type="button"
               onClick={handleFinish}

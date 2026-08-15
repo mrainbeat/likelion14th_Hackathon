@@ -162,7 +162,7 @@ export default function MyPage() {
   };
 
   return (
-    <div className="flex h-full w-full select-none flex-col gap-[14px] overflow-y-auto bg-[#F6F8FA] px-[20px] py-[16px] scrollbar-hide">
+    <div className="flex h-full w-full select-none flex-col gap-[14px] overflow-y-auto bg-[#F6F8FA] px-[16px] py-[16px] scrollbar-hide">
       <div className="flex w-full shrink-0 items-center justify-between">
         <button
           type="button"
