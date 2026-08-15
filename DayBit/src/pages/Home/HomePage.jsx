@@ -649,7 +649,7 @@ export default function HomePage() {
           <ResumeDraftModal
             onDiscard={handleDiscardDraft}
             onResume={handleResumeDraft}
-            onClose={() => setShowReflectionConsent(false)}
+            onClose={() => setShowResumeDraft(false)}
           />
         )}
       </div>
