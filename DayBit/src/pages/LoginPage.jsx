@@ -6,7 +6,6 @@ import OtherLoginButton from "../assets/buttons/otherloginbutton.svg";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const BASE_URL = import.meta.env.VITE_BASE_URL;
 
   const handleKakaoLogin = (e) => {
     e.preventDefault();
@@ -14,7 +13,7 @@ export default function LoginPage() {
   };
 
   const handleOtherLogin = () => {
-    navigate("/onboarding", { replace: true });
+    navigate("/login/email");
   };
 
   return (
