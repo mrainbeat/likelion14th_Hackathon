@@ -46,8 +46,8 @@ const BLOBS = [
   },
 ];
 
-const POLL_INTERVAL_MS = 2000;
-const MAX_POLL_ATTEMPTS = 15; // 약 30초
+const POLL_INTERVAL_MS = 800;
+const MAX_POLL_ATTEMPTS = 38; // 약 30초
 
 export default function ReflectionPage() {
   const navigate = useNavigate();
@@ -68,6 +68,7 @@ export default function ReflectionPage() {
 
   const isSavedRef = useRef(false);
   const scrollContainerRef = useRef(null);
+  const rewardReadyRef = useRef(null);
 
   useEffect(() => {
     if (isSavedRef.current) return;
@@ -122,29 +123,49 @@ export default function ReflectionPage() {
     setIsScrolled(e.target.scrollTop > 10);
   };
 
-  // 색 생성이 비동기라 PENDING이면 완료(or 실패)될 때까지 여기서 기다린 뒤 넘어감 —
-  // 오늘의 색 페이지에서는 로딩 없이 바로 결과가 보여야 하기 때문
-  const waitForReward = async (id, initialReward) => {
-    if (!id || initialReward?.status !== "PENDING") return initialReward;
+  // 색 생성이 비동기라 성찰질문 화면에 진입하자마자(사용자가 답변을 읽고 쓰는 동안)
+  // 백그라운드로 미리 폴링해둔다 — 제출 시점엔 이미 완료돼 있는 경우가 많아진다
+  useEffect(() => {
+    if (!diaryId) return;
 
-    for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt += 1) {
-      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-      try {
-        const response = await apiClient.get(`/api/v1/diaries/${id}`);
-        const nextReward = response.data.result?.reward;
-        if (nextReward && nextReward.status !== "PENDING") {
-          return nextReward;
-        }
-      } catch (error) {
-        console.error(
-          "GET /api/v1/diaries/{diaryId} 실패:",
-          error.response?.status,
-          error.response?.data,
-        );
-      }
+    if (reward?.status !== "PENDING") {
+      rewardReadyRef.current = Promise.resolve(reward);
+      return;
     }
-    return { ...initialReward, status: "FAILED" };
-  };
+
+    let cancelled = false;
+
+    rewardReadyRef.current = (async () => {
+      for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt += 1) {
+        try {
+          const response = await apiClient.get(`/api/v1/diaries/${diaryId}`);
+          const nextReward = response.data.result?.reward;
+          if (nextReward && nextReward.status !== "PENDING") {
+            if (!cancelled) setReward(nextReward);
+            return nextReward;
+          }
+        } catch (error) {
+          console.error(
+            "GET /api/v1/diaries/{diaryId} 실패:",
+            error.response?.status,
+            error.response?.data,
+          );
+        }
+        if (cancelled) break;
+        if (attempt < MAX_POLL_ATTEMPTS - 1) {
+          await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+        }
+      }
+      const failed = { ...reward, status: "FAILED" };
+      if (!cancelled) setReward(failed);
+      return failed;
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [diaryId]);
 
   const handleAnswerChange = (e) => {
     setAnswer(e.target.value);
@@ -161,7 +182,7 @@ export default function ReflectionPage() {
     // 답변 없이 넘어가면 추가 API를 호출하지 않음
     if (!trimmed || !diaryId) {
       setIsSubmitting(true);
-      const finalReward = await waitForReward(diaryId, reward);
+      const finalReward = await (rewardReadyRef.current ?? Promise.resolve(reward));
       navigate("/diary/today-color", {
         replace: true,
         state: { reward: finalReward, diaryId },
@@ -174,14 +195,14 @@ export default function ReflectionPage() {
       await apiClient.post(`/api/v1/diaries/${diaryId}/reflection-answer`, {
         answerText: trimmed,
       });
-      const finalReward = await waitForReward(diaryId, reward);
+      const finalReward = await (rewardReadyRef.current ?? Promise.resolve(reward));
       navigate("/diary/today-color", {
         replace: true,
         state: { reward: finalReward, diaryId },
       });
     } catch (error) {
       if (error.response?.data?.code === "QUESTION409_1") {
-        const finalReward = await waitForReward(diaryId, reward);
+        const finalReward = await (rewardReadyRef.current ?? Promise.resolve(reward));
         navigate("/diary/today-color", {
           replace: true,
           state: { reward: finalReward, diaryId },

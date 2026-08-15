@@ -55,8 +55,6 @@ export default function DiaryPage() {
   const [showAnonymousShare, setShowAnonymousShare] = useState(false);
   const [pendingUseDiaryContent, setPendingUseDiaryContent] = useState(false);
 
-  const [isResetting, setIsResetting] = useState(false);
-  const isDevResetEnabled = import.meta.env.VITE_DEV_RESET_ENABLED === "true";
 
   const isTimeAppended = useRef(false);
   const editorRef = useRef(null);
@@ -82,46 +80,6 @@ export default function DiaryPage() {
       alive = false;
     };
   }, []);
-
-  const handleResetTodayDiary = async () => {
-    if (isResetting) return;
-    if (
-      !window.confirm(
-        "오늘 작성한 일기와 연결된 색상·성찰 질문·기억 후보를 초기화합니다. 계속할까요?",
-      )
-    )
-      return;
-
-    setIsResetting(true);
-    try {
-      const response = await apiClient.delete("/api/dev/me/diaries/today");
-      const result = response.data.result;
-      alert(
-        result.deleted
-          ? "초기화가 완료되었습니다. 오늘 일기를 다시 작성할 수 있습니다."
-          : "오늘 작성된 일기가 없어 초기화할 데이터가 없습니다.",
-      );
-      window.location.reload();
-    } catch (error) {
-      const code = error.response?.data?.code;
-      if (code === "DEV409_1") {
-        alert("공유 이력이 있는 일기는 초기화할 수 없습니다.");
-      } else if (error.response?.status === 401) {
-        alert("로그인이 필요합니다.");
-      } else if (error.response?.status === 404) {
-        alert("현재 서버에서는 개발용 초기화 기능이 활성화되어 있지 않습니다.");
-      } else {
-        alert("오늘 일기를 초기화하지 못했습니다.");
-      }
-      console.error(
-        "DELETE /api/dev/me/diaries/today 실패:",
-        error.response?.status,
-        error.response?.data,
-      );
-    } finally {
-      setIsResetting(false);
-    }
-  };
 
   const handleScroll = (e) => {
     setIsScrolled(e.target.scrollTop > 10);
@@ -336,29 +294,17 @@ export default function DiaryPage() {
             />
           </button>
 
-          <div className="flex items-center gap-[8px]">
-            {isDevResetEnabled && (
-              <button
-                type="button"
-                onClick={handleResetTodayDiary}
-                disabled={isResetting}
-                className="shrink-0 rounded-[8px] border border-red-400 bg-grey-0 px-[8px] py-[4px] text-[12px] font-semibold text-red-500 disabled:opacity-50"
-              >
-                {isResetting ? "초기화 중..." : "오늘 일기 초기화"}
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => navigate("/mypage")}
-              className="w-[38px] h-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0 transition-opacity active:opacity-60"
-            >
-              <img
-                src={profileIcon}
-                alt="프로필"
-                className="w-full h-full object-contain [filter:drop-shadow(0_0_9.938px_rgba(65,68,80,0.16))]"
-              />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => navigate("/mypage")}
+            className="w-[38px] h-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0 transition-opacity active:opacity-60"
+          >
+            <img
+              src={profileIcon}
+              alt="프로필"
+              className="w-full h-full object-contain [filter:drop-shadow(0_0_9.938px_rgba(65,68,80,0.16))]"
+            />
+          </button>
         </header>
 
         <div className="flex w-[106px] h-[33px] justify-center items-center text-heading-28 text-grey-80 mb-[12px]">
