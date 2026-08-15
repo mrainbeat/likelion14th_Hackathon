@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
 import apiClient from "../../api/apiClient";
@@ -195,7 +195,7 @@ export default function TodayColorPage() {
             }}
           />
 
-          <div className="relative z-10 flex w-full shrink-0 items-start gap-[6px] px-[16px] pt-[32px]">
+          <div className="relative z-10 flex w-full shrink-0 items-start gap-[6px] px-[16px] pt-[32px] mb-[24px]">
             <LogoSymbol
               dotColor={accentColor}
               className="h-[27.872px] w-[22px] shrink-0"
