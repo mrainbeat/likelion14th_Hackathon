@@ -1,8 +1,7 @@
-﻿import arrowIcon from "../../../assets/icons/arrow.svg";
+﻿import backIcon from "../../../assets/icons/back.svg";
 export function ProgressBar({ step = 1, total = 4 }) {
   return (
-    <div className="absolute left-[4.10%] right-[4.10%] top-[12px] flex items-center gap-[8px]">
-      {" "}
+    <div className="flex w-full items-center gap-[8px]">
       {Array.from({ length: total }, (_, i) => (
         <div
           key={i}
@@ -20,10 +19,8 @@ export function Chip({ label, selected = false, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`flex h-[35px] shrink-0 items-center rounded-[17px] border border-solid px-[12px] text-[16px] leading-none transition-colors ${
-        selected
-          ? "border-grey-80 font-semibold text-grey-90"
-          : "border-grey-30 font-medium tracking-[-0.32px] text-grey-50"
+      className={`flex h-[35px] shrink-0 items-center rounded-[17px] border border-solid px-[12px] text-[16px] font-medium leading-none tracking-[-0.32px] transition-colors ${
+        selected ? "border-grey-80 text-grey-90" : "border-grey-30 text-grey-50"
       }`}
     >
       {label}
@@ -69,9 +66,9 @@ export function BackButton({ onClick }) {
       type="button"
       onClick={onClick}
       aria-label="이전으로"
-      className="absolute left-[4.10%] top-[26px] flex size-[32px] items-center justify-center"
+      className="size-[32px] shrink-0 cursor-pointer bg-transparent p-0 transition-opacity active:opacity-60"
     >
-      <img src={arrowIcon} alt="" className="h-[16px] w-[10px]" />
+      <img src={backIcon} alt="" className="h-full w-full" />
     </button>
   );
 }
