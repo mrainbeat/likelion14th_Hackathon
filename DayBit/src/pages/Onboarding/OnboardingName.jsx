@@ -3,11 +3,7 @@ import { useNavigate } from "react-router-dom";
 import OnboardingHeader from "./components/OnboardingHeader";
 import ClearIcon1 from "../../assets/icons/clear1.svg";
 import ClearIcon2 from "../../assets/icons/clear2.svg";
-import {
-  ProgressBar,
-  BackButton,
-  BottomButton,
-} from "./components/OnboardingUi";
+import { BottomButton } from "./components/OnboardingUi";
 
 export default function OnboardingName() {
   const navigate = useNavigate();
@@ -15,7 +11,7 @@ export default function OnboardingName() {
 
   useEffect(() => {
     const saved = localStorage.getItem("nickname");
-    if (saved) setNickname(saved);
+    if (saved) saved;
   }, []);
 
   const handleChange = (e) => {
@@ -39,14 +35,15 @@ export default function OnboardingName() {
 
   return (
     <div className="relative h-full w-full select-none overflow-hidden bg-background">
-      <ProgressBar step={0} />
-      <BackButton onClick={() => navigate("/login")} />
       <OnboardingHeader
+        step={0}
+        onBack={() => navigate("/login")}
         lines={["안녕하세요, 전 데이빗이에요 :)", "뭐라고 부르면 될까요?"]}
         caption="설정에서 언제든지 변경 가능해요."
       />
 
-      <div className="absolute left-[9.23%] right-[9.23%] top-[292px] flex flex-col gap-[8px]">
+      <div className="absolute left-[9.23%] right-[9.23%] top-[389px] flex flex-col gap-[8px]">
+        {" "}
         <div className="flex w-full flex-col gap-[6px]">
           <label className="w-full text-[14px] font-medium leading-[1.19] text-grey-70">
             닉네임
@@ -79,7 +76,7 @@ export default function OnboardingName() {
             <div className="h-px w-full bg-grey-30" />
           </div>
         </div>
-        <p className="w-full text-[14px] font-normal leading-[1.19] text-grey-50">
+        <p className="w-full text-[14px] font-normal leading-[1.19]text-grey-50">
           2~ 8자로 입력해주세요.
         </p>
       </div>

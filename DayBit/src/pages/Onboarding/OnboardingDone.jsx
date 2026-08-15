@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import OnboardingHeader from "./components/OnboardingHeader";
-import { ProgressBar, BottomButton } from "./components/OnboardingUi";
-
+import { BottomButton } from "./components/OnboardingUi";
 const BLOBS = [
   // 하단 왼쪽, 노랑
   {
@@ -44,7 +43,6 @@ const BLOBS = [
     color: "#FFCFCF",
   },
 ];
-
 // 진입 시 애니메이션
 const KEYFRAMES = `
 @keyframes blob-in {
@@ -55,18 +53,14 @@ const KEYFRAMES = `
   .blobs { animation: none !important; opacity: 1 !important; }
 }
 `;
-
 export default function OnboardingDone() {
   const navigate = useNavigate();
-
   const handleStart = () => {
     navigate("/diary", { replace: true });
   };
-
   return (
     <div className="relative h-full w-full select-none overflow-hidden bg-[#F6F8FA]">
       <style>{KEYFRAMES}</style>
-
       {/* 진입 시 색 진해지기 */}
       <div
         className="blobs pointer-events-none absolute inset-0 overflow-hidden"
@@ -88,16 +82,13 @@ export default function OnboardingDone() {
           />
         ))}
       </div>
-
-      <ProgressBar step={4} />
-
       <OnboardingHeader
+        step={4}
         lines={[
           "좋아요 :) 바로 기록을 시작할까요?",
           "기록 후에 어울리는 색을 만들게요!",
         ]}
       />
-
       <BottomButton onClick={handleStart}>시작하기</BottomButton>
     </div>
   );

@@ -3,28 +3,19 @@ import { useNavigate } from "react-router-dom";
 import OnboardingHeader from "./components/OnboardingHeader";
 import ClearIcon1 from "../../assets/icons/clear1.svg";
 import ClearIcon2 from "../../assets/icons/clear2.svg";
-import {
-  ProgressBar,
-  BackButton,
-  Chip,
-  BottomButton,
-} from "./components/OnboardingUi";
-
+import { Chip, BottomButton } from "./components/OnboardingUi";
 const PRESET_JOBS = ["직장인", "대학생", "구직중", "프리랜서"];
 const CUSTOM = "직접입력";
 const MAX_LENGTH = 40;
-
 export default function OnboardingJob() {
   const navigate = useNavigate();
   const [nickname, setNickname] = useState("");
   const [selectedJob, setSelectedJob] = useState("");
   const [customJob, setCustomJob] = useState("");
   const inputRef = useRef(null);
-
   useEffect(() => {
     const savedNickname = localStorage.getItem("nickname");
     if (savedNickname) setNickname(savedNickname);
-
     const savedJob = localStorage.getItem("job");
     if (savedJob) {
       if (PRESET_JOBS.includes(savedJob)) {
@@ -35,7 +26,6 @@ export default function OnboardingJob() {
       }
     }
   }, []);
-
   const handleSelect = (job) => {
     setSelectedJob(job);
     if (job === CUSTOM) {
@@ -45,7 +35,6 @@ export default function OnboardingJob() {
     setCustomJob("");
     localStorage.setItem("job", job);
   };
-
   const handleCustomChange = (e) => {
     const nextValue = e.target.value;
     setCustomJob(nextValue);
@@ -55,37 +44,33 @@ export default function OnboardingJob() {
       localStorage.removeItem("job");
     }
   };
-
   const handleClearCustom = () => {
     setCustomJob("");
     localStorage.removeItem("job");
     inputRef.current?.focus();
   };
-
   const isValid =
     selectedJob !== "" &&
     (selectedJob !== CUSTOM || customJob.trim().length > 0);
-
   const handleNext = () => {
     if (isValid) navigate("/onboarding/alarm", { replace: true });
   };
-
   return (
     <div className="relative h-full w-full select-none overflow-hidden bg-[#F6F8FA]">
-      <ProgressBar step={1} />
-      <BackButton onClick={() => navigate("/onboarding")} />{" "}
       <OnboardingHeader
+        step={1}
+        onBack={() => navigate("/onboarding")}
         lines={[
           `좋아요 ${nickname || "회원"}님!`,
           "일기작성을 돕기 위한 질문을 몇개 할게요!",
         ]}
         caption="설정에서 언제든지 변경 가능해요."
       />
-      <div className="absolute left-[9.23%] right-[9.23%] top-[288px] flex flex-col gap-[16px]">
+      <div className="absolute left-[9.23%] right-[9.23%] top-[389px] flex flex-col gap-[16px]">
+        {" "}
         <p className="whitespace-nowrap text-[20px] font-semibold leading-[1.19] tracking-[-0.4px] text-[#2D3038]">
           현재 어떤 일을 하고 있나요?
         </p>
-
         <div className="flex w-full flex-col items-start gap-[8px]">
           <div className="flex w-full flex-wrap items-center gap-[8px]">
             {PRESET_JOBS.map((job) => (
@@ -97,7 +82,6 @@ export default function OnboardingJob() {
               />
             ))}
           </div>
-
           <div className="flex w-full flex-col items-start gap-[12px]">
             <button
               type="button"
@@ -110,7 +94,6 @@ export default function OnboardingJob() {
             >
               직접 입력
             </button>
-
             {selectedJob === CUSTOM && (
               <div className="flex w-full flex-col items-center gap-[6px]">
                 <div className="flex w-full items-center justify-between">
