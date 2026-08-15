@@ -1,69 +1,31 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ExperiencePieceSection from "./components/ExperiencePieceSection";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
-const MOCK_RECEIVED_ALL = [
-  {
-    id: 1,
-    dateLabel: "9월 1일에 받은 조각",
-    tag: "알바",
-    time: "PM 1:00",
-    snippet: "산책하면서 공원에서 자연을 느꼈다.",
-  },
-  {
-    id: 2,
-    dateLabel: "8월 14일에 받은 조각",
-    tag: "수능공부",
-    time: "AM 10:05",
-    snippet: "새로운 레시피로 요리를 시도해 보았다.",
-  },
-  {
-    id: 3,
-    dateLabel: "8월 14일에 받은 조각",
-    tag: "수능공부",
-    time: "AM 10:05",
-    snippet: "새로운 레시피로 요리를 시도해 보았다.",
-  },
-  {
-    id: 4,
-    dateLabel: "8월 14일에 받은 조각",
-    tag: "수능공부",
-    time: "AM 10:05",
-    snippet: "새로운 레시피로 요리를 시도해 보았다.",
-  },
-  {
-    id: 5,
-    dateLabel: "8월 14일에 받은 조각",
-    tag: "수능공부",
-    time: "AM 10:05",
-    snippet: "새로운 레시피로 요리를 시도해 보았다.",
-  },
-  {
-    id: 6,
-    dateLabel: "8월 14일에 받은 조각",
-    tag: "수능공부",
-    time: "AM 10:05",
-    snippet: "새로운 레시피로 요리를 시도해 보았다.",
-  },
-  {
-    id: 7,
-    dateLabel: "8월 14일에 받은 조각",
-    tag: "수능공부",
-    time: "AM 10:05",
-    snippet: "새로운 레시피로 요리를 시도해 보았다.",
-  },
-  {
-    id: 8,
-    dateLabel: "8월 14일에 받은 조각",
-    tag: "수능공부",
-    time: "AM 10:05",
-    snippet: "새로운 레시피로 요리를 시도해 보았다.",
-  },
-];
+import {
+  getReceivedFragments,
+  removeReceivedFragment,
+  fragmentToPieceItem,
+} from "../../utils/experienceFragments";
 
 export default function ExperienceGottenListPage() {
   const navigate = useNavigate();
+  const [receivedFragments, setReceivedFragments] = useState(() =>
+    getReceivedFragments(),
+  );
+
+  const items = receivedFragments
+    .slice()
+    .sort((a, b) => new Date(b.receivedAt) - new Date(a.receivedAt))
+    .map((f) => fragmentToPieceItem(f, "received"));
+
+  const handleRemove = (item) => {
+    removeReceivedFragment(item.id);
+    setReceivedFragments(getReceivedFragments());
+  };
+
   return (
     <div className="relative flex h-full w-full select-none flex-col overflow-y-auto bg-[#f6f8fa] px-[16px] py-[16px] scrollbar-hide">
       <div className="flex w-full flex-col items-start gap-[16px] pb-[16px]">
@@ -101,8 +63,15 @@ export default function ExperienceGottenListPage() {
 
         <ExperiencePieceSection
           title="받은 경험조각"
-          items={MOCK_RECEIVED_ALL}
+          items={items}
           kebabMode="options"
+          onItemClick={(item) =>
+            navigate(`/experience/diary/${item.id}`, {
+              state: { mode: "incoming", fragment: item.fragment },
+            })
+          }
+          onHideItem={handleRemove}
+          onDeleteItem={handleRemove}
         />
       </div>
     </div>

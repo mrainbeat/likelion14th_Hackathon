@@ -21,6 +21,7 @@ import ExperienceSentListPage from "./pages/Experience/ExperienceSentListPage";
 import ExperienceSentDetailPage from "./pages/Experience/ExperienceSentDetailPage";
 import ExperienceDiaryPage from "./pages/Experience/ExperienceDiaryPage";
 import MyPage from "./pages/MyPage/MyPage";
+import WeeklyImagePage from "./pages/Home/WeeklyImagePage";
 
 function App() {
   return (
@@ -38,6 +39,10 @@ function App() {
           <Route path="/home" element={<HomePage />} />
           <Route path="/home/diaries" element={<DiaryListPage />} />
           <Route path="/home/diaries/:diaryId" element={<DiaryDetailPage />} />
+          <Route
+            path="/home/weekly-rewards/:weeklyRewardId"
+            element={<WeeklyImagePage />}
+          />
           <Route path="/experience" element={<ExperiencePage />} />
           <Route
             path="/experience/incoming"

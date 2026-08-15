@@ -1,72 +1,89 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ExperienceNotificationBubble from "./components/ExperienceNotificationBubble";
 import IncomingConfirmModal from "./components/IncomingConfirmModal";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
-const MOCK_ALL_NOTIFICATIONS = [
-  {
-    id: 1,
-    keyword: "다이어트",
-    message: `"다이어트"와 관련된 경험 조각이 도착했어요.`,
-    relativeTime: "12분 전",
-    isToday: true,
-  },
-  {
-    id: 2,
-    keyword: "다이어트",
-    message: `"다이어트"와 관련된 경험 조각이 도착했어요.`,
-    relativeTime: "21시간 전",
-    isToday: true,
-  },
-  {
-    id: 3,
-    keyword: "다이어트",
-    message: `"다이어트"와 관련된 경험 조각이 도착했어요.`,
-    relativeTime: "1일 전",
-    isToday: false,
-  },
-  {
-    id: 4,
-    keyword: "다이어트",
-    message: `"다이어트"와 관련된 경험 조각이 도착했어요.`,
-    relativeTime: "3일 전",
-    isToday: false,
-  },
-  {
-    id: 5,
-    keyword: "다이어트",
-    message: `"다이어트"와 관련된 경험 조각이 도착했어요.`,
-    relativeTime: "3일 전",
-    isToday: false,
-  },
-  {
-    id: 6,
-    keyword: "다이어트",
-    message: `"다이어트"와 관련된 경험 조각이 도착했어요.`,
-    relativeTime: "5일 전",
-    isToday: false,
-  },
-  {
-    id: 7,
-    keyword: "다이어트",
-    message: `"다이어트"와 관련된 경험 조각이 도착했어요.`,
-    relativeTime: "5일 전",
-    isToday: false,
-  },
-];
+import {
+  getMyExperienceFragments,
+  receiveExperienceMatch,
+  findExperienceMatches,
+  fragmentTopic,
+  saveReceivedFragment,
+} from "../../utils/experienceFragments";
 
 export default function ExperienceIncomingListPage() {
   const navigate = useNavigate();
+  const [matches, setMatches] = useState([]);
   const [confirmTarget, setConfirmTarget] = useState(null);
+  const [isReceiving, setIsReceiving] = useState(false);
+  const [receiveError, setReceiveError] = useState("");
 
-  const handleConfirmView = () => {
+  useEffect(() => {
+    let alive = true;
+    getMyExperienceFragments()
+      .then((response) => {
+        const fragments = response.data.result ?? [];
+        if (!alive || fragments.length === 0) return [];
+        return findExperienceMatches(fragments, 10);
+      })
+      .then((found) => {
+        if (alive && found) setMatches(found);
+      })
+      .catch((error) => {
+        console.error(
+          "GET /api/v1/experience-fragments/mine 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const notificationItems = matches.map((m) => ({
+    id: m.shareId,
+    shareId: m.shareId,
+    keyword: fragmentTopic(m) || "새로운 경험",
+    message: `"${fragmentTopic(m) || "새로운 경험"}"와 관련된 경험 조각이 도착했어요.`,
+    relativeTime: "지금 확인 가능",
+    isToday: true,
+  }));
+
+  const handleConfirmView = async () => {
     if (!confirmTarget) return;
-    navigate(`/experience/diary/${confirmTarget.id}`, {
-      state: { mode: "incoming", keyword: confirmTarget.keyword },
-    });
-    setConfirmTarget(null);
+    setIsReceiving(true);
+    setReceiveError("");
+    try {
+      const response = await receiveExperienceMatch(confirmTarget.shareId);
+      const result = response.data.result;
+      const fragment = {
+        shareId: confirmTarget.shareId,
+        anonymizedContent: result?.anonymizedContent ?? "",
+        generalTopic: result?.generalTopic ?? confirmTarget.keyword,
+        keywords: result?.keywords ?? [],
+        receivedAt: new Date().toISOString(),
+      };
+      saveReceivedFragment(fragment);
+      setMatches((prev) =>
+        prev.filter((m) => m.shareId !== confirmTarget.shareId),
+      );
+      setConfirmTarget(null);
+      navigate(`/experience/diary/${fragment.shareId}`, {
+        state: { mode: "incoming", fragment },
+      });
+    } catch (error) {
+      console.error(
+        "POST /api/v1/experience-fragments/matches/{shareId}/receive 실패:",
+        error.response?.status,
+        error.response?.data,
+      );
+      setReceiveError("경험조각을 받아오지 못했어요. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setIsReceiving(false);
+    }
   };
 
   return (
@@ -115,12 +132,9 @@ export default function ExperienceIncomingListPage() {
                   최신순
                 </span>
               </div>
-              <p className="text-[14px] font-medium tracking-[-0.28px] text-grey-60">
-                한재이님은 "3번" 경험조각을 받을 수 있어요
-              </p>
             </div>
             <div className="flex w-full flex-col items-start gap-[16px]">
-              {MOCK_ALL_NOTIFICATIONS.map((n) => (
+              {notificationItems.map((n) => (
                 <ExperienceNotificationBubble
                   key={n.id}
                   {...n}
@@ -135,9 +149,22 @@ export default function ExperienceIncomingListPage() {
       {confirmTarget && (
         <IncomingConfirmModal
           keyword={confirmTarget.keyword}
-          onDecline={() => setConfirmTarget(null)}
+          onDecline={() => {
+            setConfirmTarget(null);
+            setReceiveError("");
+          }}
           onConfirm={handleConfirmView}
         />
+      )}
+
+      {receiveError && !confirmTarget && (
+        <div className="absolute inset-x-[16px] bottom-[16px] z-50 rounded-[12px] bg-grey-90/90 px-[16px] py-[12px] text-center text-[14px] font-medium text-grey-0">
+          {receiveError}
+        </div>
+      )}
+
+      {isReceiving && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-grey-90/10" />
       )}
     </div>
   );

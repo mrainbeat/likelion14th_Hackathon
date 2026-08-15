@@ -51,23 +51,28 @@ export default function ExperiencePieceSection({
   moreItems: initialMoreItems = [],
   kebabMode = "options",
   onItemKebabClick,
+  onItemClick,
+  onHideItem,
+  onDeleteItem,
   onNavigateMore,
 }) {
-  const [items, setItems] = useState(initialItems);
-  const [moreItems, setMoreItems] = useState(initialMoreItems);
+  const [hiddenIds, setHiddenIds] = useState(() => new Set());
   const [expanded, setExpanded] = useState(false);
   const [openMenuId, setOpenMenuId] = useState(null);
 
-  const handleHide = (id) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
-    setMoreItems((prev) => prev.filter((item) => item.id !== id));
+  const items = initialItems.filter((i) => !hiddenIds.has(i.id));
+  const moreItems = initialMoreItems.filter((i) => !hiddenIds.has(i.id));
+
+  const handleHide = (item) => {
+    setHiddenIds((prev) => new Set(prev).add(item.id));
     setOpenMenuId(null);
+    onHideItem?.(item);
   };
 
-  const handleDelete = (id) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
-    setMoreItems((prev) => prev.filter((item) => item.id !== id));
+  const handleDelete = (item) => {
+    setHiddenIds((prev) => new Set(prev).add(item.id));
     setOpenMenuId(null);
+    onDeleteItem?.(item);
   };
 
   const totalCount = items.length + moreItems.length;
@@ -101,7 +106,12 @@ export default function ExperiencePieceSection({
           {visibleItems.map((item, i) => (
             <Fragment key={item.id}>
               {i > 0 && <div className="h-px w-full bg-grey-40" />}
-              <div className="flex w-full flex-col items-start gap-[8px]">
+              <div
+                className={`flex w-full flex-col items-start gap-[8px] ${
+                  onItemClick ? "cursor-pointer" : ""
+                }`}
+                onClick={() => onItemClick?.(item)}
+              >
                 <div className="flex w-full items-center justify-between">
                   <div className="flex items-center gap-[8px]">
                     <p className="whitespace-nowrap text-[18px] font-semibold tracking-[-0.18px] text-grey-80">
@@ -117,11 +127,12 @@ export default function ExperiencePieceSection({
                     <div className="relative shrink-0">
                       <button
                         type="button"
-                        onClick={() =>
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setOpenMenuId((prev) =>
                             prev === item.id ? null : item.id,
-                          )
-                        }
+                          );
+                        }}
                       >
                         <img
                           src={kebabIcon}
@@ -132,8 +143,8 @@ export default function ExperiencePieceSection({
                       {openMenuId === item.id && (
                         <ExperiencePieceOptionsMenu
                           onClose={() => setOpenMenuId(null)}
-                          onHide={() => handleHide(item.id)}
-                          onDelete={() => handleDelete(item.id)}
+                          onHide={() => handleHide(item)}
+                          onDelete={() => handleDelete(item)}
                         />
                       )}
                     </div>
@@ -141,7 +152,10 @@ export default function ExperiencePieceSection({
                     <button
                       type="button"
                       className="shrink-0"
-                      onClick={() => onItemKebabClick?.(item)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onItemKebabClick?.(item);
+                      }}
                     >
                       <img
                         src={kebabIcon}

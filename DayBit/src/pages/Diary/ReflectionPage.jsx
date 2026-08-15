@@ -2,6 +2,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
 import apiClient from "../../api/apiClient";
+import { createExperienceFragment } from "../../utils/experienceFragments";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
@@ -55,6 +56,7 @@ export default function ReflectionPage() {
   const { dateStr } = useCurrentTime() || {};
   const diaryContent = location.state?.content ?? "";
   const useDiaryContent = location.state?.useDiaryContent ?? false;
+  const shareAnonymously = location.state?.shareAnonymously ?? false;
 
   const [loading, setLoading] = useState(true);
   const [question, setQuestion] = useState("");
@@ -90,6 +92,16 @@ export default function ReflectionPage() {
         setQuestion(result.reflectionQuestion?.questionText ?? "");
         setDiaryId(result.diaryId ?? null);
         setReward(result.reward ?? null);
+
+        if (shareAnonymously && result.diaryId) {
+          createExperienceFragment(result.diaryId).catch((shareError) => {
+            console.error(
+              "POST /api/v1/experience-fragments/diaries/{diaryId} 실패:",
+              shareError.response?.status,
+              shareError.response?.data,
+            );
+          });
+        }
 
         localStorage.removeItem("diary_content");
         localStorage.removeItem("diary_content_date");

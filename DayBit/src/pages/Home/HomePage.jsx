@@ -4,8 +4,16 @@ import apiClient from "../../api/apiClient";
 import MonthYearPickerModal from "./components/MonthYearPickerModal";
 import ResumeDraftModal from "../Diary/components/ResumeDraftModal";
 import HomeTutorial from "./components/HomeTutorial";
+import WeeklyImageNotificationModal from "./components/WeeklyImageNotificationModal";
 import SpeechBubble from "../../components/SpeechBubble";
 import { getTodayColorPalette, hexToRgba } from "../../utils/rewardColor";
+import {
+  getWeeklyRewards,
+  isWeeklyRewardNotified,
+  isWeeklyRewardViewed,
+  markWeeklyRewardNotified,
+  markWeeklyRewardViewed,
+} from "../../utils/weeklyRewards";
 import LogoSymbol from "../../assets/icons/LogoSymbol.jsx";
 import profileIcon from "../../assets/icons/profile.svg";
 import bellIcon from "../../assets/icons/notification-bell.svg";
@@ -17,6 +25,7 @@ import {
   draftHasContent,
 } from "../../utils/diaryDraft";
 let resumeCheckedThisSession = false;
+let weeklyNotifyCheckedThisSession = false;
 
 const WEEKDAYS = ["월", "화", "수", "목", "금", "토", "일"];
 
@@ -54,32 +63,40 @@ function getSeoulToday() {
   };
 }
 
+function formatDate(d) {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+// 각 주는 {cells, weekStartDate}로, weekStartDate는 그 주의 월요일(주간 보상 API의
+// weekStartDate와 매칭하기 위함) — 달의 앞/뒷주는 월요일이 다른 달일 수 있어 실제
+// Date 연산으로 구한다
 function buildCalendarWeeks(year, month) {
   const firstOfMonth = new Date(year, month - 1, 1);
   const daysInMonth = new Date(year, month, 0).getDate();
-  const prevMonthDays = new Date(year, month - 1, 0).getDate();
   const firstWeekday = (firstOfMonth.getDay() + 6) % 7; // 0=월요일
-
-  const cells = [];
-  for (let i = firstWeekday - 1; i >= 0; i--) {
-    cells.push({ day: prevMonthDays - i, inMonth: false });
-  }
-  for (let d = 1; d <= daysInMonth; d++) {
-    cells.push({
-      day: d,
-      inMonth: true,
-      dateStr: `${year}-${pad2(month)}-${pad2(d)}`,
-    });
-  }
-  let nextDay = 1;
-  while (cells.length % 7 !== 0) {
-    cells.push({ day: nextDay++, inMonth: false });
-  }
+  const numWeeks = Math.ceil((firstWeekday + daysInMonth) / 7);
+  const gridStart = new Date(year, month - 1, 1 - firstWeekday);
 
   const weeks = [];
-  for (let i = 0; i < cells.length; i += 7) {
-    weeks.push(cells.slice(i, i + 7));
+  for (let w = 0; w < numWeeks; w += 1) {
+    const weekStart = new Date(gridStart);
+    weekStart.setDate(gridStart.getDate() + w * 7);
+
+    const cells = [];
+    for (let d = 0; d < 7; d += 1) {
+      const cur = new Date(weekStart);
+      cur.setDate(weekStart.getDate() + d);
+      const inMonth = cur.getMonth() === month - 1;
+      cells.push({
+        day: cur.getDate(),
+        inMonth,
+        dateStr: inMonth ? formatDate(cur) : undefined,
+      });
+    }
+
+    weeks.push({ cells, weekStartDate: formatDate(weekStart) });
   }
+
   return weeks;
 }
 
@@ -117,16 +134,31 @@ function DayCell({ cell, item, onClick }) {
   );
 }
 
-function RewardBadge() {
+const REWARD_BADGE_STYLE = {
+  // 받을 수 있음(생성 완료, 아직 미확인) — 진한 배경
+  available: "bg-[#5F6473] text-grey-0",
+  // 이미 확인함 — 흰 배경 + 테두리
+  viewed: "border-[1.5px] border-[#787E8C] bg-transparent text-grey-70",
+  // 아직 받을 수 없음(생성 전/불가) — 연한 회색
+  unavailable: "bg-grey-30 text-grey-0",
+};
+
+function RewardBadge({ state, onClick }) {
+  const isInteractive = state === "available" || state === "viewed";
   return (
-    <div
+    <button
+      type="button"
       data-reward-badge
-      className="relative flex size-[38px] shrink-0 items-center justify-center overflow-clip rounded-[4px] bg-grey-30"
+      onClick={isInteractive ? onClick : undefined}
+      disabled={!isInteractive}
+      className={`relative flex size-[38px] shrink-0 items-center justify-center overflow-clip rounded-[4px] p-0 ${
+        isInteractive ? "cursor-pointer" : "cursor-default"
+      } ${REWARD_BADGE_STYLE[state] ?? REWARD_BADGE_STYLE.unavailable}`}
     >
-      <p className="whitespace-nowrap text-[12px] font-semibold tracking-[-0.12px] text-grey-0">
+      <p className="whitespace-nowrap text-[12px] font-semibold tracking-[-0.12px]">
         보상
       </p>
-    </div>
+    </button>
   );
 }
 
@@ -259,6 +291,95 @@ export default function HomePage() {
     clearDraft();
     setShowResumeDraft(false);
     navigate("/diary");
+  };
+
+  const [weeklyRewardsByWeekStart, setWeeklyRewardsByWeekStart] = useState(
+    () => new Map(),
+  );
+  const [weeklyRewardsLoaded, setWeeklyRewardsLoaded] = useState(false);
+  const [notifyReward, setNotifyReward] = useState(null);
+
+  // 달의 첫 주는 월요일이 이전 달일 수 있어 그 달도 같이 불러와 합친다
+  useEffect(() => {
+    let alive = true;
+    setWeeklyRewardsLoaded(false);
+
+    const prevMonthDate = new Date(viewYear, viewMonth - 2, 1);
+    const requests = [
+      getWeeklyRewards(viewYear, viewMonth),
+      getWeeklyRewards(
+        prevMonthDate.getFullYear(),
+        prevMonthDate.getMonth() + 1,
+      ),
+    ];
+
+    Promise.allSettled(requests).then((results) => {
+      if (!alive) return;
+      const map = new Map();
+      results.forEach((result) => {
+        if (result.status !== "fulfilled") return;
+        const items = result.value.data.result?.items ?? [];
+        items.forEach((item) => map.set(item.weekStartDate, item));
+      });
+      setWeeklyRewardsByWeekStart(map);
+      setWeeklyRewardsLoaded(true);
+    });
+
+    return () => {
+      alive = false;
+    };
+  }, [viewYear, viewMonth]);
+
+  // 지난주 보상이 생성 완료됐는데 아직 알림을 못 받았으면 세션당 한 번 띄운다
+  useEffect(() => {
+    if (
+      !weeklyRewardsLoaded ||
+      !isCurrentMonth ||
+      weeklyNotifyCheckedThisSession
+    )
+      return;
+    weeklyNotifyCheckedThisSession = true;
+
+    const candidates = Array.from(weeklyRewardsByWeekStart.values()).filter(
+      (item) =>
+        item.status === "COMPLETED" &&
+        item.available &&
+        item.weekEndDate < today.dateStr &&
+        !isWeeklyRewardNotified(item.weeklyRewardId),
+    );
+    if (candidates.length === 0) return;
+
+    candidates.sort((a, b) => (a.weekEndDate < b.weekEndDate ? 1 : -1));
+    setNotifyReward(candidates[0]);
+  }, [weeklyRewardsLoaded, weeklyRewardsByWeekStart, isCurrentMonth, today]);
+
+  const handleNotifyClose = () => {
+    if (notifyReward) markWeeklyRewardNotified(notifyReward.weeklyRewardId);
+    setNotifyReward(null);
+  };
+
+  const handleNotifyConfirm = () => {
+    if (!notifyReward) return;
+    markWeeklyRewardNotified(notifyReward.weeklyRewardId);
+    markWeeklyRewardViewed(notifyReward.weeklyRewardId);
+    const id = notifyReward.weeklyRewardId;
+    setNotifyReward(null);
+    navigate(`/home/weekly-rewards/${id}`);
+  };
+
+  const getRewardBadgeState = (weekStartDate) => {
+    const item = weeklyRewardsByWeekStart.get(weekStartDate);
+    if (!item || item.status !== "COMPLETED" || !item.available) {
+      return "unavailable";
+    }
+    return isWeeklyRewardViewed(item.weeklyRewardId) ? "viewed" : "available";
+  };
+
+  const handleRewardBadgeClick = (weekStartDate) => {
+    const item = weeklyRewardsByWeekStart.get(weekStartDate);
+    if (!item) return;
+    markWeeklyRewardViewed(item.weeklyRewardId);
+    navigate(`/home/weekly-rewards/${item.weeklyRewardId}`);
   };
 
   const scrollRef = useRef(null);
@@ -490,8 +611,8 @@ export default function HomePage() {
                   </div>
 
                   <div className="flex flex-col gap-[2px]">
-                    {weeks.map((week, weekIdx) => {
-                      const daysInMonthCount = week.filter(
+                    {weeks.map(({ cells, weekStartDate }, weekIdx) => {
+                      const daysInMonthCount = cells.filter(
                         (cell) => cell.inMonth,
                       ).length;
                       const canEarnReward = daysInMonthCount >= 3;
@@ -501,7 +622,7 @@ export default function HomePage() {
                           className="flex w-full items-center justify-between"
                         >
                           <div className="flex items-center gap-[2px]">
-                            {week.map((cell, i) => {
+                            {cells.map((cell, i) => {
                               const item = cell.inMonth
                                 ? itemByDate.get(cell.dateStr)
                                 : undefined;
@@ -524,7 +645,14 @@ export default function HomePage() {
                               );
                             })}
                           </div>
-                          {canEarnReward && <RewardBadge />}
+                          {canEarnReward && (
+                            <RewardBadge
+                              state={getRewardBadgeState(weekStartDate)}
+                              onClick={() =>
+                                handleRewardBadgeClick(weekStartDate)
+                              }
+                            />
+                          )}
                         </div>
                       );
                     })}
@@ -650,6 +778,15 @@ export default function HomePage() {
             onDiscard={handleDiscardDraft}
             onResume={handleResumeDraft}
             onClose={() => setShowResumeDraft(false)}
+          />
+        )}
+
+        {notifyReward && (
+          <WeeklyImageNotificationModal
+            imageUrl={notifyReward.imageUrl}
+            onLater={handleNotifyClose}
+            onConfirm={handleNotifyConfirm}
+            onClose={handleNotifyClose}
           />
         )}
       </div>
