@@ -9,6 +9,8 @@ import OnboardingAlarm from "./pages/Onboarding/OnboardingAlarm";
 import OnboardingConsent from "./pages/Onboarding/OnboardingConsent";
 import OnboardingDone from "./pages/Onboarding/OnboardingDone";
 import KakaoCallbackPage from "./pages/Auth/KakaoCallbackPage";
+import EmailLoginPage from "./pages/Auth/EmailLoginPage";
+import SignupPage from "./pages/Auth/SignupPage";
 import ReflectionPage from "./pages/Diary/ReflectionPage";
 import TodayColorPage from "./pages/Diary/TodayColorPage";
 import HomePage from "./pages/Home/HomePage";
@@ -38,6 +40,8 @@ function App() {
           <Route element={<Layout />}></Route>
           <Route path="/" element={<SplashScreen />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/login/email" element={<EmailLoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
           <Route path="/onboarding" element={<OnboardingName />} />
           <Route path="/onboarding/job" element={<OnboardingJob />} />
           <Route path="/onboarding/alarm" element={<OnboardingAlarm />} />

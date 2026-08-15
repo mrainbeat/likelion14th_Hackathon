@@ -1,4 +1,25 @@
-import apiClient from "../../api/apiClient";
+import apiClient, { refreshCsrfToken } from "../../api/apiClient";
+
+export function login(email, password) {
+  return apiClient.post("/api/auth/login", { email, password });
+}
+
+export function signup(email, password) {
+  return apiClient.post("/api/auth/signup", { email, password });
+}
+
+export async function resolveDestinationAfterAuth() {
+  const response = await apiClient.get("/api/me");
+  const user = response.data.result;
+
+  try {
+    await refreshCsrfToken();
+  } catch (csrfError) {
+    console.error("GET /api/auth/csrf 실패:", csrfError);
+  }
+
+  return user.onboardingCompleted ? "/home" : "/onboarding";
+}
 
 export function clearLocalSession() {
   try {
