@@ -1,15 +1,15 @@
 ﻿import { useState, useEffect, useRef, useMemo } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
 import QuestionModal from "./components/QuestionModal";
 import ExitConfirmModal from "./components/ExitConfirmModal";
 import DiaryTutorial from "./components/DiaryTutorial";
 import ReflectionConsentModal from "./components/ReflectionConsentModal";
 import AnonymousShareModal from "./components/AnonymousShareModal";
-import ResumeDraftModal from "./components/ResumeDraftModal";
 import apiClient from "../../api/apiClient";
 import backIcon from "../../assets/icons/back.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
+import logoImageDisabled from "../../assets/logos/logo-symbol-disabled.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import { saveDraft, clearDraft, loadTodayDraft } from "../../utils/diaryDraft";
 
@@ -28,7 +28,6 @@ function htmlToPlainText(html) {
 
 export default function DiaryPage() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { dateStr } = useCurrentTime() || {};
   const [content, setContent] = useState("");
   const [initialText, setInitialText] = useState("");
@@ -55,15 +54,10 @@ export default function DiaryPage() {
   const [showReflectionConsent, setShowReflectionConsent] = useState(false);
   const [showAnonymousShare, setShowAnonymousShare] = useState(false);
   const [pendingUseDiaryContent, setPendingUseDiaryContent] = useState(false);
-  const [showResumeDraft, setShowResumeDraft] = useState(false);
-
-  const [isResetting, setIsResetting] = useState(false);
-  const isDevResetEnabled = import.meta.env.VITE_DEV_RESET_ENABLED === "true";
 
   const isTimeAppended = useRef(false);
   const editorRef = useRef(null);
   const scrollContainerRef = useRef(null);
-  const pendingDraftRef = useRef(null);
 
   useEffect(() => {
     let alive = true;
@@ -86,46 +80,6 @@ export default function DiaryPage() {
     };
   }, []);
 
-  const handleResetTodayDiary = async () => {
-    if (isResetting) return;
-    if (
-      !window.confirm(
-        "오늘 작성한 일기와 연결된 색상·성찰 질문·기억 후보를 초기화합니다. 계속할까요?",
-      )
-    )
-      return;
-
-    setIsResetting(true);
-    try {
-      const response = await apiClient.delete("/api/dev/me/diaries/today");
-      const result = response.data.result;
-      alert(
-        result.deleted
-          ? "초기화가 완료되었습니다. 오늘 일기를 다시 작성할 수 있습니다."
-          : "오늘 작성된 일기가 없어 초기화할 데이터가 없습니다.",
-      );
-      window.location.reload();
-    } catch (error) {
-      const code = error.response?.data?.code;
-      if (code === "DEV409_1") {
-        alert("공유 이력이 있는 일기는 초기화할 수 없습니다.");
-      } else if (error.response?.status === 401) {
-        alert("로그인이 필요합니다.");
-      } else if (error.response?.status === 404) {
-        alert("현재 서버에서는 개발용 초기화 기능이 활성화되어 있지 않습니다.");
-      } else {
-        alert("오늘 일기를 초기화하지 못했습니다.");
-      }
-      console.error(
-        "DELETE /api/dev/me/diaries/today 실패:",
-        error.response?.status,
-        error.response?.data,
-      );
-    } finally {
-      setIsResetting(false);
-    }
-  };
-
   const handleScroll = (e) => {
     setIsScrolled(e.target.scrollTop > 10);
   };
@@ -145,30 +99,12 @@ export default function DiaryPage() {
     const timeStr = getFormattedTime();
     const timeHtml = `<span style="color: #5F6473; font-weight: 500;">${timeStr}</span><br><span style="color: #2D3038;">\u200B</span>`;
     const savedDiary = loadTodayDraft();
-    const skipPrompt = Boolean(location.state?.skipResumePrompt);
 
     let priorText = "";
     if (savedDiary) {
       const tempPrior = document.createElement("div");
       tempPrior.innerHTML = savedDiary;
       priorText = (tempPrior.textContent || tempPrior.innerText || "").trim();
-    }
-
-    if (priorText.length > 0 && !skipPrompt) {
-      pendingDraftRef.current = savedDiary;
-      setShowResumeDraft(true);
-
-      if (editorRef.current) {
-        editorRef.current.innerHTML = timeHtml;
-        setContent(timeHtml);
-
-        const temp = document.createElement("div");
-        temp.innerHTML = timeHtml;
-        setInitialText(temp.textContent || temp.innerText || "");
-      }
-
-      isTimeAppended.current = true;
-      return;
     }
 
     const newContent = savedDiary
@@ -201,58 +137,6 @@ export default function DiaryPage() {
 
     isTimeAppended.current = true;
   }, []);
-
-  const handleResumeDraft = () => {
-    const savedDiary = pendingDraftRef.current;
-    const timeStr = getFormattedTime();
-    const timeHtml = `<span style="color: #5F6473; font-weight: 500;">${timeStr}</span><br><span style="color: #2D3038;">\u200B</span>`;
-    const newContent = savedDiary
-      ? `${savedDiary}<br><br>${timeHtml}`
-      : timeHtml;
-
-    setHadPriorContent(true);
-
-    if (editorRef.current) {
-      editorRef.current.innerHTML = newContent;
-      setContent(newContent);
-
-      const temp = document.createElement("div");
-      temp.innerHTML = newContent;
-      setInitialText(temp.textContent || temp.innerText || "");
-
-      setTimeout(() => {
-        try {
-          const range = document.createRange();
-          const sel = window.getSelection();
-          range.selectNodeContents(editorRef.current);
-          range.collapse(false);
-          sel.removeAllRanges();
-          sel.addRange(range);
-          editorRef.current.focus();
-        } catch (e) {}
-      }, 10);
-    }
-
-    setShowResumeDraft(false);
-  };
-
-  const handleDiscardDraft = () => {
-    clearDraft();
-    pendingDraftRef.current = null;
-    setShowResumeDraft(false);
-
-    setTimeout(() => {
-      try {
-        const range = document.createRange();
-        const sel = window.getSelection();
-        range.selectNodeContents(editorRef.current);
-        range.collapse(false);
-        sel.removeAllRanges();
-        sel.addRange(range);
-        editorRef.current.focus();
-      } catch (e) {}
-    }, 10);
-  };
 
   const handleInput = (e) => {
     setContent(e.currentTarget.innerHTML);
@@ -382,7 +266,7 @@ export default function DiaryPage() {
   };
 
   const handleTutorialNext = () => {
-    if (tutorialStep === 2) {
+    if (tutorialStep === 3) {
       localStorage.setItem("diary_tutorial_seen", "true");
       setTutorialStep(null);
       return;
@@ -410,25 +294,17 @@ export default function DiaryPage() {
             />
           </button>
 
-          <div className="flex items-center gap-[8px]">
-            {/* {isDevResetEnabled && (
-              // <button
-              //   type="button"
-              //   onClick={handleResetTodayDiary}
-              //   disabled={isResetting}
-              //   className="shrink-0 rounded-[8px] border border-red-400 bg-grey-0 px-[8px] py-[4px] text-[12px] font-semibold text-red-500 disabled:opacity-50"
-              // >
-              //   {isResetting ? "초기화 중..." : "오늘 일기 초기화"}
-              // </button>
-            )} */}
-            <button className="w-[38px] h-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0">
-              <img
-                src={profileIcon}
-                alt="프로필"
-                className="w-full h-full object-contain [filter:drop-shadow(0_0_9.938px_rgba(65,68,80,0.16))]"
-              />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => navigate("/mypage")}
+            className="w-[38px] h-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0 transition-opacity active:opacity-60"
+          >
+            <img
+              src={profileIcon}
+              alt="프로필"
+              className="w-full h-full object-contain [filter:drop-shadow(0_0_9.938px_rgba(65,68,80,0.16))]"
+            />
+          </button>
         </header>
 
         <div className="flex w-[106px] h-[33px] justify-center items-center text-heading-28 text-grey-80 mb-[12px]">
@@ -458,7 +334,7 @@ export default function DiaryPage() {
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-[16px] relative z-0"
+          className="flex-1 min-h-0 overflow-y-auto scrollbar-hide px-[16px] relative"
         >
           <div className="flex flex-col gap-[16px] pb-[170px]">
             <div className="w-full bg-grey-0 rounded-[12px] px-[16px] py-[20px] flex flex-col shrink-0 shadow-[0_0_30px_0_rgba(65,68,80,0.05),0_0_10px_0_rgba(77,80,91,0.05)] min-h-[91px] ">
@@ -478,10 +354,14 @@ export default function DiaryPage() {
                   type="button"
                   onClick={handleGetQuestions}
                   disabled={isAllQuestionsLoaded || isAskingQuestion}
-                  className="w-[217px] h-[48px] border-[1.5px] border-grey-60 bg-grey-0 rounded-[12px] px-[26px] text-[18px] font-semibold text-grey-95 tracking-[-0.18px] flex items-center justify-center gap-[4px] whitespace-nowrap active:bg-gray-50 disabled:opacity-50 transition-all"
+                  className={`w-[217px] h-[48px] border-[1.5px] bg-grey-0 rounded-[12px] px-[26px] text-[18px] font-semibold tracking-[-0.36px] flex items-center justify-center gap-[6px] whitespace-nowrap active:bg-gray-50 transition-all ${
+                    isAllQuestionsLoaded
+                      ? "border-[#E8EBF0] text-grey-30"
+                      : "border-grey-60 text-grey-95"
+                  }`}
                 >
                   <img
-                    src={logoImage}
+                    src={isAllQuestionsLoaded ? logoImageDisabled : logoImage}
                     alt="로고"
                     className="w-[16px] h-[20px] object-contain shrink-0"
                   />
@@ -489,15 +369,15 @@ export default function DiaryPage() {
                     {isAskingQuestion
                       ? "질문 받는 중..."
                       : isAllQuestionsLoaded
-                        ? "질문 완료"
+                        ? "질문 받기 완료"
                         : "데이빗에게 질문 받기"}
                   </span>
                 </button>
                 <button
                   type="button"
                   onClick={handleComplete}
-                  disabled={!hasUserWritten}
-                  className="w-[118px] h-[48px] rounded-[12px] px-[26px] text-[18px] font-semibold tracking-[-0.18px] bg-grey-70 text-grey-0 disabled:bg-grey-20 disabled:text-grey-0 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                  disabled={!hasUserWritten && tutorialStep !== 2}
+                  className="w-[118px] h-[48px] rounded-[12px] px-[26px] text-[18px] font-semibold tracking-[-0.18px] bg-grey-70 text-grey-0 disabled:bg-grey-20 disabled:text-grey-0 disabled:cursor-not-allowed transition-colors duration-700 delay-200 ease-in-out whitespace-nowrap"
                 >
                   작성 완료
                 </button>
@@ -509,7 +389,10 @@ export default function DiaryPage() {
                 </p>
               )}
 
-              <QuestionModal questions={questions} />
+              <QuestionModal
+                questions={questions}
+                remainingQuestions={remainingQuestions}
+              />
             </div>
           </div>
         </div>
