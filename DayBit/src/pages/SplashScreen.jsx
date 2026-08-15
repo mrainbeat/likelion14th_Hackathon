@@ -1,37 +1,64 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import logoImage from "../assets/logos/logo-full.png";
+import apiClient, { refreshCsrfToken } from "../api/apiClient";
+import LogoSymbol from "../assets/logos/logo-symbol.svg";
+import LogoText from "../assets/logos/logo-text.svg";
+
+const SPLASH_MIN_MS = 2500;
 
 export default function SplashScreen() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // 2.5초 뒤 로그인 페이지로 이동 (뒤로가기 방지 replace: true 적용)
-    const timer = setTimeout(() => {
-      navigate("/login", { replace: true });
-    }, 2500);
+    let alive = true;
 
-    // 컴포넌트 언마운트 시 타이머 종료시킴
-    return () => clearTimeout(timer);
+    const resolveDestination = async () => {
+      try {
+        const response = await apiClient.get("/api/me");
+        const user = response.data.result;
+
+        try {
+          await refreshCsrfToken();
+        } catch (csrfError) {
+          console.error("GET /api/auth/csrf 실패:", csrfError);
+        }
+
+        return user.onboardingCompleted ? "/home" : "/onboarding";
+      } catch (error) {
+        if (error.response?.status !== 401) {
+          console.error(
+            "GET /api/me 실패:",
+            error.response?.status,
+            error.response?.data,
+          );
+        }
+        return "/login";
+      }
+    };
+
+    const minDelay = new Promise((resolve) =>
+      setTimeout(resolve, SPLASH_MIN_MS),
+    );
+
+    Promise.all([resolveDestination(), minDelay]).then(([destination]) => {
+      if (alive) navigate(destination, { replace: true });
+    });
+
+    return () => {
+      alive = false;
+    };
   }, [navigate]);
 
   return (
-    // 전체 화면 컨테이너
-    <div className="flex flex-col items-center min-h-screen bg-white animate-fade-in">
-      {/* 상단 여백 : 전체 높이의 34% */}
-      <div className="flex-none" style={{ height: "34%" }}></div>
-
-      {/* 로고 영역 : 전체 높이의 26% */}
-      <div className="flex-1 flex items-center justify-center w-full px-8">
+    <div className="relative h-full w-full select-none overflow-hidden bg-[#F6F8FA]">
+      <div className="pointer-events-none absolute left-1/2 top-[33.9dvh] flex -translate-x-1/2 flex-col items-center gap-[16px]">
+        <img src={LogoSymbol} alt="" className="w-[95px] object-contain" />
         <img
-          src={logoImage}
-          alt="Logo"
-          className="w-auto h-auto max-w-[220px] max-h-[220px] object-contain"
+          src={LogoText}
+          alt="DAY BIT"
+          className="w-[153px] object-contain"
         />
       </div>
-
-      {/* 하단 여백 : 전체 높이의 40%) */}
-      <div className="flex-none" style={{ height: "40%" }}></div>
     </div>
   );
 }
