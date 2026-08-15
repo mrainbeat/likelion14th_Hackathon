@@ -15,7 +15,8 @@ export default function OnboardingHeader({
       : "text-[20px] tracking-[-0.4px]";
 
   return (
-    <div className="absolute left-0 right-0 top-[49px] flex flex-col items-start gap-[60px] px-[16px] py-[16px]">
+    <div className="absolute left-0 right-0 top-0 flex flex-col items-start gap-[60px] px-[16px] py-[16px]">
+      {" "}
       <div className="flex w-full flex-col items-start gap-[16px]">
         <ProgressBar step={step} total={totalSteps} />
         {onBack && <BackButton onClick={onBack} />}
