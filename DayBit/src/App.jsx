@@ -21,8 +21,15 @@ import ExperienceSentListPage from "./pages/Experience/ExperienceSentListPage";
 import ExperienceSentDetailPage from "./pages/Experience/ExperienceSentDetailPage";
 import ExperienceDiaryPage from "./pages/Experience/ExperienceDiaryPage";
 import MyPage from "./pages/MyPage/MyPage";
+import NotificationsPage from "./pages/Notification/NotificationsPage";
+import ProfileSettingsPage from "./pages/MyPage/ProfileSettingsPage";
+import NotificationSettingsPage from "./pages/MyPage/NotificationSettingsPage";
+import DiaryManagementPage from "./pages/MyPage/DiaryManagementPage";
+import SubscriptionPage from "./pages/MyPage/SubscriptionPage";
+import CustomerServicePage from "./pages/MyPage/CustomerServicePage";
+import TermsPage from "./pages/MyPage/TermsPage";
+import PrivacyPolicyPage from "./pages/MyPage/PrivacyPolicyPage";
 import WeeklyImagePage from "./pages/Home/WeeklyImagePage";
-
 function App() {
   return (
     <BrowserRouter>
@@ -62,6 +69,20 @@ function App() {
             element={<ExperienceDiaryPage />}
           />
           <Route path="/mypage" element={<MyPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/mypage/profile" element={<ProfileSettingsPage />} />
+          <Route
+            path="/mypage/notifications"
+            element={<NotificationSettingsPage />}
+          />
+          <Route
+            path="/mypage/diary-management"
+            element={<DiaryManagementPage />}
+          />
+          <Route path="/mypage/subscription" element={<SubscriptionPage />} />
+          <Route path="/mypage/support" element={<CustomerServicePage />} />
+          <Route path="/mypage/terms" element={<TermsPage />} />
+          <Route path="/mypage/privacy" element={<PrivacyPolicyPage />} />
           <Route path="/diary" element={<DiaryPage />} />
           <Route path="/diary/reflection" element={<ReflectionPage />} />
           <Route path="/diary/today-color" element={<TodayColorPage />} />
@@ -74,5 +95,4 @@ function App() {
     </BrowserRouter>
   );
 }
-
 export default App;

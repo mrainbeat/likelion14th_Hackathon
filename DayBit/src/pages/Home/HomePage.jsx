@@ -549,13 +549,17 @@ export default function HomePage() {
               <br />
               차곡차곡 쌓이고 있어요
             </p>
-            <div className="flex shrink-0 items-center justify-center px-[6px] py-[3px]">
+            <button
+              type="button"
+              onClick={() => navigate("/notifications")}
+              className="flex shrink-0 cursor-pointer items-center justify-center border-none bg-transparent px-[6px] py-[3px] transition-opacity active:opacity-60"
+            >
               <img
                 src={bellIcon}
                 alt="알림"
                 className="h-[24.375px] w-[18.963px] object-contain"
               />
-            </div>
+            </button>
           </div>
         </div>
 
