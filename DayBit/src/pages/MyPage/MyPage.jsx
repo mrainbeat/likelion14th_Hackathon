@@ -1,10 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/apiClient";
 import { logout } from "../Auth/auth";
 import { clearDraft } from "../../utils/diaryDraft";
-import backIcon from "../../assets/icons/back.svg";
-import profileIcon from "../../assets/icons/profile.svg";
 import chevronIcon from "../../assets/icons/mypage-chevron-right.svg";
 import personIcon from "../../assets/icons/mypage-person.svg";
 import notificationsIcon from "../../assets/icons/mypage-notifications.svg";
@@ -16,11 +14,19 @@ import lockIcon from "../../assets/icons/mypage-lock.svg";
 import personRemoveIcon from "../../assets/icons/mypage-person-remove.svg";
 import sentimentEyeIcon from "../../assets/icons/mypage-sentiment-eye.svg";
 import sentimentFaceIcon from "../../assets/icons/mypage-sentiment-face.svg";
+import MyPageHeader from "./components/MyPageHeader";
+import LogoutConfirmModal from "./components/LogoutConfirmModal";
+import { useNickname } from "./useNickname";
 
 function MenuIcon({ src, inset }) {
   return (
     <div className="relative size-[30px] shrink-0">
-      <img src={src} alt="" className="absolute block max-w-none" style={inset} />
+      <img
+        src={src}
+        alt=""
+        className="absolute block max-w-none"
+        style={inset}
+      />
     </div>
   );
 }
@@ -81,40 +87,23 @@ function Divider() {
 
 export default function MyPage() {
   const navigate = useNavigate();
-  const [nickname, setNickname] = useState(
-    () => localStorage.getItem("nickname") || "",
-  );
+  const nickname = useNickname();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  useEffect(() => {
-    let alive = true;
-
-    apiClient
-      .get("/api/me")
-      .then((response) => {
-        if (!alive) return;
-        const user = response.data.result;
-        const name = user?.nickname || user?.name;
-        if (name) setNickname(name);
-      })
-      .catch((error) => {
-        console.error(
-          "GET /api/me 실패:",
-          error.response?.status,
-          error.response?.data,
-        );
-      });
-
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  const handleLogout = async () => {
+  const handleLogoutClick = () => {
     if (isLoggingOut) return;
-    if (!window.confirm("로그아웃 하시겠어요?")) return;
+    setShowLogoutModal(true);
+  };
 
+  const handleLogoutCancel = () => {
+    setShowLogoutModal(false);
+  };
+
+  const handleLogoutConfirm = async () => {
+    if (isLoggingOut) return;
+    setShowLogoutModal(false);
     setIsLoggingOut(true);
     await logout();
     navigate("/login", { replace: true });
@@ -128,7 +117,6 @@ export default function MyPage() {
       )
     )
       return;
-
     setIsResetting(true);
     try {
       const response = await apiClient.delete("/api/dev/me/diaries/today");
@@ -147,7 +135,7 @@ export default function MyPage() {
       } else if (error.response?.status === 401) {
         alert("로그인이 필요합니다.");
       } else if (error.response?.status === 404) {
-        alert("현재 서버에서는 개발용 초기화 기능이 활성화되어 있지 않습니다.");
+        alert("현재 서버에서는 개발용 초기화 기능이 활성화되어 있지않습니다.");
       } else {
         alert("오늘 일기를 초기화하지 못했습니다.");
       }
@@ -162,38 +150,15 @@ export default function MyPage() {
   };
 
   return (
-    <div className="flex h-full w-full select-none flex-col gap-[14px] overflow-y-auto bg-[#F6F8FA] px-[16px] py-[16px] scrollbar-hide">
-      <div className="flex w-full shrink-0 items-center justify-between">
-        <button
-          type="button"
-          onClick={() => navigate("/home")}
-          className="size-[32px] shrink-0 cursor-pointer bg-transparent p-0 transition-opacity active:opacity-60"
-        >
-          <img src={backIcon} alt="뒤로가기" className="h-full w-full" />
-        </button>
-        <div className="flex items-center justify-end gap-[12px]">
-          <p className="whitespace-nowrap text-[18px] font-semibold leading-[normal] tracking-[-0.36px] text-grey-90">
-            {nickname}
-          </p>
-          <img
-            src={profileIcon}
-            alt="프로필"
-            className="size-[38px] shrink-0 rounded-full object-contain"
-            style={{
-              filter: "drop-shadow(0 0 9.938px rgba(65, 68, 80, 0.16))",
-            }}
-          />
-        </div>
-      </div>
-
+    <div className="relative flex h-full w-full select-none flex-col gap-[14px] overflow-y-auto bg-[#F6F8FA] px-[16px] py-[16px] scrollbar-hide">
+      <MyPageHeader nickname={nickname} onBack={() => navigate("/home")} />
       <Divider />
-
       <div className="flex w-full flex-col gap-[16px]">
         <div className="flex w-full flex-col gap-[22px]">
           <MenuRow
             icon={<MenuIcon src={personIcon} inset={{ inset: "16.67%" }} />}
             label="프로필 • 개인화 설정"
-            disabled
+            onClick={() => navigate("/mypage/profile")}
           />
           <MenuRow
             icon={
@@ -203,24 +168,22 @@ export default function MyPage() {
               />
             }
             label="알림 설정"
-            disabled
+            onClick={() => navigate("/mypage/notifications")}
           />
           <MenuRow
             icon={<MenuIcon src={assignmentIcon} inset={{ inset: "0" }} />}
             label="일기 관리"
-            disabled
+            onClick={() => navigate("/mypage/diary-management")}
           />
           <MenuRow
             icon={
               <MenuIcon src={monetizationIcon} inset={{ inset: "8.33%" }} />
             }
             label="구독 관리"
-            disabled
+            onClick={() => navigate("/mypage/subscription")}
           />
         </div>
-
         <Divider />
-
         <div className="flex w-full flex-col gap-[22px]">
           <MenuRow
             icon={
@@ -230,12 +193,12 @@ export default function MyPage() {
               />
             }
             label="고객센터"
-            onClick={handleResetTodayDiary}
+            onClick={() => navigate("/mypage/support")}
           />
           <MenuRow
             icon={<MenuIcon src={checkCircleIcon} inset={{ inset: "8.33%" }} />}
             label="이용 약관"
-            disabled
+            onClick={() => navigate("/mypage/terms")}
           />
           <MenuRow
             icon={
@@ -245,12 +208,10 @@ export default function MyPage() {
               />
             }
             label="개인정보 처리방침"
-            disabled
+            onClick={() => navigate("/mypage/privacy")}
           />
         </div>
-
         <Divider />
-
         <div className="flex w-full flex-col gap-[22px]">
           <MenuRow
             icon={
@@ -260,11 +221,21 @@ export default function MyPage() {
               />
             }
             label="로그아웃"
-            onClick={handleLogout}
+            onClick={handleLogoutClick}
           />
-          <MenuRow icon={<SentimentIcon />} label="회원탈퇴" disabled />
+          <MenuRow
+            icon={<SentimentIcon />}
+            label="회원탈퇴"
+            onClick={handleResetTodayDiary}
+          />
         </div>
       </div>
+      {showLogoutModal && (
+        <LogoutConfirmModal
+          onCancel={handleLogoutCancel}
+          onConfirm={handleLogoutConfirm}
+        />
+      )}
     </div>
   );
 }
