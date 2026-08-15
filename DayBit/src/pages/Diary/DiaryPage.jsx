@@ -530,6 +530,7 @@ export default function DiaryPage() {
         <ReflectionConsentModal
           onSkip={() => handleReflectionChoice(false)}
           onUse={() => handleReflectionChoice(true)}
+          onClose={() => setShowReflectionConsent(false)}
         />
       )}
 
@@ -537,6 +538,7 @@ export default function DiaryPage() {
         <AnonymousShareModal
           onDecline={() => handleAnonymousShareChoice(false)}
           onShare={() => handleAnonymousShareChoice(true)}
+          onClose={() => setShowAnonymousShare(false)}
         />
       )}
 
@@ -544,6 +546,7 @@ export default function DiaryPage() {
         <ResumeDraftModal
           onDiscard={handleDiscardDraft}
           onResume={handleResumeDraft}
+          onClose={() => setShowResumeDraft(false)}
         />
       )}
     </div>

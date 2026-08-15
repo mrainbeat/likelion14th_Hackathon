@@ -314,8 +314,7 @@ export default function HomePage() {
       const base = scroller.getBoundingClientRect();
       const visibleHeight = scroller.clientHeight - TUTORIAL_SHEET_HEIGHT;
       const targetHeight = initial.rect.bottom - initial.rect.top;
-      const topInContent =
-        initial.rect.top - base.top + scroller.scrollTop;
+      const topInContent = initial.rect.top - base.top + scroller.scrollTop;
       const desiredTop = Math.max(16, (visibleHeight - targetHeight) / 2);
       scroller.scrollTop = Math.max(0, topInContent - desiredTop);
     }
@@ -396,262 +395,263 @@ export default function HomePage() {
             : undefined
         }
       >
-      <div className="flex w-full flex-col items-start gap-[8px]">
-        <div className="flex w-full items-center justify-between">
-          <div className="flex items-end gap-[4px]">
-            <LogoSymbol
-              dotColor={accentColor ?? "#414450"}
-              className="h-[25.338px] w-[20px] shrink-0"
-            />
-            <p className="whitespace-nowrap text-[14px] font-bold leading-[10px] tracking-[1.12px] text-grey-95">
-              DAY BIT
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => navigate("/mypage")}
-            className="size-[38px] shrink-0 cursor-pointer rounded-full border-none bg-transparent p-0 transition-opacity active:opacity-60"
-          >
-            <img
-              src={profileIcon}
-              alt="프로필"
-              className="h-full w-full object-contain"
-              style={{
-                filter: `drop-shadow(0 0 9.938px ${profileShadowColor})`,
-              }}
-            />
-          </button>
-        </div>
-
-        <div className="flex w-full items-end justify-between">
-          <p className="text-[22px] font-semibold leading-[normal] tracking-[-0.66px] text-grey-90">
-            {viewMonth}월의 조각이
-            <br />
-            차곡차곡 쌓이고 있어요
-          </p>
-          <div className="flex shrink-0 items-center justify-center px-[6px] py-[3px]">
-            <img
-              src={bellIcon}
-              alt="알림"
-              className="h-[24.375px] w-[18.963px] object-contain"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="flex w-full flex-col items-center gap-[16px]">
-        <div
-          className="w-full rounded-[12px] bg-grey-0 px-[16px] py-[14px]"
-          style={{ boxShadow: cardShadow }}
-        >
-          <div className="flex w-full flex-col gap-[6px]">
-            <div className="flex w-full items-center justify-between">
-              <button
-                type="button"
-                onClick={handlePrevMonth}
-                className="size-[24px] shrink-0 cursor-pointer"
-              >
-                <img
-                  src={arrowIcon}
-                  alt="이전 달"
-                  className="h-full w-full object-contain"
-                />
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowPicker(true)}
-                className="flex cursor-pointer items-center gap-[8px] whitespace-nowrap text-[24px] font-bold tracking-[-0.48px] text-grey-90"
-              >
-                {viewYear}년 {viewMonth}월
-              </button>
-              <button
-                type="button"
-                onClick={handleNextMonth}
-                className="size-[24px] shrink-0 cursor-pointer"
-              >
-                <img
-                  src={arrowIcon}
-                  alt="다음 달"
-                  className="h-full w-full rotate-180 object-contain"
-                />
-              </button>
+        <div className="flex w-full flex-col items-start gap-[8px]">
+          <div className="flex w-full items-center justify-between">
+            <div className="flex items-end gap-[4px]">
+              <LogoSymbol
+                dotColor={accentColor ?? "#414450"}
+                className="h-[25.338px] w-[20px] shrink-0"
+              />
+              <p className="whitespace-nowrap text-[14px] font-bold leading-[10px] tracking-[1.12px] text-grey-95">
+                DAY BIT
+              </p>
             </div>
+            <button
+              type="button"
+              onClick={() => navigate("/mypage")}
+              className="size-[38px] shrink-0 cursor-pointer rounded-full border-none bg-transparent p-0 transition-opacity active:opacity-60"
+            >
+              <img
+                src={profileIcon}
+                alt="프로필"
+                className="h-full w-full object-contain"
+                style={{
+                  filter: `drop-shadow(0 0 9.938px ${profileShadowColor})`,
+                }}
+              />
+            </button>
+          </div>
 
-            <div className="flex flex-col gap-[12px]">
-              <div className="flex flex-col gap-[8px]">
-                <div className="flex items-center gap-[2px]">
-                  {WEEKDAYS.map((label) => (
-                    <div
-                      key={label}
-                      className="flex size-[38px] shrink-0 items-center justify-center text-[16px] font-semibold tracking-[-0.16px] text-grey-90"
-                    >
-                      {label}
-                    </div>
-                  ))}
-                </div>
+          <div className="flex w-full items-end justify-between">
+            <p className="text-[22px] font-semibold leading-[normal] tracking-[-0.66px] text-grey-90">
+              {viewMonth}월의 조각이
+              <br />
+              차곡차곡 쌓이고 있어요
+            </p>
+            <div className="flex shrink-0 items-center justify-center px-[6px] py-[3px]">
+              <img
+                src={bellIcon}
+                alt="알림"
+                className="h-[24.375px] w-[18.963px] object-contain"
+              />
+            </div>
+          </div>
+        </div>
 
-                <div className="flex flex-col gap-[2px]">
-                  {weeks.map((week, weekIdx) => {
-                    const daysInMonthCount = week.filter(
-                      (cell) => cell.inMonth,
-                    ).length;
-                    const canEarnReward = daysInMonthCount >= 3;
-                    return (
-                      <div
-                        key={weekIdx}
-                        className="flex w-full items-center justify-between"
-                      >
-                        <div className="flex items-center gap-[2px]">
-                          {week.map((cell, i) => {
-                            const item = cell.inMonth
-                              ? itemByDate.get(cell.dateStr)
-                              : undefined;
-                            return (
-                              <DayCell
-                                key={i}
-                                cell={cell}
-                                item={item}
-                                onClick={() =>
-                                  navigate("/diary/today-color", {
-                                    state: {
-                                      reward: item.reward,
-                                      diaryId: item.diaryId,
-                                      recordedDate: item.recordedDate,
-                                      mode: "review",
-                                    },
-                                  })
-                                }
-                              />
-                            );
-                          })}
-                        </div>
-                        {canEarnReward && <RewardBadge />}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
+        <div className="flex w-full flex-col items-center gap-[16px]">
+          <div
+            className="w-full rounded-[12px] bg-grey-0 px-[16px] py-[14px]"
+            style={{ boxShadow: cardShadow }}
+          >
+            <div className="flex w-full flex-col gap-[6px]">
               <div className="flex w-full items-center justify-between">
                 <button
-                  ref={pencilRef}
                   type="button"
-                  onClick={() => navigate("/home/diaries")}
-                  aria-label="일기 목록"
-                  className="flex size-[40px] shrink-0 cursor-pointer items-center justify-center"
+                  onClick={handlePrevMonth}
+                  className="size-[24px] shrink-0 cursor-pointer"
                 >
-                  <div
-                    aria-hidden
-                    className="size-[19.503px]"
-                    style={maskedIcon(editIcon, "#5F6473")}
+                  <img
+                    src={arrowIcon}
+                    alt="이전 달"
+                    className="h-full w-full object-contain"
                   />
                 </button>
                 <button
                   type="button"
-                  onClick={handleGoToWrite}
-                  disabled={isTodayWritten}
-                  className={`flex h-[43px] items-center justify-center rounded-[12px] px-[20px] ${
-                    isTodayWritten
-                      ? "cursor-default bg-grey-20"
-                      : "cursor-pointer bg-grey-70"
-                  }`}
+                  onClick={() => setShowPicker(true)}
+                  className="flex cursor-pointer items-center gap-[8px] whitespace-nowrap text-[24px] font-bold tracking-[-0.48px] text-grey-90"
                 >
-                  <p className="whitespace-nowrap text-[16px] font-semibold leading-[normal] text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)] text-grey-0">
-                    {isTodayWritten ? "작성 완료" : "일기 작성하기"}
-                  </p>
+                  {viewYear}년 {viewMonth}월
                 </button>
+                <button
+                  type="button"
+                  onClick={handleNextMonth}
+                  className="size-[24px] shrink-0 cursor-pointer"
+                >
+                  <img
+                    src={arrowIcon}
+                    alt="다음 달"
+                    className="h-full w-full rotate-180 object-contain"
+                  />
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-[12px]">
+                <div className="flex flex-col gap-[8px]">
+                  <div className="flex items-center gap-[2px]">
+                    {WEEKDAYS.map((label) => (
+                      <div
+                        key={label}
+                        className="flex size-[38px] shrink-0 items-center justify-center text-[16px] font-semibold tracking-[-0.16px] text-grey-90"
+                      >
+                        {label}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-col gap-[2px]">
+                    {weeks.map((week, weekIdx) => {
+                      const daysInMonthCount = week.filter(
+                        (cell) => cell.inMonth,
+                      ).length;
+                      const canEarnReward = daysInMonthCount >= 3;
+                      return (
+                        <div
+                          key={weekIdx}
+                          className="flex w-full items-center justify-between"
+                        >
+                          <div className="flex items-center gap-[2px]">
+                            {week.map((cell, i) => {
+                              const item = cell.inMonth
+                                ? itemByDate.get(cell.dateStr)
+                                : undefined;
+                              return (
+                                <DayCell
+                                  key={i}
+                                  cell={cell}
+                                  item={item}
+                                  onClick={() =>
+                                    navigate("/diary/today-color", {
+                                      state: {
+                                        reward: item.reward,
+                                        diaryId: item.diaryId,
+                                        recordedDate: item.recordedDate,
+                                        mode: "review",
+                                      },
+                                    })
+                                  }
+                                />
+                              );
+                            })}
+                          </div>
+                          {canEarnReward && <RewardBadge />}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="flex w-full items-center justify-between">
+                  <button
+                    ref={pencilRef}
+                    type="button"
+                    onClick={() => navigate("/home/diaries")}
+                    aria-label="일기 목록"
+                    className="flex size-[40px] shrink-0 cursor-pointer items-center justify-center"
+                  >
+                    <div
+                      aria-hidden
+                      className="size-[19.503px]"
+                      style={maskedIcon(editIcon, "#5F6473")}
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleGoToWrite}
+                    disabled={isTodayWritten}
+                    className={`flex h-[43px] items-center justify-center rounded-[12px] px-[20px] ${
+                      isTodayWritten
+                        ? "cursor-default bg-grey-20"
+                        : "cursor-pointer bg-grey-70"
+                    }`}
+                  >
+                    <p className="whitespace-nowrap text-[16px] font-semibold leading-[normal] text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)] text-grey-0">
+                      {isTodayWritten ? "작성 완료" : "일기 작성하기"}
+                    </p>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div
-          className="flex w-full flex-col items-center rounded-[12px] bg-grey-0 px-[16px] py-[12px]"
-          style={{ boxShadow: cardShadow }}
-        >
-          <div className="flex items-center gap-[47px]">
-            <div className="flex w-[66px] flex-col items-center gap-[6px]">
-              <p className="whitespace-nowrap text-[16px] font-semibold text-grey-90">
-                오늘 작성
-              </p>
-              <p
-                className={`whitespace-nowrap text-[12px] font-semibold leading-[normal] tracking-[-0.12px] ${
-                  isTodayWritten
-                    ? "text-grey-70"
+          <div
+            className="flex w-full flex-col items-center rounded-[12px] bg-grey-0 px-[16px] py-[12px]"
+            style={{ boxShadow: cardShadow }}
+          >
+            <div className="flex items-center gap-[47px]">
+              <div className="flex w-[66px] flex-col items-center gap-[6px]">
+                <p className="whitespace-nowrap text-[16px] font-semibold text-grey-90">
+                  오늘 작성
+                </p>
+                <p
+                  className={`whitespace-nowrap text-[12px] font-semibold leading-[normal] tracking-[-0.12px] ${
+                    isTodayWritten
+                      ? "text-grey-70"
+                      : hasTodayDraft
+                        ? "text-[#787E8C]"
+                        : "text-grey-40"
+                  }`}
+                  style={
+                    isTodayWritten && accentColor
+                      ? { color: accentColor }
+                      : undefined
+                  }
+                >
+                  {isTodayWritten
+                    ? "작성 완료"
                     : hasTodayDraft
-                      ? "text-[#787E8C]"
-                      : "text-grey-40"
-                }`}
-                style={
-                  isTodayWritten && accentColor
-                    ? { color: accentColor }
-                    : undefined
-                }
+                      ? "작성 중"
+                      : "작성 전"}
+                </p>
+              </div>
+              <div className="h-full w-px shrink-0 bg-grey-20" />
+              <div className="flex flex-col items-center gap-[6px]">
+                <p className="whitespace-nowrap text-[16px] font-semibold text-grey-90">
+                  이달 기록
+                </p>
+                <p className="whitespace-nowrap text-[12px] font-semibold tracking-[-0.12px] text-grey-70">
+                  {monthItems.length}회
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className="flex w-full flex-col items-start gap-[16px] rounded-[12px] bg-grey-0 px-[16px] py-[20px] text-left opacity-30"
+            style={{ boxShadow: cardShadow }}
+          >
+            <div ref={experienceRef} className="flex items-center gap-[10px]">
+              <LogoSymbol
+                dotColor={accentColor ?? "#414450"}
+                className="h-[28px] w-[22px] shrink-0"
+              />
+              <p className="whitespace-nowrap text-[20px] font-semibold tracking-[-0.4px] text-grey-90">
+                경험조각 주고받기
+              </p>
+            </div>
+            {[
+              "“다이어트”와 관련된 다른사람의 경험이 도착했어요.",
+              "“수능공부”와 관련된 다른사람의 경험이 도착했어요.",
+            ].map((text) => (
+              <SpeechBubble
+                key={text}
+                color="#EFF1F6"
+                direction="left"
+                bordered
+                className="flex w-full items-center gap-[10px] px-[16px] py-[10px]"
               >
-                {isTodayWritten
-                  ? "작성 완료"
-                  : hasTodayDraft
-                    ? "작성 중"
-                    : "작성 전"}
-              </p>
-            </div>
-            <div className="h-full w-px shrink-0 bg-grey-20" />
-            <div className="flex flex-col items-center gap-[6px]">
-              <p className="whitespace-nowrap text-[16px] font-semibold text-grey-90">
-                이달 기록
-              </p>
-              <p className="whitespace-nowrap text-[12px] font-semibold tracking-[-0.12px] text-grey-70">
-                {monthItems.length}회
-              </p>
-            </div>
+                <p className="flex-1 text-[16px] font-medium tracking-[-0.32px] text-grey-80">
+                  {text}
+                </p>
+              </SpeechBubble>
+            ))}
           </div>
         </div>
 
-        <div
-          className="flex w-full flex-col items-start gap-[16px] rounded-[12px] bg-grey-0 px-[16px] py-[20px] text-left opacity-30"
-          style={{ boxShadow: cardShadow }}
-        >
-          <div ref={experienceRef} className="flex items-center gap-[10px]">
-            <LogoSymbol
-              dotColor={accentColor ?? "#414450"}
-              className="h-[28px] w-[22px] shrink-0"
-            />
-            <p className="whitespace-nowrap text-[20px] font-semibold tracking-[-0.4px] text-grey-90">
-              경험조각 주고받기
-            </p>
-          </div>
-          {[
-            "“다이어트”와 관련된 다른사람의 경험이 도착했어요.",
-            "“수능공부”와 관련된 다른사람의 경험이 도착했어요.",
-          ].map((text) => (
-            <SpeechBubble
-              key={text}
-              color="#EFF1F6"
-              direction="left"
-              bordered
-              className="flex w-full items-center gap-[10px] px-[16px] py-[10px]"
-            >
-              <p className="flex-1 text-[16px] font-medium tracking-[-0.32px] text-grey-80">
-                {text}
-              </p>
-            </SpeechBubble>
-          ))}
-        </div>
-      </div>
-
-      <MonthYearPickerModal
-        open={showPicker}
-        initial={{ year: viewYear, month: viewMonth }}
-        onConfirm={handleConfirmPicker}
-        onClose={() => setShowPicker(false)}
-      />
-
-      {showResumeDraft && (
-        <ResumeDraftModal
-          onDiscard={handleDiscardDraft}
-          onResume={handleResumeDraft}
+        <MonthYearPickerModal
+          open={showPicker}
+          initial={{ year: viewYear, month: viewMonth }}
+          onConfirm={handleConfirmPicker}
+          onClose={() => setShowPicker(false)}
         />
-      )}
+
+        {showResumeDraft && (
+          <ResumeDraftModal
+            onDiscard={handleDiscardDraft}
+            onResume={handleResumeDraft}
+            onClose={() => setShowReflectionConsent(false)}
+          />
+        )}
       </div>
 
       {tutorialStep !== null && (
