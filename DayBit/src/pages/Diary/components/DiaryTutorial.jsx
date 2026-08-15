@@ -1,15 +1,8 @@
 import MiniProgressBar from "./MiniProgressBar";
 
-const SPOTLIGHTS = [
-  { x: 20, y: 219, w: 217, h: 48, radius: 12 },
-  { x: 28, y: 126, w: 75, h: 35, radius: 8 },
-  { x: 251, y: 219, w: 118, h: 48, radius: 12 },
-  { x: 332, y: 16, w: 38, h: 38, radius: 57 },
-];
-
 const DIM_COLOR = "rgba(45, 48, 56, 0.35)";
 
-export default function DiaryTutorial({ step, onNext }) {
+export default function DiaryTutorial({ step, spot, onNext }) {
   const STEPS = [
     {
       title: "무엇을 쓸지 막막한가요?",
@@ -33,22 +26,27 @@ export default function DiaryTutorial({ step, onNext }) {
   ];
 
   const current = STEPS[step];
-  const spot = SPOTLIGHTS[step];
 
   return (
     <div className="absolute inset-0 z-50">
-      <div className="pointer-events-auto absolute inset-0" />
-      <div
-        className="pointer-events-auto absolute"
-        style={{
-          top: spot.y,
-          left: spot.x,
-          width: spot.w,
-          height: spot.h,
-          borderRadius: spot.radius,
-          boxShadow: `0 0 0 9999px ${DIM_COLOR}`,
-        }}
-      />
+      {spot ? (
+        <div
+          className="pointer-events-auto absolute"
+          style={{
+            top: spot.top,
+            left: spot.left,
+            width: spot.width,
+            height: spot.height,
+            borderRadius: spot.radius,
+            boxShadow: `0 0 0 9999px ${DIM_COLOR}`,
+          }}
+        />
+      ) : (
+        <div
+          className="pointer-events-auto absolute inset-0"
+          style={{ backgroundColor: DIM_COLOR }}
+        />
+      )}
 
       <div className="absolute inset-x-0 bottom-0 flex h-[312px] w-full flex-col items-start justify-between rounded-t-[8px] bg-grey-0 px-[16px] pb-[30px] pt-[16px]">
         <div className="flex w-full flex-1 flex-col items-start justify-between">

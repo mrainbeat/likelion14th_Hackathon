@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useMemo } from "react";
+﻿import { useState, useEffect, useLayoutEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
 import QuestionModal from "./components/QuestionModal";
@@ -54,10 +54,15 @@ export default function DiaryPage() {
   const [showReflectionConsent, setShowReflectionConsent] = useState(false);
   const [showAnonymousShare, setShowAnonymousShare] = useState(false);
   const [pendingUseDiaryContent, setPendingUseDiaryContent] = useState(false);
+  const [tutorialSpot, setTutorialSpot] = useState(null);
 
   const isTimeAppended = useRef(false);
   const editorRef = useRef(null);
   const scrollContainerRef = useRef(null);
+  const pageRef = useRef(null);
+  const questionButtonRef = useRef(null);
+  const completeButtonRef = useRef(null);
+  const profileButtonRef = useRef(null);
 
   useEffect(() => {
     let alive = true;
@@ -97,7 +102,7 @@ export default function DiaryPage() {
     if (isTimeAppended.current) return;
 
     const timeStr = getFormattedTime();
-    const timeHtml = `<span style="color: #5F6473; font-weight: 500;">${timeStr}</span><br><span style="color: #2D3038;">\u200B</span>`;
+    const timeHtml = `<span data-time-badge style="color: #5F6473; font-weight: 500;">${timeStr}</span><br><span style="color: #2D3038;">\u200B</span>`;
     const savedDiary = loadTodayDraft();
 
     let priorText = "";
@@ -274,10 +279,55 @@ export default function DiaryPage() {
     setTutorialStep((prev) => prev + 1);
   };
 
+  useLayoutEffect(() => {
+    if (tutorialStep === null) return;
+    const container = pageRef.current;
+    if (!container) return;
+
+    const collect = () => {
+      if (tutorialStep === 0) {
+        return { el: questionButtonRef.current, radius: 12, pad: 0 };
+      }
+      if (tutorialStep === 1) {
+        return {
+          el: editorRef.current?.querySelector("[data-time-badge]"),
+          radius: 8,
+          pad: 6,
+        };
+      }
+      if (tutorialStep === 2) {
+        return { el: completeButtonRef.current, radius: 12, pad: 0 };
+      }
+      return { el: profileButtonRef.current, radius: 999, pad: 0 };
+    };
+
+    const measure = () => {
+      const target = collect();
+      if (!target?.el) return;
+      const rect = target.el.getBoundingClientRect();
+      const base = container.getBoundingClientRect();
+      const pad = target.pad;
+      setTutorialSpot({
+        top: rect.top - base.top - pad,
+        left: rect.left - base.left - pad,
+        width: rect.width + pad * 2,
+        height: rect.height + pad * 2,
+        radius: target.radius,
+      });
+    };
+
+    measure();
+    const raf = requestAnimationFrame(measure);
+    return () => cancelAnimationFrame(raf);
+  }, [tutorialStep]);
+
   const isAllQuestionsLoaded = remainingQuestions === 0;
 
   return (
-    <div className="flex flex-col w-full h-full  min-h-0 bg-[#F6F8FA] box-border relative select-none overflow-hidden">
+    <div
+      ref={pageRef}
+      className="flex flex-col w-full h-full  min-h-0 bg-[#F6F8FA] box-border relative select-none overflow-hidden"
+    >
       <div className="absolute bottom-0 left-0 right-0 w-full h-[42px] bg-[#F6F8FA] z-30 pointer-events-none"></div>
 
       <div className="shrink-0 pt-[16px] px-[16px] relative z-20">
@@ -295,6 +345,7 @@ export default function DiaryPage() {
           </button>
 
           <button
+            ref={profileButtonRef}
             type="button"
             onClick={() => navigate("/mypage")}
             className="w-[38px] h-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0 transition-opacity active:opacity-60"
@@ -351,6 +402,7 @@ export default function DiaryPage() {
             <div className="flex flex-col gap-[10px] w-full shrink-0 ">
               <div className="flex w-full gap-[14px] z-20 relative">
                 <button
+                  ref={questionButtonRef}
                   type="button"
                   onClick={handleGetQuestions}
                   disabled={isAllQuestionsLoaded || isAskingQuestion}
@@ -374,6 +426,7 @@ export default function DiaryPage() {
                   </span>
                 </button>
                 <button
+                  ref={completeButtonRef}
                   type="button"
                   onClick={handleComplete}
                   disabled={!hasUserWritten && tutorialStep !== 2}
@@ -406,7 +459,11 @@ export default function DiaryPage() {
       )}
 
       {tutorialStep !== null && (
-        <DiaryTutorial step={tutorialStep} onNext={handleTutorialNext} />
+        <DiaryTutorial
+          step={tutorialStep}
+          spot={tutorialSpot}
+          onNext={handleTutorialNext}
+        />
       )}
 
       {showReflectionConsent && (
