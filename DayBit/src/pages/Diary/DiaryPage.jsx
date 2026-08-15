@@ -541,14 +541,6 @@ export default function DiaryPage() {
           onClose={() => setShowAnonymousShare(false)}
         />
       )}
-
-      {showResumeDraft && (
-        <ResumeDraftModal
-          onDiscard={handleDiscardDraft}
-          onResume={handleResumeDraft}
-          onClose={() => setShowResumeDraft(false)}
-        />
-      )}
     </div>
   );
 }
