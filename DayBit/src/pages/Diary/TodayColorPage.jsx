@@ -5,7 +5,7 @@ import apiClient from "../../api/apiClient";
 import { getTodayColorPalette, hexToRgba } from "../../utils/rewardColor";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
-import logoImage from "../../assets/logos/logo-symbol.svg";
+import LogoSymbol from "../../assets/icons/LogoSymbol.jsx";
 
 const BLOBS = [
   {
@@ -52,7 +52,6 @@ export default function TodayColorPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { dateStr } = useCurrentTime() || {};
-  const [isScrolled, setIsScrolled] = useState(false);
 
   const isReview = location.state?.mode === "review";
   const diaryId = location.state?.diaryId ?? null;
@@ -111,7 +110,6 @@ export default function TodayColorPage() {
     }
     navigate("/home", { replace: true });
   };
-  const handleScroll = (e) => setIsScrolled(e.target.scrollTop > 10);
 
   if (!reward) return null;
 
@@ -198,10 +196,9 @@ export default function TodayColorPage() {
           />
 
           <div className="relative z-10 flex w-full shrink-0 items-start gap-[6px] px-[20px] pt-[32px]">
-            <img
-              src={logoImage}
-              alt=""
-              className="h-[27.872px] w-[22px] shrink-0 object-contain"
+            <LogoSymbol
+              dotColor={accentColor}
+              className="h-[27.872px] w-[22px] shrink-0"
             />
             <p className="text-[24px] font-bold leading-[normal] tracking-[-0.48px] text-grey-80">
               오늘의 색
@@ -209,15 +206,6 @@ export default function TodayColorPage() {
           </div>
 
           <div className="relative z-10 min-h-0 flex-1">
-            <div
-              className={`pointer-events-none absolute left-0 right-0 top-0 z-10 h-[56px] transition-opacity duration-200 ${
-                isScrolled ? "opacity-100" : "opacity-0"
-              }`}
-              style={{
-                background:
-                  "linear-gradient(180deg, #FFF 0%, rgba(255, 255, 255, 0) 100%)",
-              }}
-            />
             <div
               className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-[56px]"
               style={{
@@ -227,7 +215,6 @@ export default function TodayColorPage() {
             />
 
             <div
-              onScroll={handleScroll}
               className="h-full overflow-y-auto scrollbar-hide px-[36px] pb-[24px] pt-[32px]"
             >
               {isReady ? (

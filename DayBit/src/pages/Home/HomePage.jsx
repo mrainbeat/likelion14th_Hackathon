@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/apiClient";
 import MonthYearPickerModal from "./components/MonthYearPickerModal";
 import ResumeDraftModal from "../Diary/components/ResumeDraftModal";
+import HomeTutorial from "./components/HomeTutorial";
 import SpeechBubble from "../../components/SpeechBubble";
 import { getTodayColorPalette, hexToRgba } from "../../utils/rewardColor";
 import LogoSymbol from "../../assets/icons/LogoSymbol.jsx";
@@ -118,7 +119,10 @@ function DayCell({ cell, item, onClick }) {
 
 function RewardBadge() {
   return (
-    <div className="relative flex size-[38px] shrink-0 items-center justify-center overflow-clip rounded-[4px] bg-grey-30">
+    <div
+      data-reward-badge
+      className="relative flex size-[38px] shrink-0 items-center justify-center overflow-clip rounded-[4px] bg-grey-30"
+    >
       <p className="whitespace-nowrap text-[12px] font-semibold tracking-[-0.12px] text-grey-0">
         보상
       </p>
@@ -133,50 +137,16 @@ export default function HomePage() {
   const [viewYear, setViewYear] = useState(today.year);
   const [viewMonth, setViewMonth] = useState(today.month);
   const [monthItems, setMonthItems] = useState([]);
-  const [todayItem, setTodayItem] = useState(null);
+  const [monthLoaded, setMonthLoaded] = useState(false);
+  const [awayTodayItem, setAwayTodayItem] = useState(null);
+  const [awayLoaded, setAwayLoaded] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const [showResumeDraft, setShowResumeDraft] = useState(false);
-
-  const themeColor =
-    todayItem?.reward?.status === "COMPLETED"
-      ? todayItem.reward.colorHex
-      : null;
-  const palette = themeColor ? getTodayColorPalette(themeColor) : null;
-
-  const accentColor = palette ? palette.uiAccentColor : null;
-  const profileShadowColor = accentColor
-    ? hexToRgba(accentColor, 0.16)
-    : "rgba(65, 68, 80, 0.16)";
-
-  const cardShadow = accentColor
-    ? `0 0 10px 0 ${hexToRgba(accentColor, 0.05)}, 0 0 30px 0 ${hexToRgba(accentColor, 0.05)}`
-    : "0 0 10px 0 rgba(77, 80, 91, 0.05), 0 0 30px 0 rgba(65, 68, 80, 0.05)";
-
   const [hasTodayDraft, setHasTodayDraft] = useState(() =>
     draftHasContent(loadTodayDraft()),
   );
 
-  useEffect(() => {
-    if (resumeCheckedThisSession) return;
-    resumeCheckedThisSession = true;
-
-    const draft = loadTodayDraft();
-    if (draftHasContent(draft)) {
-      setShowResumeDraft(true);
-    }
-  }, []);
-
-  const handleResumeDraft = () => {
-    setShowResumeDraft(false);
-    navigate("/diary");
-  };
-
-  const handleDiscardDraft = () => {
-    setHasTodayDraft(false);
-    clearDraft();
-    setShowResumeDraft(false);
-    navigate("/diary");
-  };
+  const isCurrentMonth = viewYear === today.year && viewMonth === today.month;
 
   useEffect(() => {
     let alive = true;
@@ -196,13 +166,19 @@ export default function HomePage() {
           error.response?.status,
           error.response?.data,
         );
+      })
+      .finally(() => {
+        if (alive) setMonthLoaded(true);
       });
     return () => {
       alive = false;
     };
   }, [viewYear, viewMonth]);
 
+  // 이번 달을 보고 있으면 위 응답에서 오늘 항목을 그대로 꺼내 쓴다.
+  // 따로 요청하면 캘린더 색과 포인트 색이 서로 다른 시점에 들어와 깜빡여서.
   useEffect(() => {
+    if (isCurrentMonth) return;
     let alive = true;
     apiClient
       .get("/api/v1/diaries", {
@@ -213,7 +189,7 @@ export default function HomePage() {
         if (!alive) return;
         const result = response.data.result;
         const items = Array.isArray(result) ? result : (result?.items ?? []);
-        setTodayItem(
+        setAwayTodayItem(
           items.find((item) => item.recordedDate === today.dateStr) ?? null,
         );
       })
@@ -223,17 +199,163 @@ export default function HomePage() {
           error.response?.status,
           error.response?.data,
         );
+      })
+      .finally(() => {
+        if (alive) setAwayLoaded(true);
       });
     return () => {
       alive = false;
     };
-  }, [today]);
+  }, [isCurrentMonth, today]);
 
   const itemByDate = new Map(
     monthItems.map((item) => [item.recordedDate, item]),
   );
 
+  const todayItem = isCurrentMonth
+    ? (itemByDate.get(today.dateStr) ?? null)
+    : awayTodayItem;
+  const todayLoaded = isCurrentMonth ? monthLoaded : awayLoaded;
   const isTodayWritten = Boolean(todayItem);
+
+  const themeColor =
+    todayItem?.reward?.status === "COMPLETED"
+      ? todayItem.reward.colorHex
+      : null;
+  const palette = themeColor ? getTodayColorPalette(themeColor) : null;
+
+  const accentColor = palette ? palette.uiAccentColor : null;
+  const profileShadowColor = accentColor
+    ? hexToRgba(accentColor, 0.16)
+    : "rgba(65, 68, 80, 0.16)";
+
+  const cardShadow = accentColor
+    ? `0 0 10px 0 ${hexToRgba(accentColor, 0.05)}, 0 0 30px 0 ${hexToRgba(accentColor, 0.05)}`
+    : "0 0 10px 0 rgba(77, 80, 91, 0.05), 0 0 30px 0 rgba(65, 68, 80, 0.05)";
+
+  // 오늘 일기가 이미 완료된 상태면 남아있는 임시 저장은 버그로 생긴 값이라 지운다
+  useEffect(() => {
+    if (!todayLoaded || resumeCheckedThisSession) return;
+    resumeCheckedThisSession = true;
+
+    if (isTodayWritten) {
+      clearDraft();
+      setHasTodayDraft(false);
+      return;
+    }
+
+    if (draftHasContent(loadTodayDraft())) {
+      setShowResumeDraft(true);
+    }
+  }, [todayLoaded, isTodayWritten]);
+
+  const handleResumeDraft = () => {
+    setShowResumeDraft(false);
+    navigate("/diary");
+  };
+
+  const handleDiscardDraft = () => {
+    setHasTodayDraft(false);
+    clearDraft();
+    setShowResumeDraft(false);
+    navigate("/diary");
+  };
+
+  const scrollRef = useRef(null);
+  const pencilRef = useRef(null);
+  const experienceRef = useRef(null);
+
+  const TUTORIAL_STEP_COUNT = 3;
+  const TUTORIAL_SHEET_HEIGHT = 312;
+  const tutorialJustFinished = useRef(false);
+  const [tutorialStep, setTutorialStep] = useState(() =>
+    localStorage.getItem("home_tutorial_seen") ? null : 0,
+  );
+  const [spot, setSpot] = useState(null);
+
+  useLayoutEffect(() => {
+    if (tutorialStep === null) return;
+
+    const scroller = scrollRef.current;
+    if (!scroller) return;
+
+    const collect = () => {
+      if (tutorialStep === 0) {
+        const badges = Array.from(
+          scroller.querySelectorAll("[data-reward-badge]"),
+        );
+        if (!badges.length) return null;
+        const rects = badges.map((b) => b.getBoundingClientRect());
+        return {
+          rect: {
+            top: Math.min(...rects.map((r) => r.top)),
+            left: Math.min(...rects.map((r) => r.left)),
+            right: Math.max(...rects.map((r) => r.right)),
+            bottom: Math.max(...rects.map((r) => r.bottom)),
+          },
+          radius: 4,
+          pad: 4,
+          el: badges[0],
+        };
+      }
+      const el = tutorialStep === 1 ? pencilRef.current : experienceRef.current;
+      if (!el) return null;
+      return {
+        rect: el.getBoundingClientRect(),
+        radius: tutorialStep === 1 ? 999 : 8,
+        pad: 6,
+        el,
+      };
+    };
+
+    // 하단 시트에 가리지 않도록 시트 위쪽 영역 가운데로 직접 스크롤한다
+    const initial = collect();
+    if (initial) {
+      const base = scroller.getBoundingClientRect();
+      const visibleHeight = scroller.clientHeight - TUTORIAL_SHEET_HEIGHT;
+      const targetHeight = initial.rect.bottom - initial.rect.top;
+      const topInContent =
+        initial.rect.top - base.top + scroller.scrollTop;
+      const desiredTop = Math.max(16, (visibleHeight - targetHeight) / 2);
+      scroller.scrollTop = Math.max(0, topInContent - desiredTop);
+    }
+
+    const measure = () => {
+      const target = collect();
+      if (!target) return;
+      const base = scroller.getBoundingClientRect();
+      const { rect, pad } = target;
+      setSpot({
+        top: rect.top - base.top - pad,
+        left: rect.left - base.left - pad,
+        width: rect.right - rect.left + pad * 2,
+        height: rect.bottom - rect.top + pad * 2,
+        radius: target.radius,
+      });
+    };
+
+    measure();
+    const raf = requestAnimationFrame(measure);
+    return () => cancelAnimationFrame(raf);
+  }, [tutorialStep, monthLoaded]);
+
+  // 하단 여백이 걷힌 뒤에 올려야 스크롤이 중간에 잘리지 않는다
+  useLayoutEffect(() => {
+    if (tutorialStep !== null || !tutorialJustFinished.current) return;
+    tutorialJustFinished.current = false;
+    scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, [tutorialStep]);
+
+  const handleTutorialNext = () => {
+    if (tutorialStep >= TUTORIAL_STEP_COUNT - 1) {
+      localStorage.setItem("home_tutorial_seen", "true");
+      tutorialJustFinished.current = true;
+      setTutorialStep(null);
+      setSpot(null);
+      return;
+    }
+    setTutorialStep((prev) => prev + 1);
+  };
 
   const weeks = buildCalendarWeeks(viewYear, viewMonth);
 
@@ -264,15 +386,24 @@ export default function HomePage() {
   const handleGoToWrite = () => navigate("/diary");
 
   return (
-    <div className="relative flex h-full w-full select-none flex-col items-center gap-[20px] overflow-y-auto bg-[#f6f8fa] px-[16px] py-[16px] scrollbar-hide">
+    <div className="relative h-full w-full overflow-hidden bg-[#f6f8fa]">
+      <div
+        ref={scrollRef}
+        className="flex h-full w-full select-none flex-col items-center gap-[20px] overflow-y-auto px-[16px] py-[16px] scrollbar-hide"
+        style={
+          tutorialStep !== null
+            ? { paddingBottom: TUTORIAL_SHEET_HEIGHT + 16 }
+            : undefined
+        }
+      >
       <div className="flex w-full flex-col items-start gap-[8px]">
         <div className="flex w-full items-center justify-between">
           <div className="flex items-end gap-[4px]">
             <LogoSymbol
               dotColor={accentColor ?? "#414450"}
-              className="h-[25px] w-[20px] shrink-0"
+              className="h-[25.338px] w-[20px] shrink-0"
             />
-            <p className="whitespace-nowrap text-[14px] font-bold tracking-[1.12px] text-grey-95">
+            <p className="whitespace-nowrap text-[14px] font-bold leading-[10px] tracking-[1.12px] text-grey-95">
               DAY BIT
             </p>
           </div>
@@ -403,6 +534,7 @@ export default function HomePage() {
 
               <div className="flex w-full items-center justify-between">
                 <button
+                  ref={pencilRef}
                   type="button"
                   onClick={() => navigate("/home/diaries")}
                   aria-label="일기 목록"
@@ -479,7 +611,7 @@ export default function HomePage() {
           className="flex w-full flex-col items-start gap-[16px] rounded-[12px] bg-grey-0 px-[16px] py-[20px] text-left"
           style={{ boxShadow: cardShadow }}
         >
-          <div className="flex items-center gap-[10px]">
+          <div ref={experienceRef} className="flex items-center gap-[10px]">
             <LogoSymbol
               dotColor={accentColor ?? "#414450"}
               className="h-[28px] w-[22px] shrink-0"
@@ -518,6 +650,15 @@ export default function HomePage() {
         <ResumeDraftModal
           onDiscard={handleDiscardDraft}
           onResume={handleResumeDraft}
+        />
+      )}
+      </div>
+
+      {tutorialStep !== null && (
+        <HomeTutorial
+          step={tutorialStep}
+          spot={spot}
+          onNext={handleTutorialNext}
         />
       )}
     </div>

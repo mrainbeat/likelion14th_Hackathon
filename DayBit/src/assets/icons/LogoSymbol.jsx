@@ -4,7 +4,7 @@ export default function LogoSymbol({ dotColor = "#414450", className = "" }) {
   return (
     <svg
       className={className}
-      viewBox="95 70 150 184"
+      viewBox="95 70 146 184"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >

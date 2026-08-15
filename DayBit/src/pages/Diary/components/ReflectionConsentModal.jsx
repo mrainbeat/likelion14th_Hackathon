@@ -1,10 +1,16 @@
 const BUTTON_BASE =
   "flex h-[49px] min-w-px flex-1 items-center justify-center whitespace-nowrap rounded-[12px] border-[1.5px] px-[26px] text-[18px] font-semibold tracking-[-0.36px] text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)]";
 
-export default function ReflectionConsentModal({ onSkip, onUse }) {
+export default function ReflectionConsentModal({ onSkip, onUse, onClose }) {
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-grey-90/25 backdrop-blur-[1px]">
-      <div className="flex w-[calc(100%-40px)] max-w-[350px] flex-col gap-[16px] rounded-[12px] bg-[#F6F8FA] px-[16px] py-[20px]">
+    <div
+      className="absolute inset-0 z-50 flex items-center justify-center bg-grey-90/25 backdrop-blur-[1px]"
+      onClick={onClose}
+    >
+      <div
+        className="flex w-[calc(100%-40px)] max-w-[350px] flex-col gap-[16px] rounded-[12px] bg-[#F6F8FA] px-[16px] py-[20px]"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex w-full flex-col items-start gap-[10px]">
           <div className="flex w-full flex-col items-start gap-[2px]">
             <p className="w-full text-[20px] font-semibold leading-[normal] tracking-[-0.4px] text-grey-90">

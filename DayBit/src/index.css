@@ -1,6 +1,12 @@
 @import "pretendard/dist/web/static/pretendard.css";
 @import "tailwindcss";
 
+html {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 @theme {
   --font-sans:
     "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto,

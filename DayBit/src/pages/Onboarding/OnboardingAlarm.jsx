@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import OnboardingHeader from "./components/OnboardingHeader";
 import AlarmTimeModal, { formatAlarmLabel } from "./components/AlarmTimeModal";
+import { requestNotificationPermission } from "../../utils/notification";
 import {
   ProgressBar,
   BackButton,
@@ -54,8 +55,11 @@ export default function OnboardingAlarm() {
 
   const isValid = selectedTime !== "";
 
-  const handleNext = () => {
-    if (isValid) navigate("/onboarding/consent", { replace: true });
+  const handleNext = async () => {
+    if (!isValid) return;
+    const permission = await requestNotificationPermission();
+    localStorage.setItem("notificationPermission", permission);
+    navigate("/onboarding/consent", { replace: true });
   };
 
   return (
