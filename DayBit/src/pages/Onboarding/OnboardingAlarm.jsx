@@ -59,7 +59,7 @@ export default function OnboardingAlarm() {
         ]}
         caption="설정에서 언제든지 변경 가능해요."
       />
-      <div className="absolute left-[9.23%] right-[9.23%] top-[340px] ...">
+      <div className="absolute left-[9.23%] right-[9.23%] top-[332px] flex flex-col gap-[16px]">
         {" "}
         <div className="flex flex-col items-start gap-[6px]">
           <p className="whitespace-nowrap text-[20px] font-semibold leading-[1.19] tracking-[-0.4px] text-grey-90">

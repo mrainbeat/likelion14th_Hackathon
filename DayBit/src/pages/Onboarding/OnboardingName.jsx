@@ -42,7 +42,7 @@ export default function OnboardingName() {
         caption="설정에서 언제든지 변경 가능해요."
       />
 
-      <div className="absolute left-[9.23%] right-[9.23%] top-[340px] ...">
+      <div className="absolute left-[9.23%] right-[9.23%] top-[336px] flex flex-col gap-[8px]">
         {" "}
         <div className="flex w-full flex-col gap-[6px]">
           <label className="w-full text-[14px] font-medium leading-[1.19] text-grey-70">

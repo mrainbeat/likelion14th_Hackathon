@@ -66,7 +66,7 @@ export default function OnboardingJob() {
         ]}
         caption="설정에서 언제든지 변경 가능해요."
       />
-      <div className="absolute left-[9.23%] right-[9.23%] top-[340px] ...">
+      <div className="absolute left-[9.23%] right-[9.23%] top-[332px] flex flex-col gap-[16px]">
         {" "}
         <p className="whitespace-nowrap text-[20px] font-semibold leading-[1.19] tracking-[-0.4px] text-[#2D3038]">
           현재 어떤 일을 하고 있나요?
