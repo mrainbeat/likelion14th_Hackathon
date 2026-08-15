@@ -38,27 +38,25 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="relative h-full w-full select-none overflow-hidden bg-[#F6F8FA]">
-      <div className="flex w-full items-center px-[20px] pt-[48px]">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="size-[32px] shrink-0 cursor-pointer bg-transparent border-none p-0 transition-opacity active:opacity-60"
-        >
-          <img
-            src={backIcon}
-            alt="뒤로가기"
-            className="h-full w-full object-contain"
-          />
-        </button>
-      </div>
+    <div className="relative flex h-full w-full select-none flex-col overflow-y-auto bg-[#F6F8FA] px-[16px] py-[16px] scrollbar-hide">
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        className="size-[32px] shrink-0 cursor-pointer bg-transparent p-0 transition-opacity active:opacity-60"
+      >
+        <img
+          src={backIcon}
+          alt="뒤로가기"
+          className="h-full w-full object-contain"
+        />
+      </button>
 
       <form
         onSubmit={handleSubmit}
         className="flex w-full flex-col items-center pt-[27px]"
       >
         <div className="flex w-full flex-col gap-[13px] items-center">
-          <div className="flex w-full flex-col gap-[55px] items-start px-[20px]">
+          <div className="flex w-full flex-col gap-[55px] items-start">
             <p className="w-full text-[20px] font-semibold tracking-[-0.2px] text-grey-90">
               회원가입
             </p>
@@ -100,7 +98,7 @@ export default function SignupPage() {
             </div>
           </div>
 
-          <div className="flex w-[350px] flex-col gap-[17px] items-center">
+          <div className="flex w-full flex-col gap-[17px] items-center">
             {error && (
               <p className="w-full text-[13px] font-medium text-red-500">
                 {error}
