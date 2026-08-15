@@ -411,16 +411,16 @@ export default function DiaryPage() {
           </button>
 
           <div className="flex items-center gap-[8px]">
-            {isDevResetEnabled && (
-              <button
-                type="button"
-                onClick={handleResetTodayDiary}
-                disabled={isResetting}
-                className="shrink-0 rounded-[8px] border border-red-400 bg-grey-0 px-[8px] py-[4px] text-[12px] font-semibold text-red-500 disabled:opacity-50"
-              >
-                {isResetting ? "초기화 중..." : "오늘 일기 초기화"}
-              </button>
-            )}
+            {/* {isDevResetEnabled && (
+              // <button
+              //   type="button"
+              //   onClick={handleResetTodayDiary}
+              //   disabled={isResetting}
+              //   className="shrink-0 rounded-[8px] border border-red-400 bg-grey-0 px-[8px] py-[4px] text-[12px] font-semibold text-red-500 disabled:opacity-50"
+              // >
+              //   {isResetting ? "초기화 중..." : "오늘 일기 초기화"}
+              // </button>
+            )} */}
             <button className="w-[38px] h-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0">
               <img
                 src={profileIcon}
