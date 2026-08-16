@@ -11,6 +11,11 @@ import {
   addDays,
 } from "../../utils/devDiary";
 import { useDevAccess } from "../../contexts/devAccess";
+import {
+  createExperienceFragment,
+  getMyExperienceFragments,
+  approveExperienceFragment,
+} from "../../utils/experienceFragments";
 
 const POLL_INTERVAL_MS = 1500;
 const POLL_TIMEOUT_MS = 90000;
@@ -122,7 +127,18 @@ export default function DatedDiaryPage() {
   const [isGeneratingWeekly, setIsGeneratingWeekly] = useState(false);
   const [weeklyResult, setWeeklyResult] = useState(null);
 
+  const [shareInstantly, setShareInstantly] = useState(false);
+  const [shareStatus, setShareStatus] = useState("");
+
   const pollRef = useRef(null);
+  const aliveRef = useRef(true);
+
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => {
+      aliveRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     const diaryId = savedDiary?.diaryId;
@@ -161,6 +177,73 @@ export default function DatedDiaryPage() {
     };
   }, [savedDiary]);
 
+  // 테스트 일기는 검토 유예기간 없이 익명화가 끝나는 대로 바로 승인해 공유 풀에 넣는다
+  const runInstantShare = async (diaryId) => {
+    setShareStatus("익명화를 요청하고 있어요...");
+    try {
+      await createExperienceFragment(diaryId);
+    } catch (error) {
+      console.error(
+        "POST /api/v1/experience-fragments/diaries/{diaryId} 실패:",
+        error.response?.status,
+        error.response?.data,
+      );
+      setShareStatus("경험조각 생성 요청에 실패했어요.");
+      return;
+    }
+
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      if (!aliveRef.current) return;
+
+      let found;
+      try {
+        const response = await getMyExperienceFragments();
+        found = (response.data.result ?? []).find(
+          (f) => f.diaryId === diaryId,
+        );
+      } catch (error) {
+        console.error(
+          "GET /api/v1/experience-fragments/mine 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+        continue;
+      }
+      if (!aliveRef.current) return;
+
+      if (found?.status === "REVIEW_REQUIRED") {
+        try {
+          await approveExperienceFragment(found.shareId);
+          if (aliveRef.current) {
+            setShareStatus("익명화 후 바로 전달까지 끝났어요.");
+          }
+        } catch (error) {
+          console.error(
+            "POST /api/v1/experience-fragments/{shareId}/approve 실패:",
+            error.response?.status,
+            error.response?.data,
+          );
+          if (aliveRef.current) setShareStatus("자동 전달에 실패했어요.");
+        }
+        return;
+      }
+      if (found?.status === "APPROVED") {
+        setShareStatus("이미 전달된 조각이에요.");
+        return;
+      }
+      if (found?.status === "BLOCKED" || found?.status === "REJECTED") {
+        setShareStatus("공유가 제한된 조각이에요.");
+        return;
+      }
+      setShareStatus(`익명화가 진행 중이에요... (${attempt + 1})`);
+    }
+
+    if (aliveRef.current) {
+      setShareStatus("익명화가 아직 안 끝났어요. 경험조각 화면에서 확인해주세요.");
+    }
+  };
+
   const weekStartDate = recordedDate ? getMondayOf(recordedDate) : "";
   const weekEndDate = weekStartDate ? addDays(weekStartDate, 6) : "";
   const canSave = Boolean(recordedDate) && content.trim().length > 0;
@@ -173,6 +256,7 @@ export default function DatedDiaryPage() {
     setSavedDiary(null);
     setReward(null);
     setWeeklyResult(null);
+    setShareStatus("");
 
     try {
       const response = await createDatedDiary(
@@ -185,6 +269,9 @@ export default function DatedDiaryPage() {
       setSavedDiary(result);
       setReward(result.reward ?? null);
       setContent("");
+      if (shareInstantly && result.diaryId) {
+        runInstantShare(result.diaryId);
+      }
     } catch (error) {
       console.error(
         "POST /api/dev/me/diaries 실패:",
@@ -305,12 +392,37 @@ export default function DatedDiaryPage() {
 
           <button
             type="button"
+            onClick={() => setShareInstantly((prev) => !prev)}
+            className="flex w-full items-center justify-between text-left"
+          >
+            <span className="min-w-0 flex-1 pr-[10px] text-[14px] font-medium leading-[1.4] text-grey-70">
+              경험조각으로 바로 공유 (익명화 후 유예기간 없이 전달)
+            </span>
+            <span
+              className={`flex size-[22px] shrink-0 items-center justify-center rounded-[6px] border-[1.5px] border-solid text-[13px] font-bold ${
+                shareInstantly
+                  ? "border-grey-70 bg-grey-70 text-grey-0"
+                  : "border-grey-30 bg-grey-0 text-transparent"
+              }`}
+            >
+              ✓
+            </span>
+          </button>
+
+          <button
+            type="button"
             onClick={handleSave}
             disabled={!canSave || isSaving}
             className={PRIMARY_BUTTON}
           >
             {isSaving ? "저장 중..." : "일기 저장"}
           </button>
+
+          {shareStatus && (
+            <p className="text-[13px] font-medium leading-[1.5] text-grey-70">
+              {shareStatus}
+            </p>
+          )}
 
           {saveError && (
             <p className="text-[13px] font-medium leading-[1.5] text-red-500">
@@ -426,6 +538,21 @@ export default function DatedDiaryPage() {
               )}
             </div>
           )}
+        </div>
+
+        <div className={CARD}>
+          <p className={SECTION_TITLE}>4. 경험조각 주고받기</p>
+          <p className={CAPTION}>
+            홈 화면에서는 아직 막아둔 화면이에요. 여기서만 들어가서 익명화
+            결과와 전달을 확인할 수 있어요.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate("/experience")}
+            className="flex w-full items-center justify-center rounded-[12px] border-[1.5px] border-solid border-grey-60 bg-grey-0 px-[10px] py-[14px] text-[16px] font-semibold text-grey-80"
+          >
+            경험조각 화면 열기
+          </button>
         </div>
       </div>
     </div>

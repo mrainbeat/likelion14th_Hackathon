@@ -6,7 +6,7 @@ export default function ExperiencePieceOptionsMenu({
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className="absolute right-0 top-[19px] z-50 flex w-[146px] flex-col items-start gap-[16px] rounded-bl-[8px] rounded-br-[8px] rounded-tl-[8px] bg-grey-60 px-[8px] py-[10px] text-[16px] font-medium tracking-[-0.32px] text-grey-0">
+      <div className="absolute right-0 top-[19px] z-50 flex flex-col items-start gap-[16px] rounded-bl-[8px] rounded-br-[8px] rounded-tl-[8px] bg-grey-60 py-[10px] pl-[8px] pr-[16px] text-[16px] font-medium leading-[normal] tracking-[-0.32px] text-grey-0">
         <button
           type="button"
           onClick={onHide}

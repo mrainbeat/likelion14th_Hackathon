@@ -89,20 +89,20 @@ export default function ExperiencePieceSection({
   };
 
   return (
-    <div className="w-full shrink-0 rounded-[12px] bg-grey-0 px-[16px] py-[14px] shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">
+    <div className="w-full shrink-0 rounded-[12px] bg-grey-0 p-[16px] shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">
       <div className="flex w-full flex-col items-start gap-[16px]">
-        <div className="flex w-full flex-col items-start gap-[2px]">
-          <p className="text-[20px] font-semibold tracking-[-0.4px] text-grey-90">
+        <div className="flex w-full flex-col items-start gap-[4px]">
+          <p className="text-[20px] font-semibold leading-[normal] tracking-[-0.4px] text-grey-90">
             {title}
           </p>
           {subtitle && (
-            <p className="text-[14px] font-medium tracking-[-0.28px] text-grey-60">
+            <p className="w-full text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-grey-60">
               {subtitle}
             </p>
           )}
         </div>
 
-        <div className="flex w-full flex-col items-start gap-[12px]">
+        <div className="flex w-full flex-col items-start gap-[20px]">
           {visibleItems.map((item, i) => (
             <Fragment key={item.id}>
               {i > 0 && <div className="h-px w-full bg-grey-40" />}
@@ -112,13 +112,13 @@ export default function ExperiencePieceSection({
                 }`}
                 onClick={() => onItemClick?.(item)}
               >
-                <div className="flex w-full items-center justify-between">
-                  <div className="flex items-center gap-[8px]">
-                    <p className="whitespace-nowrap text-[18px] font-semibold tracking-[-0.18px] text-grey-80">
+                <div className="flex w-full items-center justify-between gap-[8px]">
+                  <div className="flex min-w-0 flex-1 items-center gap-[8px]">
+                    <p className="shrink-0 whitespace-nowrap text-[18px] font-semibold leading-[normal] tracking-[-0.36px] text-grey-80">
                       {item.dateLabel}
                     </p>
                     {item.tag && (
-                      <span className="shrink-0 rounded-[8px] bg-grey-60 px-[6px] py-[2px] text-[14px] font-medium tracking-[-0.28px] text-grey-0">
+                      <span className="min-w-0 truncate rounded-[8px] bg-grey-60 px-[6px] py-[2px] text-[14px] font-medium tracking-[-0.28px] text-grey-0">
                         {item.tag}
                       </span>
                     )}
@@ -166,10 +166,10 @@ export default function ExperiencePieceSection({
                   )}
                 </div>
                 <div className="flex w-full items-center gap-[5px] overflow-hidden">
-                  <p className="shrink-0 whitespace-nowrap text-[16px] font-medium tracking-[-0.32px] text-grey-70">
+                  <p className="shrink-0 whitespace-nowrap text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-grey-70">
                     {item.time}
                   </p>
-                  <p className="min-w-0 flex-1 truncate text-[16px] font-medium tracking-[-0.32px] text-grey-70">
+                  <p className="min-w-0 flex-1 truncate text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-grey-70">
                     {item.snippet}
                   </p>
                 </div>

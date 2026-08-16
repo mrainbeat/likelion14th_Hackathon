@@ -61,6 +61,7 @@ export default function ExperienceIncomingListPage() {
       const result = response.data.result;
       const fragment = {
         shareId: confirmTarget.shareId,
+        deliveryId: result?.deliveryId ?? null,
         anonymizedContent: result?.anonymizedContent ?? "",
         generalTopic: result?.generalTopic ?? confirmTarget.keyword,
         keywords: result?.keywords ?? [],
