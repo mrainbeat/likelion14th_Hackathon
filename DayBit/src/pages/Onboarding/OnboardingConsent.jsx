@@ -25,7 +25,7 @@ function SpeechBubble({ lines }) {
     <div className="relative flex shrink-0 items-center rounded-tr-[12px] rounded-br-[12px] rounded-bl-[12px] border border-solid border-[#DFE2EA] bg-[#EFF1F6] px-[16px] py-[10px]">
       <div className="text-[16px] font-medium tracking-[-0.32px] text-grey-80">
         {lines.map((line, i) => (
-          <p key={i} className="leading-normal whitespace-pre">
+          <p key={i} className="leading-[normal] whitespace-pre">
             {line}
           </p>
         ))}
