@@ -1,4 +1,5 @@
 import apiClient, { refreshCsrfToken } from "../../api/apiClient";
+import { DEV_UNLOCK_KEY } from "../../utils/devDiary";
 
 export function login(email, password) {
   return apiClient.post("/api/auth/login", { email, password });
@@ -23,7 +24,9 @@ export async function resolveDestinationAfterAuth() {
 
 export function clearLocalSession() {
   try {
+    const devUnlocked = localStorage.getItem(DEV_UNLOCK_KEY);
     localStorage.clear();
+    if (devUnlocked) localStorage.setItem(DEV_UNLOCK_KEY, devUnlocked);
   } catch (error) {
     console.error("localStorage 정리 실패:", error);
   }

@@ -31,6 +31,7 @@ import SubscriptionPage from "./pages/MyPage/SubscriptionPage";
 import CustomerServicePage from "./pages/MyPage/CustomerServicePage";
 import TermsPage from "./pages/MyPage/TermsPage";
 import PrivacyPolicyPage from "./pages/MyPage/PrivacyPolicyPage";
+import DatedDiaryPage from "./pages/MyPage/DatedDiaryPage";
 import WeeklyImagePage from "./pages/Home/WeeklyImagePage";
 function App() {
   return (
@@ -87,6 +88,10 @@ function App() {
           <Route path="/mypage/support" element={<CustomerServicePage />} />
           <Route path="/mypage/terms" element={<TermsPage />} />
           <Route path="/mypage/privacy" element={<PrivacyPolicyPage />} />
+          <Route
+            path="/mypage/privacy/dated-diary"
+            element={<DatedDiaryPage />}
+          />
           <Route path="/diary" element={<DiaryPage />} />
           <Route path="/diary/reflection" element={<ReflectionPage />} />
           <Route path="/diary/today-color" element={<TodayColorPage />} />

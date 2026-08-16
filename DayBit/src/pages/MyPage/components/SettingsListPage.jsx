@@ -3,12 +3,14 @@ import chevronIcon from "../../../assets/icons/mypage-chevron-right.svg";
 import MyPageHeader from "./MyPageHeader";
 import { useNickname } from "../useNickname";
 
-function SettingsRow({ label, to, disabled }) {
+function SettingsRow({ label, to, onClick, disabled }) {
   const navigate = useNavigate();
 
   const handleClick = () => {
     if (disabled) return;
-    if (to) {
+    if (onClick) {
+      onClick();
+    } else if (to) {
       navigate(to);
     } else {
       alert("준비 중인 기능이에요.");
