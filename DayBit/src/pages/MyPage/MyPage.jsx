@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import apiClient from "../../api/apiClient";
 import { logout } from "../Auth/auth";
-import { clearDraft } from "../../utils/diaryDraft";
 import chevronIcon from "../../assets/icons/mypage-chevron-right.svg";
 import personIcon from "../../assets/icons/mypage-person.svg";
 import notificationsIcon from "../../assets/icons/mypage-notifications.svg";
@@ -68,7 +66,11 @@ function MenuRow({ icon, label, onClick, disabled }) {
     >
       <div className="flex items-center gap-[17px]">
         {icon}
-        <p className="whitespace-nowrap text-[16px] font-medium leading-[normal] tracking-[-0.32px] text-grey-70">
+        <p
+          className={`whitespace-nowrap text-[16px] font-medium leading-[normal] tracking-[-0.32px] ${
+            disabled ? "text-grey-40" : "text-grey-70"
+          }`}
+        >
           {label}
         </p>
       </div>
@@ -89,7 +91,6 @@ export default function MyPage() {
   const navigate = useNavigate();
   const nickname = useNickname();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleLogoutClick = () => {
@@ -107,46 +108,6 @@ export default function MyPage() {
     setIsLoggingOut(true);
     await logout();
     navigate("/login", { replace: true });
-  };
-
-  const handleResetTodayDiary = async () => {
-    if (isResetting) return;
-    if (
-      !window.confirm(
-        "오늘 작성한 일기와 연결된 색상·성찰 질문·기억 후보를 초기화합니다. 계속할까요?",
-      )
-    )
-      return;
-    setIsResetting(true);
-    try {
-      const response = await apiClient.delete("/api/dev/me/diaries/today");
-      const result = response.data.result;
-      alert(
-        result.deleted
-          ? "초기화가 완료되었습니다. 오늘 일기를 다시 작성할 수 있습니다."
-          : "오늘 작성된 일기가 없어 초기화할 데이터가 없습니다.",
-      );
-      clearDraft();
-      navigate("/home", { replace: true });
-    } catch (error) {
-      const code = error.response?.data?.code;
-      if (code === "DEV409_1") {
-        alert("공유 이력이 있는 일기는 초기화할 수 없습니다.");
-      } else if (error.response?.status === 401) {
-        alert("로그인이 필요합니다.");
-      } else if (error.response?.status === 404) {
-        alert("현재 서버에서는 개발용 초기화 기능이 활성화되어 있지않습니다.");
-      } else {
-        alert("오늘 일기를 초기화하지 못했습니다.");
-      }
-      console.error(
-        "DELETE /api/dev/me/diaries/today 실패:",
-        error.response?.status,
-        error.response?.data,
-      );
-    } finally {
-      setIsResetting(false);
-    }
   };
 
   return (
@@ -223,11 +184,7 @@ export default function MyPage() {
             label="로그아웃"
             onClick={handleLogoutClick}
           />
-          <MenuRow
-            icon={<SentimentIcon />}
-            label="회원탈퇴"
-            onClick={handleResetTodayDiary}
-          />
+          <MenuRow icon={<SentimentIcon />} label="회원탈퇴" disabled />
         </div>
       </div>
       {showLogoutModal && (

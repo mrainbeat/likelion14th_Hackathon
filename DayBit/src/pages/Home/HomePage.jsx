@@ -14,6 +14,8 @@ import {
   markWeeklyRewardNotified,
   markWeeklyRewardViewed,
 } from "../../utils/weeklyRewards";
+import { addDays, generateWeeklyReward } from "../../utils/devDiary";
+import { useDevAccess } from "../../contexts/devAccess";
 import LogoSymbol from "../../assets/icons/LogoSymbol.jsx";
 import profileIcon from "../../assets/icons/profile.svg";
 import bellIcon from "../../assets/icons/notification-bell.svg";
@@ -164,6 +166,7 @@ function RewardBadge({ state, onClick }) {
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const { devPassword } = useDevAccess();
   const [today] = useState(() => getSeoulToday());
 
   const [viewYear, setViewYear] = useState(today.year);
@@ -367,19 +370,66 @@ export default function HomePage() {
     navigate(`/home/weekly-rewards/${id}`);
   };
 
-  const getRewardBadgeState = (weekStartDate) => {
-    const item = weeklyRewardsByWeekStart.get(weekStartDate);
-    if (!item || item.status !== "COMPLETED" || !item.available) {
-      return "unavailable";
+  const [claimingWeek, setClaimingWeek] = useState(null);
+  const [rewardClaimError, setRewardClaimError] = useState("");
+
+  const countDiariesInWeek = (weekStartDate) => {
+    let count = 0;
+    for (let i = 0; i < 7; i += 1) {
+      if (itemByDate.has(addDays(weekStartDate, i))) count += 1;
     }
-    return isWeeklyRewardViewed(item.weeklyRewardId) ? "viewed" : "available";
+    return count;
   };
 
-  const handleRewardBadgeClick = (weekStartDate) => {
+  // 아직 만들어지지 않았어도 그 주 일요일이 지났고 일기가 3개 이상이면 눌러서 받을 수 있다.
+  // 진행 중인 주차는 백엔드가 정해진 시간에 자동 생성하므로 여기서 제외한다.
+  const isWeekClaimable = (weekStartDate, item) => {
+    if (addDays(weekStartDate, 6) >= today.dateStr) return false;
+    return (item?.diaryCount ?? countDiariesInWeek(weekStartDate)) >= 3;
+  };
+
+  const getRewardBadgeState = (weekStartDate) => {
     const item = weeklyRewardsByWeekStart.get(weekStartDate);
-    if (!item) return;
-    markWeeklyRewardViewed(item.weeklyRewardId);
-    navigate(`/home/weekly-rewards/${item.weeklyRewardId}`);
+    if (item?.status === "COMPLETED" && item.available) {
+      return isWeeklyRewardViewed(item.weeklyRewardId) ? "viewed" : "available";
+    }
+    return isWeekClaimable(weekStartDate, item) ? "available" : "unavailable";
+  };
+
+  const handleRewardBadgeClick = async (weekStartDate) => {
+    const item = weeklyRewardsByWeekStart.get(weekStartDate);
+
+    if (item?.weeklyRewardId) {
+      markWeeklyRewardViewed(item.weeklyRewardId);
+      navigate(`/home/weekly-rewards/${item.weeklyRewardId}`);
+      return;
+    }
+
+    if (claimingWeek) return;
+    setClaimingWeek(weekStartDate);
+    setRewardClaimError("");
+    try {
+      const response = await generateWeeklyReward(weekStartDate, devPassword);
+      const result = response.data.result;
+      if (!result?.eligible || !result.weeklyRewardId) {
+        setRewardClaimError(
+          result?.message ?? "아직 이 주의 이미지를 만들 수 없어요.",
+        );
+        return;
+      }
+      navigate(`/home/weekly-rewards/${result.weeklyRewardId}`);
+    } catch (error) {
+      console.error(
+        "POST /api/dev/me/weekly-rewards/generate 실패:",
+        error.response?.status,
+        error.response?.data,
+      );
+      setRewardClaimError(
+        "주간 이미지를 준비 중이에요. 잠시 후 다시 확인해주세요.",
+      );
+    } finally {
+      setClaimingWeek(null);
+    }
   };
 
   const scrollRef = useRef(null);
@@ -794,6 +844,16 @@ export default function HomePage() {
           />
         )}
       </div>
+
+      {rewardClaimError && (
+        <button
+          type="button"
+          onClick={() => setRewardClaimError("")}
+          className="absolute inset-x-[16px] bottom-[16px] z-40 rounded-[12px] bg-grey-90/90 px-[16px] py-[12px] text-center text-[14px] font-medium leading-[1.5] text-grey-0"
+        >
+          {rewardClaimError}
+        </button>
+      )}
 
       {tutorialStep !== null && (
         <HomeTutorial

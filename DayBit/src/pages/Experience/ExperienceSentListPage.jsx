@@ -77,7 +77,7 @@ export default function ExperienceSentListPage() {
         </div>
 
         <ExperiencePieceSection
-          title="전달된 나의 경험조각"
+          title="전달한 나의 경험조각"
           items={items}
           kebabMode="link"
           onItemKebabClick={(item) =>

@@ -72,6 +72,7 @@ export default function ExperiencePage() {
       const result = response.data.result;
       const fragment = {
         shareId: confirmTarget.shareId,
+        deliveryId: result?.deliveryId ?? null,
         anonymizedContent: result?.anonymizedContent ?? "",
         generalTopic: result?.generalTopic ?? confirmTarget.keyword,
         keywords: result?.keywords ?? [],
@@ -156,7 +157,7 @@ export default function ExperiencePage() {
 
   return (
     <div className="relative flex h-full w-full select-none flex-col overflow-y-auto bg-[#f6f8fa] px-[16px] py-[16px] scrollbar-hide">
-      <div className="flex w-full flex-col items-start gap-[16px] pb-[16px]">
+      <div className="flex w-full flex-col items-start gap-[24px] pb-[16px]">
         <div className="flex w-full items-center justify-between">
           <button
             type="button"
@@ -247,7 +248,7 @@ export default function ExperiencePage() {
 
         <ExperiencePieceSection
           title="전달 대기중인 경험조각"
-          subtitle="익명화된 내용을 확인하고 전달을 취소할 수 있어요. 이후에는 다른 사람에게 전달될 수 있어요."
+          subtitle="5일동안 익명화된 내용을 확인하고 전달을 취소할 수 있어요. 이후에는 다른 사람에게 전달될 수 있어요."
           items={pendingAll.slice(0, 2)}
           moreItems={pendingAll.slice(2)}
           kebabMode="link"
@@ -259,7 +260,7 @@ export default function ExperiencePage() {
         />
 
         <ExperiencePieceSection
-          title="전달된 나의 경험조각"
+          title="전달한 나의 경험조각"
           items={sentAll.slice(0, 2)}
           moreItems={sentAll.slice(2)}
           kebabMode="link"
