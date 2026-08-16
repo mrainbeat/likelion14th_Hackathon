@@ -71,30 +71,18 @@ export default function DiaryListPage() {
     setIsLoading(true);
     setErrorMessage("");
     try {
-      const listRes = await apiClient.get("/api/v1/diaries", {
+      const res = await apiClient.get("/api/v1/diaries", {
         params: { year, month },
       });
-      const items = listRes.data?.result?.items ?? [];
-
-      const details = await Promise.all(
-        items.map((item) =>
-          apiClient
-            .get(`/api/v1/diaries/${item.diaryId}`)
-            .then((res) => res.data?.result)
-            .catch(() => null),
-        ),
-      );
+      const items = res.data?.result ?? [];
 
       const merged = items
-        .map((item, i) => {
-          const detail = details[i];
-          return {
-            diaryId: item.diaryId,
-            recordedDate: item.recordedDate,
-            body: detail?.content ?? "",
-            time: detail?.createdAt ? formatTimeLabel(detail.createdAt) : "",
-          };
-        })
+        .map((item) => ({
+          diaryId: item.diaryId,
+          recordedDate: item.recordedDate,
+          body: item.content ?? "",
+          time: item.createdAt ? formatTimeLabel(item.createdAt) : "",
+        }))
         .sort((a, b) => (a.recordedDate < b.recordedDate ? -1 : 1));
 
       setEntries(merged);
