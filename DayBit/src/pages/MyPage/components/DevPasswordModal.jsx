@@ -51,18 +51,18 @@ export default function DevPasswordModal({ onClose, onSubmit }) {
           <button
             type="button"
             onClick={onClose}
-            className="flex min-w-px flex-[1_0_0] items-center justify-center rounded-[12px] border-[1.5px] border-solid border-grey-60 bg-white px-[26px] py-[14px]"
+            className="flex h-[46px] min-w-px flex-[1_0_0] items-center justify-center rounded-[12px] border-[1.5px] border-solid border-grey-60 bg-white px-[26px]"
           >
-            <span className="whitespace-nowrap text-[18px] font-semibold tracking-[-0.36px] text-grey-80">
+            <span className="whitespace-nowrap text-[16px] font-semibold tracking-[-0.32px] text-grey-80">
               닫기
             </span>
           </button>
           <button
             type="submit"
             disabled={!value.trim()}
-            className="flex min-w-px flex-[1_0_0] items-center justify-center rounded-[12px] bg-grey-80 px-[26px] py-[14px] disabled:bg-grey-20"
+            className="flex h-[46px] min-w-px flex-[1_0_0] items-center justify-center rounded-[12px] bg-grey-80 px-[26px] disabled:bg-grey-20"
           >
-            <span className="whitespace-nowrap text-[18px] font-semibold tracking-[-0.36px] text-white">
+            <span className="whitespace-nowrap text-[16px] font-semibold tracking-[-0.32px] text-white">
               확인
             </span>
           </button>

@@ -187,7 +187,7 @@ export default function DatedDiaryPage() {
               value={recordedDate}
               max={todayStr}
               onChange={(e) => setRecordedDate(e.target.value)}
-              className="w-full rounded-[8px] border border-solid border-grey-30 bg-grey-0 px-[12px] py-[10px] text-[16px] font-medium text-grey-90 focus:outline-none"
+              className="w-full appearance-none rounded-[8px] border border-solid border-grey-30 bg-grey-0 px-[12px] py-[10px] text-left text-[16px] font-medium text-grey-90 focus:outline-none [&::-webkit-date-and-time-value]:text-left [&::-webkit-datetime-edit]:p-0"
             />
           </div>
 
