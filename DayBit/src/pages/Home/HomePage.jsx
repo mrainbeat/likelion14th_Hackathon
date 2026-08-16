@@ -15,6 +15,7 @@ import {
   markWeeklyRewardViewed,
 } from "../../utils/weeklyRewards";
 import { addDays, generateWeeklyReward } from "../../utils/devDiary";
+import { useDevAccess } from "../../contexts/devAccess";
 import LogoSymbol from "../../assets/icons/LogoSymbol.jsx";
 import profileIcon from "../../assets/icons/profile.svg";
 import bellIcon from "../../assets/icons/notification-bell.svg";
@@ -165,6 +166,7 @@ function RewardBadge({ state, onClick }) {
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const { devPassword } = useDevAccess();
   const [today] = useState(() => getSeoulToday());
 
   const [viewYear, setViewYear] = useState(today.year);
@@ -407,7 +409,7 @@ export default function HomePage() {
     setClaimingWeek(weekStartDate);
     setRewardClaimError("");
     try {
-      const response = await generateWeeklyReward(weekStartDate);
+      const response = await generateWeeklyReward(weekStartDate, devPassword);
       const result = response.data.result;
       if (!result?.eligible || !result.weeklyRewardId) {
         setRewardClaimError(

@@ -1,14 +1,27 @@
 import apiClient from "../api/apiClient";
 
+const DEV_PASSWORD_HEADER = "X-Daybit-Dev-Password";
+
+function devHeaders(devPassword) {
+  return devPassword ? { [DEV_PASSWORD_HEADER]: devPassword } : {};
+}
+
+export function verifyDevAccess(devPassword) {
+  return apiClient.post("/api/dev/access/verify", null, {
+    headers: devHeaders(devPassword),
+  });
+}
+
 export function createDatedDiary(
   recordedDate,
   content,
   personalizationUsesDiaryContent,
+  devPassword,
 ) {
   return apiClient.post(
     "/api/dev/me/diaries",
     { content, personalizationUsesDiaryContent },
-    { params: { recordedDate } },
+    { params: { recordedDate }, headers: devHeaders(devPassword) },
   );
 }
 
@@ -16,35 +29,15 @@ export function getDiaryReward(diaryId) {
   return apiClient.get(`/api/v1/diaries/${diaryId}/reward`);
 }
 
-export function generateWeeklyReward(weekStartDate) {
+export function generateWeeklyReward(weekStartDate, devPassword) {
   return apiClient.post("/api/dev/me/weekly-rewards/generate", null, {
     params: { weekStartDate },
+    headers: devHeaders(devPassword),
   });
 }
 
 export function resetTodayDiary() {
   return apiClient.delete("/api/dev/me/diaries/today");
-}
-
-export const DEV_UNLOCK_KEY = "dev_tools_unlocked";
-const DEV_PASSCODE = "0825";
-
-export function isDevToolsUnlocked() {
-  try {
-    return localStorage.getItem(DEV_UNLOCK_KEY) === "true";
-  } catch {
-    return false;
-  }
-}
-
-export function unlockDevTools(passcode) {
-  if (passcode.trim() !== DEV_PASSCODE) return false;
-  try {
-    localStorage.setItem(DEV_UNLOCK_KEY, "true");
-  } catch {
-    return true;
-  }
-  return true;
 }
 
 function pad2(n) {

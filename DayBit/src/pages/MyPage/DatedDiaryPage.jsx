@@ -10,6 +10,7 @@ import {
   getSeoulTodayStr,
   addDays,
 } from "../../utils/devDiary";
+import { useDevAccess } from "../../contexts/devAccess";
 
 const POLL_INTERVAL_MS = 1500;
 const POLL_TIMEOUT_MS = 90000;
@@ -25,24 +26,88 @@ const CAPTION = "text-[13px] font-medium leading-[1.5] text-grey-60";
 function describeError(error, fallback) {
   const status = error.response?.status;
   const code = error.response?.data?.code;
-  if (status === 404) {
-    return "서버에 개발용 API가 켜져 있지 않아요. (DEV_DATED_DIARY_ENABLED 확인 필요)";
+  if (status === 401) {
+    return "로그인이 필요해요.";
   }
-  if (code === "AUTH403_1") {
-    return "이 계정은 날짜 지정 일기 허용 사용자가 아니에요. (DEV_DATED_DIARY_ALLOWED_USER_ID 확인 필요)";
+  if (status === 403) {
+    return "비밀번호가 없거나 틀렸어요. 다시 입력해주세요.";
+  }
+  if (status === 404) {
+    return "서버에서 개발용 API가 비활성화되어 있어요.";
   }
   if (code === "DIARY409_1") {
     return "그 날짜에는 이미 일기가 있어요. 다른 날짜를 골라주세요.";
   }
-  if (status === 401) {
-    return "로그인이 필요해요.";
-  }
   return error.response?.data?.message ?? fallback;
+}
+
+function DevPasswordGate({ onBack, nickname, onVerify }) {
+  const [value, setValue] = useState("");
+  const [error, setError] = useState("");
+  const [isChecking, setIsChecking] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!value.trim() || isChecking) return;
+
+    setIsChecking(true);
+    setError("");
+    try {
+      const ok = await onVerify(value);
+      if (!ok) setError("비밀번호가 올바르지 않아요.");
+    } catch (err) {
+      console.error(
+        "POST /api/dev/access/verify 실패:",
+        err.response?.status,
+        err.response?.data,
+      );
+      setError(describeError(err, "확인하지 못했어요. 잠시 후 다시 시도해주세요."));
+    } finally {
+      setIsChecking(false);
+    }
+  };
+
+  return (
+    <div className="flex h-full w-full select-none flex-col gap-[14px] overflow-y-auto bg-[#F6F8FA] px-[16px] py-[16px] scrollbar-hide">
+      <MyPageHeader nickname={nickname} onBack={onBack} />
+      <form onSubmit={handleSubmit} className={`${CARD} mt-[14px]`}>
+        <p className="w-full text-[20px] font-semibold leading-[normal] tracking-[-0.4px] text-grey-90">
+          암호를 입력해주세요
+        </p>
+        <input
+          type="password"
+          inputMode="numeric"
+          value={value}
+          onChange={(e) => {
+            setValue(e.target.value);
+            setError("");
+          }}
+          placeholder="암호"
+          className={`w-full rounded-[8px] border border-solid bg-white px-[12px] py-[10px] text-[16px] font-medium tracking-[0.2em] text-grey-90 placeholder-grey-40 placeholder:tracking-normal focus:outline-none ${
+            error ? "border-red-400" : "border-grey-30"
+          }`}
+        />
+        {error && (
+          <p className="text-[13px] font-medium leading-[1.5] text-red-500">
+            {error}
+          </p>
+        )}
+        <button
+          type="submit"
+          disabled={!value.trim() || isChecking}
+          className="flex h-[46px] w-full items-center justify-center rounded-[12px] bg-grey-80 px-[26px] text-[16px] font-semibold text-white disabled:bg-grey-20"
+        >
+          {isChecking ? "확인 중..." : "확인"}
+        </button>
+      </form>
+    </div>
+  );
 }
 
 export default function DatedDiaryPage() {
   const navigate = useNavigate();
   const nickname = useNickname();
+  const { devPassword, isVerified, verify } = useDevAccess();
   const [todayStr] = useState(() => getSeoulTodayStr());
 
   const [recordedDate, setRecordedDate] = useState(todayStr);
@@ -114,6 +179,7 @@ export default function DatedDiaryPage() {
         recordedDate,
         content.trim(),
         usePersonalization,
+        devPassword,
       );
       const result = response.data.result;
       setSavedDiary(result);
@@ -138,7 +204,7 @@ export default function DatedDiaryPage() {
     setWeeklyResult(null);
 
     try {
-      const response = await generateWeeklyReward(weekStartDate);
+      const response = await generateWeeklyReward(weekStartDate, devPassword);
       setWeeklyResult(response.data.result);
     } catch (error) {
       console.error(
@@ -157,6 +223,16 @@ export default function DatedDiaryPage() {
 
   const isRewardPending =
     reward?.status === "PENDING" || reward?.status === "GENERATING";
+
+  if (!isVerified) {
+    return (
+      <DevPasswordGate
+        nickname={nickname}
+        onBack={() => navigate(-1)}
+        onVerify={verify}
+      />
+    );
+  }
 
   return (
     <div className="flex h-full w-full select-none flex-col gap-[14px] overflow-y-auto bg-[#F6F8FA] px-[16px] py-[16px] scrollbar-hide">

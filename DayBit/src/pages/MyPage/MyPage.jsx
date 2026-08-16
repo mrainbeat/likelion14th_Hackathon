@@ -14,9 +14,7 @@ import sentimentEyeIcon from "../../assets/icons/mypage-sentiment-eye.svg";
 import sentimentFaceIcon from "../../assets/icons/mypage-sentiment-face.svg";
 import MyPageHeader from "./components/MyPageHeader";
 import LogoutConfirmModal from "./components/LogoutConfirmModal";
-import DevPasswordModal from "./components/DevPasswordModal";
 import { useNickname } from "./useNickname";
-import { isDevToolsUnlocked, unlockDevTools } from "../../utils/devDiary";
 
 function MenuIcon({ src, inset }) {
   return (
@@ -94,22 +92,6 @@ export default function MyPage() {
   const nickname = useNickname();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [showDevPassword, setShowDevPassword] = useState(false);
-
-  const handlePrivacyClick = () => {
-    if (isDevToolsUnlocked()) {
-      navigate("/mypage/privacy");
-      return;
-    }
-    setShowDevPassword(true);
-  };
-
-  const handleDevPasswordSubmit = (passcode) => {
-    if (!unlockDevTools(passcode)) return false;
-    setShowDevPassword(false);
-    navigate("/mypage/privacy");
-    return true;
-  };
 
   const handleLogoutClick = () => {
     if (isLoggingOut) return;
@@ -187,7 +169,7 @@ export default function MyPage() {
               />
             }
             label="개인정보 처리방침"
-            onClick={handlePrivacyClick}
+            onClick={() => navigate("/mypage/privacy")}
           />
         </div>
         <Divider />
@@ -209,12 +191,6 @@ export default function MyPage() {
         <LogoutConfirmModal
           onCancel={handleLogoutCancel}
           onConfirm={handleLogoutConfirm}
-        />
-      )}
-      {showDevPassword && (
-        <DevPasswordModal
-          onClose={() => setShowDevPassword(false)}
-          onSubmit={handleDevPasswordSubmit}
         />
       )}
     </div>
