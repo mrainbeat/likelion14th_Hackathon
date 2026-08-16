@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/apiClient";
+import DiaryOptionsMenu from "../Home/components/DiaryOptionsMenu";
+import DeleteConfirmModal from "../Home/components/DeleteConfirmModal";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
+import kebabIcon from "../../assets/icons/menu.svg";
 
 function ChevronLeft({ className }) {
   return (
@@ -32,16 +35,6 @@ function ChevronRight({ className }) {
   );
 }
 
-function MoreIcon({ className }) {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" className={className}>
-      <circle cx="3" cy="8" r="1.3" fill="#5F6473" />
-      <circle cx="8" cy="8" r="1.3" fill="#5F6473" />
-      <circle cx="13" cy="8" r="1.3" fill="#5F6473" />
-    </svg>
-  );
-}
-
 function formatDateLabel(recordedDate) {
   const [, month, day] = recordedDate.split("-").map(Number);
   return `${month}월 ${day}일`;
@@ -66,6 +59,8 @@ export default function DiaryListPage() {
   const [entries, setEntries] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const fetchDiaries = useCallback(async () => {
     setIsLoading(true);
@@ -115,7 +110,22 @@ export default function DiaryListPage() {
     }
   };
 
-  const handleMore = () => alert("준비 중인 기능이에요.");
+  const handleDeleteConfirmed = async () => {
+    if (!deleteTarget) return;
+    const { diaryId } = deleteTarget;
+    setDeleteTarget(null);
+    try {
+      await apiClient.delete(`/api/v1/diaries/${diaryId}`);
+      setEntries((prev) => prev.filter((entry) => entry.diaryId !== diaryId));
+    } catch (error) {
+      alert("일기를 삭제하지 못했어요. 다시 시도해주세요.");
+      console.error(
+        "DELETE /api/v1/diaries/{diaryId} 실패:",
+        error.response?.status,
+        error.response?.data,
+      );
+    }
+  };
 
   return (
     <div className="flex h-full w-full select-none flex-col gap-[24px] overflow-y-auto bg-[#F6F8FA] p-[16px] scrollbar-hide">
@@ -184,27 +194,65 @@ export default function DiaryListPage() {
                 className="flex w-full flex-col items-start gap-[8px]"
               >
                 <div className="flex w-full items-center justify-between">
-                  <p className="whitespace-nowrap text-[18px] font-semibold leading-[normal] tracking-[-0.36px] text-[#2D3038]">
-                    {formatDateLabel(entry.recordedDate)}
-                  </p>
                   <button
                     type="button"
-                    onClick={handleMore}
-                    className="size-[16px] shrink-0 bg-transparent p-0"
+                    onClick={() => navigate(`/home/diaries/${entry.diaryId}`)}
+                    className="cursor-pointer bg-transparent p-0 text-left"
                   >
-                    <MoreIcon className="h-full w-full" />
+                    <p className="whitespace-nowrap text-[18px] font-semibold leading-[normal] tracking-[-0.36px] text-[#2D3038]">
+                      {formatDateLabel(entry.recordedDate)}
+                    </p>
                   </button>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOpenMenuId((prev) =>
+                          prev === entry.diaryId ? null : entry.diaryId,
+                        )
+                      }
+                      className="flex size-[16px] shrink-0 cursor-pointer items-center justify-center bg-transparent p-0"
+                    >
+                      <img
+                        src={kebabIcon}
+                        alt="더보기"
+                        className="h-full w-full"
+                      />
+                    </button>
+                    {openMenuId === entry.diaryId && (
+                      <DiaryOptionsMenu
+                        onClose={() => setOpenMenuId(null)}
+                        onDelete={() => {
+                          setOpenMenuId(null);
+                          setDeleteTarget(entry);
+                        }}
+                      />
+                    )}
+                  </div>
                 </div>
-                <div className="flex w-full items-center gap-[5px] whitespace-nowrap text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-[#5F6473]">
+                <button
+                  type="button"
+                  onClick={() => navigate(`/home/diaries/${entry.diaryId}`)}
+                  className="flex w-full cursor-pointer items-center gap-[5px] whitespace-nowrap bg-transparent p-0 text-left text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-[#5F6473]"
+                >
                   <p className="shrink-0">{entry.time}</p>
                   <p className="truncate">{entry.body}</p>
-                </div>
+                </button>
                 <div className="h-0 w-full border-t border-[#D6D9E2]" />
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {deleteTarget && (
+        <DeleteConfirmModal
+          month={Number(deleteTarget.recordedDate.split("-")[1])}
+          day={Number(deleteTarget.recordedDate.split("-")[2])}
+          onCancel={() => setDeleteTarget(null)}
+          onDelete={handleDeleteConfirmed}
+        />
+      )}
     </div>
   );
 }
