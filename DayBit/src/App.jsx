@@ -27,6 +27,7 @@ import NotificationsPage from "./pages/Notification/NotificationsPage";
 import ProfileSettingsPage from "./pages/MyPage/ProfileSettingsPage";
 import NotificationSettingsPage from "./pages/MyPage/NotificationSettingsPage";
 import DiaryManagementPage from "./pages/MyPage/DiaryManagementPage";
+import MyPageDiaryListPage from "./pages/MyPage/DiaryListPage";
 import SubscriptionPage from "./pages/MyPage/SubscriptionPage";
 import CustomerServicePage from "./pages/MyPage/CustomerServicePage";
 import TermsPage from "./pages/MyPage/TermsPage";
@@ -50,6 +51,10 @@ function App() {
           <Route path="/home" element={<HomePage />} />
           <Route path="/home/diaries" element={<DiaryListPage />} />
           <Route path="/home/diaries/:diaryId" element={<DiaryDetailPage />} />
+          <Route
+            path="/mypage/diary-list"
+            element={<MyPageDiaryListPage />}
+          />{" "}
           <Route
             path="/home/weekly-rewards/:weeklyRewardId"
             element={<WeeklyImagePage />}
