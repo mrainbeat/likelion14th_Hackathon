@@ -39,7 +39,8 @@ export default function OnboardingHeader({
             ))}
           </div>
           {caption && (
-            <p className="whitespace-nowrap text-[12px] font-normal leading-[1.19] tracking-[-0.12px] text-[#858C9C]">
+            <p className="whitespace-nowrap text-[12px] font-normal leading-[1.19] tracking-[-0.12px] text-[#787E8C]">
+              {" "}
               {caption}
             </p>
           )}

@@ -30,7 +30,7 @@ export default function OnboardingName() {
   const isValid = nickname.length >= 2 && nickname.length <= 8;
 
   const handleNext = () => {
-    if (isValid) navigate("/onboarding/job", { replace: true });
+    if (isValid) navigate("/onboarding/day-start-time", { replace: true });
   };
 
   return (

@@ -4,7 +4,6 @@ import Layout from "./components/Layout";
 import SplashScreen from "./pages/SplashScreen";
 import LoginPage from "./pages/LoginPage";
 import OnboardingName from "./pages/Onboarding/OnboardingName";
-import OnboardingJob from "./pages/Onboarding/OnboardingJob";
 import DiaryPage from "./pages/Diary/DiaryPage";
 import OnboardingAlarm from "./pages/Onboarding/OnboardingAlarm";
 import OnboardingConsent from "./pages/Onboarding/OnboardingConsent";
@@ -37,6 +36,8 @@ import DatedDiaryPage from "./pages/MyPage/DatedDiaryPage";
 import WeeklyImagePage from "./pages/Home/WeeklyImagePage";
 import TrashPage from "./pages/MyPage/TrashPage";
 import HiddenDiaryPage from "./pages/MyPage/HiddenDiaryPage";
+import DayStartTimePage from "./pages/MyPage/DayStartTimePage";
+import OnboardingDayStartTime from "./pages/Onboarding/OnboardingDayStartTime";
 
 function App() {
   return (
@@ -44,13 +45,15 @@ function App() {
       <DevAccessProvider>
         <Routes>
           <Route element={<Layout />}>
-            <Route element={<Layout />}></Route>
             <Route path="/" element={<SplashScreen />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/login/email" element={<EmailLoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/onboarding" element={<OnboardingName />} />
-            <Route path="/onboarding/job" element={<OnboardingJob />} />
+            <Route
+              path="/onboarding/day-start-time"
+              element={<OnboardingDayStartTime />}
+            />
             <Route path="/onboarding/alarm" element={<OnboardingAlarm />} />
             <Route path="/onboarding/consent" element={<OnboardingConsent />} />
             <Route path="/onboarding/done" element={<OnboardingDone />} />
@@ -117,6 +120,10 @@ function App() {
             />
             <Route path="/mypage/trash" element={<TrashPage />} />
             <Route path="/mypage/hidden" element={<HiddenDiaryPage />} />
+            <Route
+              path="/mypage/day-start-time"
+              element={<DayStartTimePage />}
+            />
           </Route>
         </Routes>
       </DevAccessProvider>

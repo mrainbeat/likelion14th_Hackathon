@@ -52,7 +52,7 @@ export default function OnboardingAlarm() {
     <div className="relative h-full w-full select-none overflow-hidden bg-background">
       <OnboardingHeader
         step={2}
-        onBack={() => navigate("/onboarding/job")}
+        onBack={() => navigate("/onboarding/day-start-time")}
         lines={[
           `좋아요 ${nickname || "회원"}님!`,
           "일기작성을 돕기 위한 질문을 몇개 할게요!",
