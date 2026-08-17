@@ -13,12 +13,12 @@ const REVIEW_SEQ_KEY = "review_account_seq";
 const REVIEW_SEQ_START = 6;
 const REVIEW_MAX_TRIES = 50;
 
-// 이미 쓰인 번호면 서버가 거절하므로 +1 해가며 비어 있는 번호를 찾는다
 export async function signupNextReviewAccount() {
   const saved = Number(localStorage.getItem(REVIEW_SEQ_KEY));
-  let seq = Number.isFinite(saved) && saved >= REVIEW_SEQ_START
-    ? saved
-    : REVIEW_SEQ_START;
+  let seq =
+    Number.isFinite(saved) && saved >= REVIEW_SEQ_START
+      ? saved
+      : REVIEW_SEQ_START;
 
   for (let attempt = 0; attempt < REVIEW_MAX_TRIES; attempt += 1, seq += 1) {
     const email = `test${seq}@gmail.com`;
@@ -36,7 +36,6 @@ export async function signupNextReviewAccount() {
   throw new Error("사용 가능한 심사용 계정 번호를 찾지 못했어요.");
 }
 
-// 로그인/가입 응답이 이미 MeResponse라 그대로 넘기면 /api/me 왕복을 한 번 아낀다
 export async function resolveDestinationAfterAuth(authUser) {
   let user = authUser;
   if (!user) {
@@ -54,12 +53,6 @@ export async function resolveDestinationAfterAuth(authUser) {
 }
 
 export function clearLocalSession() {
-  try {
-    localStorage.clear();
-  } catch (error) {
-    console.error("localStorage 정리 실패:", error);
-  }
-
   try {
     sessionStorage.clear();
   } catch (error) {

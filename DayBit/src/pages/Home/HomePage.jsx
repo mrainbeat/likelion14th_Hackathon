@@ -168,6 +168,26 @@ export default function HomePage() {
   const navigate = useNavigate();
   const { devPassword } = useDevAccess();
   const [today] = useState(() => getSeoulToday());
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    apiClient
+      .get("/api/me")
+      .then((response) => {
+        if (alive) setUserId(response.data.result?.id ?? null);
+      })
+      .catch((error) => {
+        console.error(
+          "GET /api/me 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const location = useLocation();
   const returnedMonth = location.state?.viewMonth;
@@ -342,6 +362,7 @@ export default function HomePage() {
     if (
       !weeklyRewardsLoaded ||
       !isCurrentMonth ||
+      userId == null ||
       weeklyNotifyCheckedThisSession
     )
       return;
@@ -352,23 +373,30 @@ export default function HomePage() {
         item.status === "COMPLETED" &&
         item.available &&
         item.weekEndDate < today.dateStr &&
-        !isWeeklyRewardNotified(item.weeklyRewardId),
+        !isWeeklyRewardNotified(userId, item.weeklyRewardId),
     );
     if (candidates.length === 0) return;
 
     candidates.sort((a, b) => (a.weekEndDate < b.weekEndDate ? 1 : -1));
     setNotifyReward(candidates[0]);
-  }, [weeklyRewardsLoaded, weeklyRewardsByWeekStart, isCurrentMonth, today]);
+  }, [
+    weeklyRewardsLoaded,
+    weeklyRewardsByWeekStart,
+    isCurrentMonth,
+    today,
+    userId,
+  ]);
 
   const handleNotifyClose = () => {
-    if (notifyReward) markWeeklyRewardNotified(notifyReward.weeklyRewardId);
+    if (notifyReward)
+      markWeeklyRewardNotified(userId, notifyReward.weeklyRewardId);
     setNotifyReward(null);
   };
 
   const handleNotifyConfirm = () => {
     if (!notifyReward) return;
-    markWeeklyRewardNotified(notifyReward.weeklyRewardId);
-    markWeeklyRewardViewed(notifyReward.weeklyRewardId);
+    markWeeklyRewardNotified(userId, notifyReward.weeklyRewardId);
+    markWeeklyRewardViewed(userId, notifyReward.weeklyRewardId);
     const id = notifyReward.weeklyRewardId;
     setNotifyReward(null);
     navigate(`/home/weekly-rewards/${id}`);
@@ -395,7 +423,9 @@ export default function HomePage() {
   const getRewardBadgeState = (weekStartDate) => {
     const item = weeklyRewardsByWeekStart.get(weekStartDate);
     if (item?.status === "COMPLETED" && item.available) {
-      return isWeeklyRewardViewed(item.weeklyRewardId) ? "viewed" : "available";
+      return isWeeklyRewardViewed(userId, item.weeklyRewardId)
+        ? "viewed"
+        : "available";
     }
     return isWeekClaimable(weekStartDate, item) ? "available" : "unavailable";
   };
@@ -404,7 +434,7 @@ export default function HomePage() {
     const item = weeklyRewardsByWeekStart.get(weekStartDate);
 
     if (item?.weeklyRewardId) {
-      markWeeklyRewardViewed(item.weeklyRewardId);
+      markWeeklyRewardViewed(userId, item.weeklyRewardId);
       navigate(`/home/weekly-rewards/${item.weeklyRewardId}`, {
         state: { fromMonth: { year: viewYear, month: viewMonth } },
       });
@@ -447,10 +477,15 @@ export default function HomePage() {
   const TUTORIAL_STEP_COUNT = 3;
   const TUTORIAL_SHEET_HEIGHT = 312;
   const tutorialJustFinished = useRef(false);
-  const [tutorialStep, setTutorialStep] = useState(() =>
-    localStorage.getItem("home_tutorial_seen") ? null : 0,
-  );
+  const [tutorialStep, setTutorialStep] = useState(null);
   const [spot, setSpot] = useState(null);
+
+  useEffect(() => {
+    if (userId == null) return;
+    if (!localStorage.getItem(`home_tutorial_seen_${userId}`)) {
+      setTutorialStep(0);
+    }
+  }, [userId]);
 
   useLayoutEffect(() => {
     if (tutorialStep === null) return;
@@ -526,7 +561,9 @@ export default function HomePage() {
 
   const handleTutorialNext = () => {
     if (tutorialStep >= TUTORIAL_STEP_COUNT - 1) {
-      localStorage.setItem("home_tutorial_seen", "true");
+      if (userId != null) {
+        localStorage.setItem(`home_tutorial_seen_${userId}`, "true");
+      }
       tutorialJustFinished.current = true;
       setTutorialStep(null);
       setSpot(null);

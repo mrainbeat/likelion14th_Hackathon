@@ -11,33 +11,37 @@ export function getWeeklyRewardDetail(weeklyRewardId) {
 const VIEWED_KEY = "weekly_reward_viewed_ids";
 const NOTIFIED_KEY = "weekly_reward_notified_ids";
 
-function readIdSet(key) {
+function scopedKey(key, userId) {
+  return `${key}_${userId}`;
+}
+
+function readIdSet(key, userId) {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = localStorage.getItem(scopedKey(key, userId));
     return raw ? new Set(JSON.parse(raw)) : new Set();
   } catch {
     return new Set();
   }
 }
 
-function addId(key, id) {
-  const set = readIdSet(key);
+function addId(key, userId, id) {
+  const set = readIdSet(key, userId);
   set.add(id);
-  localStorage.setItem(key, JSON.stringify(Array.from(set)));
+  localStorage.setItem(scopedKey(key, userId), JSON.stringify(Array.from(set)));
 }
 
-export function isWeeklyRewardViewed(id) {
-  return readIdSet(VIEWED_KEY).has(id);
+export function isWeeklyRewardViewed(userId, id) {
+  return readIdSet(VIEWED_KEY, userId).has(id);
 }
 
-export function markWeeklyRewardViewed(id) {
-  addId(VIEWED_KEY, id);
+export function markWeeklyRewardViewed(userId, id) {
+  addId(VIEWED_KEY, userId, id);
 }
 
-export function isWeeklyRewardNotified(id) {
-  return readIdSet(NOTIFIED_KEY).has(id);
+export function isWeeklyRewardNotified(userId, id) {
+  return readIdSet(NOTIFIED_KEY, userId).has(id);
 }
 
-export function markWeeklyRewardNotified(id) {
-  addId(NOTIFIED_KEY, id);
+export function markWeeklyRewardNotified(userId, id) {
+  addId(NOTIFIED_KEY, userId, id);
 }
