@@ -35,6 +35,7 @@ import TermsPage from "./pages/MyPage/TermsPage";
 import PrivacyPolicyPage from "./pages/MyPage/PrivacyPolicyPage";
 import DatedDiaryPage from "./pages/MyPage/DatedDiaryPage";
 import WeeklyImagePage from "./pages/Home/WeeklyImagePage";
+import TrashPage from "./pages/MyPage/TrashPage";
 
 function App() {
   return (
@@ -113,6 +114,7 @@ function App() {
               path="/oauth2/callback/kakao"
               element={<KakaoCallbackPage />}
             />
+            <Route path="/mypage/trash" element={<TrashPage />} />
           </Route>
         </Routes>
       </DevAccessProvider>
