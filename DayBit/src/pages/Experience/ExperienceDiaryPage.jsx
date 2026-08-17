@@ -16,16 +16,21 @@ import {
   describeAutoApprove,
 } from "../../utils/experienceFragments";
 
+const TIME_PATTERN = /^(AM|PM)\s*\d{1,2}:\d{2}$/i;
+
 function parseDiaryBlocks(content) {
   if (!content) return [];
-  const blocks = content
+  return content
     .split(/\n{2,}/)
     .map((block) => {
-      const [time, ...rest] = block.split("\n");
-      return { time: time?.trim() ?? "", text: rest.join("\n").trim() };
+      const [first, ...rest] = block.split("\n");
+      const head = first?.trim() ?? "";
+      if (TIME_PATTERN.test(head)) {
+        return { time: head, text: rest.join("\n").trim() };
+      }
+      return { time: "", text: block.trim() };
     })
-    .filter((block) => block.time && block.text);
-  return blocks.length > 0 ? blocks : [{ time: "", text: content }];
+    .filter((block) => block.time || block.text);
 }
 
 export default function ExperienceDiaryPage() {
@@ -198,7 +203,11 @@ export default function ExperienceDiaryPage() {
               className="h-full w-full object-contain"
             />
           </button>
-          <button className="size-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0">
+          <button
+            type="button"
+            onClick={() => navigate("/mypage")}
+            className="size-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0 transition-opacity active:opacity-60"
+          >
             <img
               src={profileIcon}
               alt="프로필"
@@ -256,7 +265,7 @@ export default function ExperienceDiaryPage() {
                         {block.time}
                       </p>
                     )}
-                    <p className="text-16 w-full text-grey-90">
+                    <p className="text-16 w-full whitespace-pre-wrap break-words text-grey-90">
                       {block.text}
                     </p>
                   </div>

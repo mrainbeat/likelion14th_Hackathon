@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import apiClient from "../../api/apiClient";
 import { getWeeklyRewardDetail, markWeeklyRewardViewed } from "../../utils/weeklyRewards";
 import backIcon from "../../assets/icons/back.svg";
@@ -50,7 +50,9 @@ const ACCENT_COLOR = "#4F5563";
 
 export default function WeeklyImagePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { weeklyRewardId } = useParams();
+  const fromMonth = location.state?.fromMonth ?? null;
   const [reward, setReward] = useState(null);
   const [errorText, setErrorText] = useState("");
 
@@ -115,8 +117,10 @@ export default function WeeklyImagePage() {
     }
   };
 
-  const handleBack = () => navigate("/home");
-  const handleFinish = () => navigate("/home");
+  const goHome = () =>
+    navigate("/home", fromMonth ? { state: { viewMonth: fromMonth } } : {});
+  const handleBack = goHome;
+  const handleFinish = goHome;
 
   const isReady = reward?.status === "COMPLETED" && reward?.available;
   const isPending =
@@ -174,7 +178,7 @@ export default function WeeklyImagePage() {
         </div>
       ) : (
         <div className="absolute inset-x-0 bottom-0 top-[65px] z-10 flex flex-col overflow-hidden rounded-t-[12px] bg-grey-0 shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">
-          <div className="relative z-10 flex w-full shrink-0 items-start gap-[6px] px-[16px] pt-[32px]">
+          <div className="relative z-10 flex w-full shrink-0 items-start gap-[6px] px-[16px] pb-[32px] pt-[32px]">
             <LogoSymbol dotColor={ACCENT_COLOR} className="h-[27.872px] w-[22px] shrink-0" />
             <p className="text-[24px] font-bold leading-[normal] tracking-[-0.48px] text-grey-80">
               주간 이미지
@@ -190,7 +194,7 @@ export default function WeeklyImagePage() {
               }}
             />
 
-            <div className="h-full overflow-y-auto scrollbar-hide px-[36px] pb-[56px] pt-[32px]">
+            <div className="h-full overflow-y-auto scrollbar-hide px-[36px] pb-[56px] pt-0">
               {isReady ? (
                 <div className="flex w-full flex-col items-start gap-[20px]">
                   <div className="flex w-full flex-col items-start gap-[4px]">

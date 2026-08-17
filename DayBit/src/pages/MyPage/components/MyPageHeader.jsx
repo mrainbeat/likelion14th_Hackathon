@@ -13,7 +13,11 @@ export default function MyPageHeader({ nickname, onBack }) {
       >
         <img src={backIcon} alt="뒤로가기" className="h-full w-full" />
       </button>
-      <div className="flex items-center justify-end gap-[12px]">
+      <button
+        type="button"
+        onClick={() => navigate("/mypage")}
+        className="flex cursor-pointer items-center justify-end gap-[12px] border-none bg-transparent p-0 transition-opacity active:opacity-60"
+      >
         <p className="whitespace-nowrap text-[18px] font-semibold leading-[normal] tracking-[-0.36px] text-grey-90">
           {nickname}
         </p>
@@ -25,7 +29,7 @@ export default function MyPageHeader({ nickname, onBack }) {
             filter: "drop-shadow(0 0 9.938px rgba(65, 68, 80, 0.16))",
           }}
         />
-      </div>
+      </button>
     </div>
   );
 }

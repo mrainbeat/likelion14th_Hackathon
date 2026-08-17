@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import apiClient from "../../api/apiClient";
 import MonthYearPickerModal from "./components/MonthYearPickerModal";
 import ResumeDraftModal from "../Diary/components/ResumeDraftModal";
@@ -169,8 +169,12 @@ export default function HomePage() {
   const { devPassword } = useDevAccess();
   const [today] = useState(() => getSeoulToday());
 
-  const [viewYear, setViewYear] = useState(today.year);
-  const [viewMonth, setViewMonth] = useState(today.month);
+  const location = useLocation();
+  const returnedMonth = location.state?.viewMonth;
+  const [viewYear, setViewYear] = useState(returnedMonth?.year ?? today.year);
+  const [viewMonth, setViewMonth] = useState(
+    returnedMonth?.month ?? today.month,
+  );
   const [monthItems, setMonthItems] = useState([]);
   const [monthLoaded, setMonthLoaded] = useState(false);
   const [awayTodayItem, setAwayTodayItem] = useState(null);
@@ -401,7 +405,9 @@ export default function HomePage() {
 
     if (item?.weeklyRewardId) {
       markWeeklyRewardViewed(item.weeklyRewardId);
-      navigate(`/home/weekly-rewards/${item.weeklyRewardId}`);
+      navigate(`/home/weekly-rewards/${item.weeklyRewardId}`, {
+        state: { fromMonth: { year: viewYear, month: viewMonth } },
+      });
       return;
     }
 
@@ -417,7 +423,9 @@ export default function HomePage() {
         );
         return;
       }
-      navigate(`/home/weekly-rewards/${result.weeklyRewardId}`);
+      navigate(`/home/weekly-rewards/${result.weeklyRewardId}`, {
+        state: { fromMonth: { year: viewYear, month: viewMonth } },
+      });
     } catch (error) {
       console.error(
         "POST /api/dev/me/weekly-rewards/generate 실패:",

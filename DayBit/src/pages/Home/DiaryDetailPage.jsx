@@ -6,6 +6,7 @@ import DeleteConfirmModal from "./components/DeleteConfirmModal";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import kebabIcon from "../../assets/icons/menu.svg";
+import LogoSymbol from "../../assets/icons/LogoSymbol.jsx";
 
 const FALLBACK_COLOR = "#4F5563";
 
@@ -17,15 +18,23 @@ function hexToRgba(hex, alpha) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+const TIME_PATTERN = /^(AM|PM)\s*\d{1,2}:\d{2}$/i;
+
+// 첫 줄이 실제 시간 표기일 때만 시간으로 취급한다. 그렇지 않으면 본문 전체가
+// 시간 자리로 들어가 nowrap 때문에 한 줄로 삐져나간다.
 function parseDiaryBlocks(content) {
   if (!content) return [];
   return content
     .split(/\n{2,}/)
     .map((block) => {
-      const [time, ...rest] = block.split("\n");
-      return { time: time?.trim() ?? "", text: rest.join("\n").trim() };
+      const [first, ...rest] = block.split("\n");
+      const head = first?.trim() ?? "";
+      if (TIME_PATTERN.test(head)) {
+        return { time: head, text: rest.join("\n").trim() };
+      }
+      return { time: "", text: block.trim() };
     })
-    .filter((block) => block.time);
+    .filter((block) => block.time || block.text);
 }
 
 export default function DiaryDetailPage() {
@@ -81,6 +90,10 @@ export default function DiaryDetailPage() {
   const colorHex = diary?.reward?.colorHex;
   const color = colorHex || FALLBACK_COLOR;
   const blocks = parseDiaryBlocks(diary?.content);
+  const reflection = diary?.reflectionQuestion ?? diary?.reflection ?? null;
+  const reflectionQuestion = reflection?.questionText ?? "";
+  const reflectionAnswer =
+    reflection?.answerText ?? diary?.reflectionAnswer?.answerText ?? "";
   const [, month, day] = diary?.recordedDate?.split("-").map(Number) ?? [];
 
   return (
@@ -98,7 +111,9 @@ export default function DiaryDetailPage() {
           />
         </button>
         <button
-          className="size-[38px] shrink-0 rounded-full border-none bg-transparent p-0"
+          type="button"
+          onClick={() => navigate("/mypage")}
+          className="size-[38px] shrink-0 cursor-pointer rounded-full border-none bg-transparent p-0 transition-opacity active:opacity-60"
           style={{
             filter: `drop-shadow(0 0 9.938px ${hexToRgba(color, 0.16)})`,
           }}
@@ -148,25 +163,59 @@ export default function DiaryDetailPage() {
             </div>
           </div>
 
-          <div
-            className="flex w-full flex-col gap-[26px] rounded-[12px] bg-grey-0 px-[16px] py-[20px]"
-            style={{
-              boxShadow: `0 0 5px 0 ${hexToRgba(color, 0.05)}, 0 0 15px 0 ${hexToRgba(color, 0.05)}`,
-            }}
-          >
-            {blocks.map((block, i) => (
-              <div
-                key={i}
-                className="flex w-full flex-col items-start gap-[6px]"
-              >
-                <p className="whitespace-nowrap text-[16px] font-medium tracking-[-0.32px] text-grey-70">
-                  {block.time}
-                </p>
-                {block.text && (
-                  <p className="text-16 w-full text-grey-90">{block.text}</p>
+          <div className="flex w-full flex-col items-start gap-[16px] pb-[250px]">
+            <div
+              className="flex w-full flex-col gap-[26px] rounded-[12px] bg-grey-0 px-[16px] py-[20px]"
+              style={{
+                boxShadow: `0 0 5px 0 ${hexToRgba(color, 0.05)}, 0 0 15px 0 ${hexToRgba(color, 0.05)}`,
+              }}
+            >
+              {blocks.map((block, i) => (
+                <div
+                  key={i}
+                  className="flex w-full flex-col items-start gap-[6px]"
+                >
+                  {block.time && (
+                    <p className="whitespace-nowrap text-[16px] font-medium tracking-[-0.32px] text-grey-70">
+                      {block.time}
+                    </p>
+                  )}
+                  {block.text && (
+                    <p className="text-16 w-full whitespace-pre-wrap break-words text-grey-90">
+                      {block.text}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {reflectionQuestion && (
+              <div className="flex w-full flex-col items-start gap-[16px]">
+                <div className="flex items-end gap-[6px]">
+                  <LogoSymbol
+                    dotColor={color}
+                    className="h-[27.872px] w-[22px] shrink-0"
+                  />
+                  <p className="whitespace-nowrap text-[24px] font-bold leading-[normal] tracking-[-0.48px] text-grey-90">
+                    성찰질문
+                  </p>
+                </div>
+
+                <div className="flex w-full items-center rounded-bl-[12px] rounded-br-[12px] rounded-tr-[12px] bg-grey-60 px-[16px] py-[10px]">
+                  <p className="min-w-0 flex-1 whitespace-pre-wrap break-words text-[16px] font-medium leading-[normal] tracking-[-0.32px] text-grey-0">
+                    {reflectionQuestion}
+                  </p>
+                </div>
+
+                {reflectionAnswer && (
+                  <div className="flex w-full items-center rounded-bl-[12px] rounded-br-[12px] rounded-tl-[12px] border border-solid border-grey-30 bg-[#EFF1F6] px-[16px] py-[10px]">
+                    <p className="text-16 min-w-0 flex-1 whitespace-pre-wrap break-words text-grey-90">
+                      {reflectionAnswer}
+                    </p>
+                  </div>
                 )}
               </div>
-            ))}
+            )}
           </div>
         </>
       )}

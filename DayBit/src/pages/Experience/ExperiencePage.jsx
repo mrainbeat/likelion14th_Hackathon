@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import apiClient from "../../api/apiClient";
 import ExperienceNotificationBubble from "./components/ExperienceNotificationBubble";
 import ExperiencePieceSection, {
   MoreButton,
@@ -11,8 +10,9 @@ import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
 import {
   getMyExperienceFragments,
-  receiveExperienceMatch,
-  findExperienceMatches,
+  receiveInboxArrival,
+  loadExperienceInbox,
+  formatArrivalTime,
   fragmentToPieceItem,
   fragmentTopic,
   getReceivedFragments,
@@ -54,62 +54,29 @@ export default function ExperiencePage() {
     };
   }, []);
 
-  // 공유한 일기뿐 아니라 최근 일기까지 매칭 기준으로 넣어 후보를 넓힌다
   useEffect(() => {
-    if (fragments.length === 0) return;
     let alive = true;
-
-    const run = async () => {
-      const diaryIds = fragments.map((f) => f.diaryId);
-
-      try {
-        const now = new Date();
-        const response = await apiClient.get("/api/v1/diaries", {
-          params: { year: now.getFullYear(), month: now.getMonth() + 1 },
-        });
-        const result = response.data.result;
-        const items = Array.isArray(result) ? result : (result?.items ?? []);
-        items.forEach((item) => {
-          if (item.diaryId) diaryIds.push(item.diaryId);
-        });
-      } catch (error) {
-        console.error(
-          "GET /api/v1/diaries(매칭 후보) 실패:",
-          error.response?.status,
-          error.response?.data,
-        );
-      }
+    loadExperienceInbox().then(({ arrivals, failed }) => {
       if (!alive) return;
-
-      const { matches: found, errorCount } = await findExperienceMatches(
-        diaryIds,
-        10,
-      );
-      if (!alive) return;
-
-      setMatches(found);
+      setMatches(arrivals);
       setMatchError(
-        errorCount > 0 && found.length === 0
-          ? "경험조각을 찾지 못했어요. 잠시 후 다시 시도해주세요."
-          : "",
+        failed ? "경험조각을 불러오지 못했어요. 잠시 후 다시 시도해주세요." : "",
       );
-    };
-
-    run();
+    });
     return () => {
       alive = false;
     };
-  }, [fragments]);
+  }, []);
 
   const handleConfirmView = async () => {
     if (!confirmTarget) return;
     setIsReceiving(true);
     setReceiveError("");
     try {
-      const response = await receiveExperienceMatch(confirmTarget.shareId);
+      const response = await receiveInboxArrival(confirmTarget.arrivalId);
       const result = response.data.result;
       const fragment = {
-        shareId: confirmTarget.shareId,
+        shareId: result?.shareId ?? confirmTarget.arrivalId,
         deliveryId: result?.deliveryId ?? null,
         anonymizedContent: result?.anonymizedContent ?? "",
         generalTopic: result?.generalTopic ?? confirmTarget.keyword,
@@ -119,7 +86,7 @@ export default function ExperiencePage() {
       saveReceivedFragment(fragment);
       setReceivedFragments(getReceivedFragments());
       setMatches((prev) =>
-        prev.filter((m) => m.shareId !== confirmTarget.shareId),
+        prev.filter((m) => m.arrivalId !== confirmTarget.arrivalId),
       );
       setConfirmTarget(null);
       navigate(`/experience/diary/${fragment.shareId}`, {
@@ -127,23 +94,27 @@ export default function ExperiencePage() {
       });
     } catch (error) {
       console.error(
-        "POST /api/v1/experience-fragments/matches/{shareId}/receive 실패:",
+        "POST /api/v1/experience-fragments/inbox/{arrivalId}/receive 실패:",
         error.response?.status,
         error.response?.data,
       );
-      setReceiveError("경험조각을 받아오지 못했어요. 잠시 후 다시 시도해주세요.");
+      setReceiveError(
+        error.response?.data?.code === "CREDIT409_1"
+          ? "크레딧이 부족해요. 경험조각을 더 전달하면 다시 받아볼 수 있어요."
+          : "경험조각을 받아오지 못했어요. 잠시 후 다시 시도해주세요.",
+      );
+      setConfirmTarget(null);
     } finally {
       setIsReceiving(false);
     }
   };
 
   const notificationItems = matches.map((m) => ({
-    id: m.shareId,
-    shareId: m.shareId,
+    id: m.arrivalId,
+    arrivalId: m.arrivalId,
     keyword: fragmentTopic(m) || "새로운 경험",
-    message: `"${fragmentTopic(m) || "새로운 경험"}"와 관련된 경험 조각이 도착했어요.`,
-    relativeTime: "지금 확인 가능",
-    isToday: true,
+    message: `${fragmentTopic(m) || "새로운 경험"}과 관련된 경험조각이 도착했어요.`,
+    relativeTime: formatArrivalTime(m.arrivedAt),
   }));
 
   const notificationsTotal = notificationItems.length;
@@ -208,7 +179,11 @@ export default function ExperiencePage() {
               className="h-full w-full object-contain"
             />
           </button>
-          <button className="size-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0">
+          <button
+            type="button"
+            onClick={() => navigate("/mypage")}
+            className="size-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0 transition-opacity active:opacity-60"
+          >
             <img
               src={profileIcon}
               alt="프로필"

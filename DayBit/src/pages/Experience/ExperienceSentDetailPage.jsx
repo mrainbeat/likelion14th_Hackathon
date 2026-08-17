@@ -72,7 +72,11 @@ export default function ExperienceSentDetailPage() {
               className="h-full w-full object-contain"
             />
           </button>
-          <button className="size-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0">
+          <button
+            type="button"
+            onClick={() => navigate("/mypage")}
+            className="size-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0 transition-opacity active:opacity-60"
+          >
             <img
               src={profileIcon}
               alt="프로필"

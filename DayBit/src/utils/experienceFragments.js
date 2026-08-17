@@ -16,13 +16,13 @@ export function rejectExperienceFragment(shareId) {
   return apiClient.post(`/api/v1/experience-fragments/${shareId}/reject`);
 }
 
-export function findExperienceMatch(diaryId) {
-  return apiClient.post("/api/v1/experience-fragments/matches", { diaryId });
+export function getExperienceInbox() {
+  return apiClient.get("/api/v1/experience-fragments/inbox");
 }
 
-export function receiveExperienceMatch(shareId) {
+export function receiveInboxArrival(arrivalId) {
   return apiClient.post(
-    `/api/v1/experience-fragments/matches/${shareId}/receive`,
+    `/api/v1/experience-fragments/inbox/${arrivalId}/receive`,
   );
 }
 
@@ -104,6 +104,19 @@ export function formatFragmentTime(iso) {
   return `${period} ${h12}:${minutes}`;
 }
 
+export function formatArrivalTime(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const diffMs = Date.now() - d.getTime();
+  if (diffMs < 60000) return "방금 전";
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 60) return `${minutes}분 전`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}시간 전`;
+  return `${Math.floor(hours / 24)}일 전`;
+}
+
 export function fragmentTopic(fragment) {
   return fragment.generalTopic || fragment.keywords?.[0] || "";
 }
@@ -145,32 +158,17 @@ export function fragmentToPieceItem(fragment, kind) {
   };
 }
 
-export async function findExperienceMatches(sourceDiaryIds, cap = 10) {
-  const diaryIds = [...new Set(sourceDiaryIds.filter(Boolean))].slice(0, cap);
-  const results = await Promise.allSettled(
-    diaryIds.map((diaryId) => findExperienceMatch(diaryId)),
-  );
-
-  const matches = [];
-  const seen = new Set();
-  let errorCount = 0;
-
-  results.forEach((r) => {
-    if (r.status === "fulfilled") {
-      const match = r.value.data.result;
-      if (match && !seen.has(match.shareId)) {
-        seen.add(match.shareId);
-        matches.push(match);
-      }
-    } else {
-      errorCount += 1;
-      console.error(
-        "POST /api/v1/experience-fragments/matches 실패:",
-        r.reason?.response?.status,
-        r.reason?.response?.data,
-      );
-    }
-  });
-
-  return { matches, errorCount, searchedCount: diaryIds.length };
+export async function loadExperienceInbox() {
+  try {
+    const response = await getExperienceInbox();
+    const result = response.data.result;
+    return { arrivals: Array.isArray(result) ? result : [], failed: false };
+  } catch (error) {
+    console.error(
+      "GET /api/v1/experience-fragments/inbox 실패:",
+      error.response?.status,
+      error.response?.data,
+    );
+    return { arrivals: [], failed: true };
+  }
 }
