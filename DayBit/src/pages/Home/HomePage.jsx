@@ -74,13 +74,10 @@ function formatDate(d) {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
-// 각 주는 {cells, weekStartDate}로, weekStartDate는 그 주의 월요일(주간 보상 API의
-// weekStartDate와 매칭하기 위함) — 달의 앞/뒷주는 월요일이 다른 달일 수 있어 실제
-// Date 연산으로 구한다
 function buildCalendarWeeks(year, month) {
   const firstOfMonth = new Date(year, month - 1, 1);
   const daysInMonth = new Date(year, month, 0).getDate();
-  const firstWeekday = (firstOfMonth.getDay() + 6) % 7; // 0=월요일
+  const firstWeekday = (firstOfMonth.getDay() + 6) % 7;
   const numWeeks = Math.ceil((firstWeekday + daysInMonth) / 7);
   const gridStart = new Date(year, month - 1, 1 - firstWeekday);
 
@@ -142,11 +139,8 @@ function DayCell({ cell, item, onClick }) {
 }
 
 const REWARD_BADGE_STYLE = {
-  // 받을 수 있음(생성 완료, 아직 미확인) — 진한 배경
   available: "bg-[#5F6473] text-grey-0",
-  // 이미 확인함 — 흰 배경 + 테두리
   viewed: "border-[1.5px] border-[#787E8C] bg-transparent text-grey-70",
-  // 아직 받을 수 없음(생성 전/불가) — 연한 회색
   unavailable: "bg-grey-30 text-grey-0",
 };
 
@@ -211,6 +205,12 @@ export default function HomePage() {
   );
 
   const isCurrentMonth = viewYear === today.year && viewMonth === today.month;
+  const isPastMonth =
+    viewYear < today.year ||
+    (viewYear === today.year && viewMonth < today.month);
+  const isFutureMonth =
+    viewYear > today.year ||
+    (viewYear === today.year && viewMonth > today.month);
 
   useEffect(() => {
     let alive = true;
@@ -239,8 +239,6 @@ export default function HomePage() {
     };
   }, [viewYear, viewMonth]);
 
-  // 이번 달을 보고 있으면 위 응답에서 오늘 항목을 그대로 꺼내 쓴다.
-  // 따로 요청하면 캘린더 색과 포인트 색이 서로 다른 시점에 들어와 깜빡여서.
   useEffect(() => {
     if (isCurrentMonth) return;
     let alive = true;
@@ -276,6 +274,33 @@ export default function HomePage() {
     monthItems.map((item) => [item.recordedDate, item]),
   );
 
+  const calendarMent = (() => {
+    if (isPastMonth) {
+      return {
+        line1: `${viewMonth}월의 조각이`,
+        line2: "이렇게 모여있네요 :)",
+      };
+    }
+    if (isFutureMonth) {
+      return { line1: `${viewMonth}월의 조각은`, line2: "어떤 색일까요?" };
+    }
+    const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
+    const coloredCount = monthItems.filter(
+      (item) => item.reward?.colorHex,
+    ).length;
+    const ratio = daysInMonth > 0 ? coloredCount / daysInMonth : 0;
+    if (ratio >= 2 / 3) {
+      return { line1: `${viewMonth}월의 조각이`, line2: "다채로워졌어요 :)" };
+    }
+    if (ratio >= 1 / 3) {
+      return {
+        line1: `${viewMonth}월의 조각을`,
+        line2: "차곡차곡 쌓고 있어요",
+      };
+    }
+    return { line1: `${viewMonth}월의 조각을`, line2: "데이빗과 모아봐요 :)" };
+  })();
+
   const todayItem = isCurrentMonth
     ? (itemByDate.get(today.dateStr) ?? null)
     : awayTodayItem;
@@ -297,7 +322,6 @@ export default function HomePage() {
     ? `0 0 10px 0 ${hexToRgba(accentColor, 0.05)}, 0 0 30px 0 ${hexToRgba(accentColor, 0.05)}`
     : "0 0 10px 0 rgba(77, 80, 91, 0.05), 0 0 30px 0 rgba(65, 68, 80, 0.05)";
 
-  // 오늘 일기가 이미 완료된 상태면 남아있는 임시 저장은 버그로 생긴 값이라 지운다
   useEffect(() => {
     if (!todayLoaded || resumeCheckedThisSession) return;
     resumeCheckedThisSession = true;
@@ -331,7 +355,6 @@ export default function HomePage() {
   const [weeklyRewardsLoaded, setWeeklyRewardsLoaded] = useState(false);
   const [notifyReward, setNotifyReward] = useState(null);
 
-  // 달의 첫 주는 월요일이 이전 달일 수 있어 그 달도 같이 불러와 합친다
   useEffect(() => {
     let alive = true;
     setWeeklyRewardsLoaded(false);
@@ -362,7 +385,6 @@ export default function HomePage() {
     };
   }, [viewYear, viewMonth]);
 
-  // 지난주 보상이 생성 완료됐는데 아직 알림을 못 받았으면 세션당 한 번 띄운다
   useEffect(() => {
     if (
       !weeklyRewardsLoaded ||
@@ -495,8 +517,6 @@ export default function HomePage() {
   const [tutorialStep, setTutorialStep] = useState(null);
   const [spot, setSpot] = useState(null);
 
-  // 주간 이미지 알림 모달과 겹치지 않도록, 그 알림 확정 여부(weeklyRewardsLoaded)와
-  // 실제 알림 표시 여부(notifyReward)를 먼저 기다린 뒤에만 튜토리얼을 띄운다
   useEffect(() => {
     if (userId == null || !weeklyRewardsLoaded) return;
     if (notifyReward) return;
@@ -540,7 +560,6 @@ export default function HomePage() {
       };
     };
 
-    // 하단 시트에 가리지 않도록 시트 위쪽 영역 가운데로 직접 스크롤한다
     const initial = collect();
     if (initial) {
       const base = scroller.getBoundingClientRect();
@@ -570,7 +589,6 @@ export default function HomePage() {
     return () => cancelAnimationFrame(raf);
   }, [tutorialStep, monthLoaded]);
 
-  // 하단 여백이 걷힌 뒤에 올려야 스크롤이 중간에 잘리지 않는다
   useLayoutEffect(() => {
     if (tutorialStep !== null || !tutorialJustFinished.current) return;
     tutorialJustFinished.current = false;
@@ -658,9 +676,9 @@ export default function HomePage() {
 
           <div className="flex w-full items-end justify-between">
             <p className="text-[22px] font-semibold leading-[normal] tracking-[-0.66px] text-grey-90">
-              {viewMonth}월의 조각이
+              {calendarMent.line1}
               <br />
-              차곡차곡 쌓이고 있어요
+              {calendarMent.line2}
             </p>
             <button
               type="button"
@@ -880,8 +898,8 @@ export default function HomePage() {
                   className="flex w-full items-center gap-[10px] px-[16px] py-[10px]"
                 >
                   <p className="flex-1 text-[16px] font-medium tracking-[-0.32px] text-grey-80">
-                    {fragmentTopic(arrival) || "새로운 경험"}과 관련된 경험조각이
-                    도착했어요.
+                    {fragmentTopic(arrival) || "새로운 경험"}과 관련된
+                    경험조각이 도착했어요.
                   </p>
                   <span className="shrink-0 whitespace-nowrap text-[12px] font-normal text-grey-60">
                     {formatArrivalTime(arrival.arrivedAt)}
