@@ -1,5 +1,6 @@
 export default function DiaryOptionsMenu({
   onClose,
+  onHide,
   onDelete,
   hideQuestionButton = false,
 }) {
@@ -22,8 +23,8 @@ export default function DiaryOptionsMenu({
         )}
         <button
           type="button"
-          onClick={onClose}
-          className="w-full cursor-not-allowed whitespace-nowrap text-left"
+          onClick={onHide}
+          className="w-full cursor-pointer whitespace-nowrap text-left transition-opacity active:opacity-60"
         >
           숨기기
         </button>

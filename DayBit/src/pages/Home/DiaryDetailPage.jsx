@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import apiClient from "../../api/apiClient";
 import DiaryOptionsMenu from "./components/DiaryOptionsMenu";
 import DeleteConfirmModal from "./components/DeleteConfirmModal";
+import HideConfirmModal from "./components/HideConfirmModal";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import kebabIcon from "../../assets/icons/menu.svg";
@@ -20,8 +21,6 @@ function hexToRgba(hex, alpha) {
 
 const TIME_PATTERN = /^(AM|PM)\s*\d{1,2}:\d{2}$/i;
 
-// 첫 줄이 실제 시간 표기일 때만 시간으로 취급한다. 그렇지 않으면 본문 전체가
-// 시간 자리로 들어가 nowrap 때문에 한 줄로 삐져나간다.
 function parseDiaryBlocks(content) {
   if (!content) return [];
   return content
@@ -46,6 +45,7 @@ export default function DiaryDetailPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showHideConfirm, setShowHideConfirm] = useState(false);
   useEffect(() => {
     let alive = true;
     apiClient
@@ -81,6 +81,36 @@ export default function DiaryDetailPage() {
       alert("일기를 삭제하지 못했어요. 다시 시도해주세요.");
       console.error(
         "DELETE /api/v1/diaries/{diaryId} 실패:",
+        error.response?.status,
+        error.response?.data,
+      );
+    }
+  };
+
+  const handleHideConfirmed = async () => {
+    setShowHideConfirm(false);
+    try {
+      await apiClient.patch(`/api/v1/diaries/${diaryId}/hide`);
+      navigate(-1);
+    } catch (error) {
+      alert("일기를 숨기지 못했어요. 다시 시도해주세요.");
+      console.error(
+        "PATCH /api/v1/diaries/{diaryId}/hide 실패:",
+        error.response?.status,
+        error.response?.data,
+      );
+    }
+  };
+
+  const handleHide = async () => {
+    setShowMenu(false);
+    try {
+      await apiClient.patch(`/api/v1/diaries/${diaryId}/hide`);
+      navigate(-1);
+    } catch (error) {
+      alert("일기를 숨기지 못했어요. 다시 시도해주세요.");
+      console.error(
+        "PATCH /api/v1/diaries/{diaryId}/hide 실패:",
         error.response?.status,
         error.response?.data,
       );
@@ -154,6 +184,10 @@ export default function DiaryDetailPage() {
               {showMenu && (
                 <DiaryOptionsMenu
                   onClose={() => setShowMenu(false)}
+                  onHide={() => {
+                    setShowMenu(false);
+                    setShowHideConfirm(true);
+                  }}
                   onDelete={() => {
                     setShowMenu(false);
                     setShowDeleteConfirm(true);
@@ -226,6 +260,15 @@ export default function DiaryDetailPage() {
           day={day}
           onCancel={() => setShowDeleteConfirm(false)}
           onDelete={handleDelete}
+        />
+      )}
+
+      {showHideConfirm && (
+        <HideConfirmModal
+          month={month}
+          day={day}
+          onCancel={() => setShowHideConfirm(false)}
+          onConfirm={handleHideConfirmed}
         />
       )}
     </div>

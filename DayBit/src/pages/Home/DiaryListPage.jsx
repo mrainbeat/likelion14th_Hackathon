@@ -4,6 +4,7 @@ import apiClient from "../../api/apiClient";
 import MonthYearPickerModal from "./components/MonthYearPickerModal";
 import DiaryOptionsMenu from "./components/DiaryOptionsMenu";
 import DeleteConfirmModal from "./components/DeleteConfirmModal";
+import HideConfirmModal from "./components/HideConfirmModal";
 import arrowIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import kebabIcon from "../../assets/icons/menu.svg";
@@ -35,6 +36,7 @@ export default function DiaryListPage() {
   const [showPicker, setShowPicker] = useState(false);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [hideTarget, setHideTarget] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -87,6 +89,29 @@ export default function DiaryListPage() {
   const handleRequestDelete = (item) => {
     setOpenMenuId(null);
     setDeleteTarget(item);
+  };
+
+  const handleRequestHide = (item) => {
+    setOpenMenuId(null);
+    setHideTarget(item);
+  };
+
+  const handleConfirmHide = async () => {
+    if (!hideTarget) return;
+    const diaryId = hideTarget.diaryId;
+    setHideTarget(null);
+
+    try {
+      await apiClient.patch(`/api/v1/diaries/${diaryId}/hide`);
+      setItems((prev) => prev.filter((item) => item.diaryId !== diaryId));
+    } catch (error) {
+      alert("일기를 숨기지 못했어요. 다시 시도해주세요.");
+      console.error(
+        "PATCH /api/v1/diaries/{diaryId}/hide 실패:",
+        error.response?.status,
+        error.response?.data,
+      );
+    }
   };
 
   const handleConfirmDelete = async () => {
@@ -197,6 +222,7 @@ export default function DiaryListPage() {
                       {openMenuId === item.diaryId && (
                         <DiaryOptionsMenu
                           onClose={() => setOpenMenuId(null)}
+                          onHide={() => handleRequestHide(item)}
                           onDelete={() => handleRequestDelete(item)}
                           hideQuestionButton
                         />
@@ -236,6 +262,15 @@ export default function DiaryListPage() {
           day={Number(deleteTarget.recordedDate.split("-")[2])}
           onCancel={() => setDeleteTarget(null)}
           onDelete={handleConfirmDelete}
+        />
+      )}
+
+      {hideTarget && (
+        <HideConfirmModal
+          month={Number(hideTarget.recordedDate.split("-")[1])}
+          day={Number(hideTarget.recordedDate.split("-")[2])}
+          onCancel={() => setHideTarget(null)}
+          onConfirm={handleConfirmHide}
         />
       )}
     </div>
