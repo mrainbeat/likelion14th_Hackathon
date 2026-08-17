@@ -413,8 +413,6 @@ export default function HomePage() {
     return count;
   };
 
-  // 아직 만들어지지 않았어도 그 주 일요일이 지났고 일기가 3개 이상이면 눌러서 받을 수 있다.
-  // 진행 중인 주차는 백엔드가 정해진 시간에 자동 생성하므로 여기서 제외한다.
   const isWeekClaimable = (weekStartDate, item) => {
     if (addDays(weekStartDate, 6) >= today.dateStr) return false;
     return (item?.diaryCount ?? countDiariesInWeek(weekStartDate)) >= 3;
@@ -737,6 +735,10 @@ export default function HomePage() {
                                         diaryId: item.diaryId,
                                         recordedDate: item.recordedDate,
                                         mode: "review",
+                                        fromMonth: {
+                                          year: viewYear,
+                                          month: viewMonth,
+                                        },
                                       },
                                     })
                                   }

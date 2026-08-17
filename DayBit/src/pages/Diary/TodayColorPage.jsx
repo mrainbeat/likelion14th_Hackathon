@@ -55,6 +55,7 @@ export default function TodayColorPage() {
 
   const isReview = location.state?.mode === "review";
   const diaryId = location.state?.diaryId ?? null;
+  const fromMonth = location.state?.fromMonth ?? null;
   const [reward, setReward] = useState(location.state?.reward ?? null);
 
   const isPending = reward?.status === "PENDING";
@@ -102,10 +103,13 @@ export default function TodayColorPage() {
   }, [isReview, diaryId, colorComment]);
 
   const handleBack = () =>
-    navigate(isReview ? "/home" : "/diary", { replace: true });
+    navigate(isReview ? "/home" : "/diary", {
+      replace: true,
+      state: isReview && fromMonth ? { viewMonth: fromMonth } : undefined,
+    });
   const handleFinish = () => {
     if (isReview && diaryId) {
-      navigate(`/home/diaries/${diaryId}`);
+      navigate(`/home/diaries/${diaryId}`, { state: { fromMonth } });
       return;
     }
     navigate("/home", { replace: true });

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import apiClient from "../../api/apiClient";
 import DiaryOptionsMenu from "./components/DiaryOptionsMenu";
 import DeleteConfirmModal from "./components/DeleteConfirmModal";
@@ -38,7 +38,9 @@ function parseDiaryBlocks(content) {
 
 export default function DiaryDetailPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { diaryId } = useParams();
+  const fromMonth = location.state?.fromMonth ?? null;
 
   const [diary, setDiary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -131,7 +133,11 @@ export default function DiaryDetailPage() {
       <div className="flex w-full items-center justify-between">
         <button
           type="button"
-          onClick={() => navigate(-1)}
+          onClick={() =>
+            fromMonth
+              ? navigate("/home", { state: { viewMonth: fromMonth } })
+              : navigate(-1)
+          }
           className="size-[32px] shrink-0 cursor-pointer"
         >
           <img
