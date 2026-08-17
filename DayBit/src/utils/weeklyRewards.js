@@ -8,7 +8,10 @@ export function getWeeklyRewardDetail(weeklyRewardId) {
   return apiClient.get(`/api/v1/weekly-rewards/${weeklyRewardId}`);
 }
 
-const VIEWED_KEY = "weekly_reward_viewed_ids";
+export function markWeeklyRewardViewed(weeklyRewardId) {
+  return apiClient.patch(`/api/v1/weekly-rewards/${weeklyRewardId}/view`);
+}
+
 const NOTIFIED_KEY = "weekly_reward_notified_ids";
 
 function scopedKey(key, userId) {
@@ -28,14 +31,6 @@ function addId(key, userId, id) {
   const set = readIdSet(key, userId);
   set.add(id);
   localStorage.setItem(scopedKey(key, userId), JSON.stringify(Array.from(set)));
-}
-
-export function isWeeklyRewardViewed(userId, id) {
-  return readIdSet(VIEWED_KEY, userId).has(id);
-}
-
-export function markWeeklyRewardViewed(userId, id) {
-  addId(VIEWED_KEY, userId, id);
 }
 
 export function isWeeklyRewardNotified(userId, id) {

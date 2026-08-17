@@ -74,10 +74,20 @@ export default function WeeklyImagePage() {
         } else if (
           result.status === "COMPLETED" &&
           result.available &&
+          !result.viewed &&
           !viewedRef.current
         ) {
           viewedRef.current = true;
-          markWeeklyRewardViewed(result.weeklyRewardId ?? Number(weeklyRewardId));
+          markWeeklyRewardViewed(
+            result.weeklyRewardId ?? Number(weeklyRewardId),
+          ).catch((error) => {
+            if (error.response?.data?.code === "WEEKLY_REWARD409") return;
+            console.error(
+              "PATCH /api/v1/weekly-rewards/{weeklyRewardId}/view 실패:",
+              error.response?.status,
+              error.response?.data,
+            );
+          });
         }
       } catch (error) {
         if (!alive) return;

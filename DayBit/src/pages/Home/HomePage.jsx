@@ -10,9 +10,7 @@ import { getTodayColorPalette, hexToRgba } from "../../utils/rewardColor";
 import {
   getWeeklyRewards,
   isWeeklyRewardNotified,
-  isWeeklyRewardViewed,
   markWeeklyRewardNotified,
-  markWeeklyRewardViewed,
 } from "../../utils/weeklyRewards";
 import { addDays, generateWeeklyReward } from "../../utils/devDiary";
 import {
@@ -168,13 +166,16 @@ export default function HomePage() {
   const { devPassword } = useDevAccess();
   const [today] = useState(() => getSeoulToday());
   const [userId, setUserId] = useState(null);
+  const [tutorialCompleted, setTutorialCompleted] = useState(null);
 
   useEffect(() => {
     let alive = true;
     apiClient
       .get("/api/me")
       .then((response) => {
-        if (alive) setUserId(response.data.result?.id ?? null);
+        if (!alive) return;
+        setUserId(response.data.result?.id ?? null);
+        setTutorialCompleted(response.data.result?.tutorialCompleted ?? null);
       })
       .catch((error) => {
         console.error(
@@ -423,7 +424,6 @@ export default function HomePage() {
   const handleNotifyConfirm = () => {
     if (!notifyReward) return;
     markWeeklyRewardNotified(userId, notifyReward.weeklyRewardId);
-    markWeeklyRewardViewed(userId, notifyReward.weeklyRewardId);
     const id = notifyReward.weeklyRewardId;
     setNotifyReward(null);
     navigate(`/home/weekly-rewards/${id}`);
@@ -448,9 +448,7 @@ export default function HomePage() {
   const getRewardBadgeState = (weekStartDate) => {
     const item = weeklyRewardsByWeekStart.get(weekStartDate);
     if (item?.status === "COMPLETED" && item.available) {
-      return isWeeklyRewardViewed(userId, item.weeklyRewardId)
-        ? "viewed"
-        : "available";
+      return item.viewed ? "viewed" : "available";
     }
     return isWeekClaimable(weekStartDate, item) ? "available" : "unavailable";
   };
@@ -459,7 +457,6 @@ export default function HomePage() {
     const item = weeklyRewardsByWeekStart.get(weekStartDate);
 
     if (item?.weeklyRewardId) {
-      markWeeklyRewardViewed(userId, item.weeklyRewardId);
       navigate(`/home/weekly-rewards/${item.weeklyRewardId}`, {
         state: { fromMonth: { year: viewYear, month: viewMonth } },
       });
@@ -520,10 +517,10 @@ export default function HomePage() {
   useEffect(() => {
     if (userId == null || !weeklyRewardsLoaded) return;
     if (notifyReward) return;
-    if (!localStorage.getItem(`home_tutorial_seen_${userId}`)) {
+    if (tutorialCompleted === false) {
       setTutorialStep(0);
     }
-  }, [userId, weeklyRewardsLoaded, notifyReward]);
+  }, [userId, weeklyRewardsLoaded, notifyReward, tutorialCompleted]);
 
   useLayoutEffect(() => {
     if (tutorialStep === null) return;
@@ -597,9 +594,14 @@ export default function HomePage() {
 
   const handleTutorialNext = () => {
     if (tutorialStep >= TUTORIAL_STEP_COUNT - 1) {
-      if (userId != null) {
-        localStorage.setItem(`home_tutorial_seen_${userId}`, "true");
-      }
+      setTutorialCompleted(true);
+      apiClient.patch("/api/me/tutorial-completion").catch((error) => {
+        console.error(
+          "PATCH /api/me/tutorial-completion 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      });
       tutorialJustFinished.current = true;
       setTutorialStep(null);
       setSpot(null);
