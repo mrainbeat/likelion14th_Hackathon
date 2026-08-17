@@ -194,7 +194,7 @@ export default function WeeklyImagePage() {
               }}
             />
 
-            <div className="h-full overflow-y-auto scrollbar-hide px-[36px] pb-[56px] pt-0">
+            <div className="h-full overflow-y-auto scrollbar-hide px-[16px] pb-[56px] pt-0">
               {isReady ? (
                 <div className="flex w-full flex-col items-start gap-[20px]">
                   <div className="flex w-full flex-col items-start gap-[4px]">
@@ -202,7 +202,7 @@ export default function WeeklyImagePage() {
                       src={reward.imageUrl}
                       alt=""
                       onError={handleImageError}
-                      className="aspect-square w-full rounded-[4px] object-cover"
+                      className="w-full rounded-[4px]"
                     />
                     {reward.dailyColors?.length > 0 && (
                       <div className="flex flex-wrap items-start gap-[4px]">

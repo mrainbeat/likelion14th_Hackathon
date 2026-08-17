@@ -15,6 +15,11 @@ import {
   markWeeklyRewardViewed,
 } from "../../utils/weeklyRewards";
 import { addDays, generateWeeklyReward } from "../../utils/devDiary";
+import {
+  loadExperienceInbox,
+  fragmentTopic,
+  formatArrivalTime,
+} from "../../utils/experienceFragments";
 import { useDevAccess } from "../../contexts/devAccess";
 import LogoSymbol from "../../assets/icons/LogoSymbol.jsx";
 import profileIcon from "../../assets/icons/profile.svg";
@@ -468,6 +473,18 @@ export default function HomePage() {
     }
   };
 
+  const [inboxArrivals, setInboxArrivals] = useState([]);
+
+  useEffect(() => {
+    let alive = true;
+    loadExperienceInbox().then(({ arrivals }) => {
+      if (alive) setInboxArrivals(arrivals);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   const scrollRef = useRef(null);
   const pencilRef = useRef(null);
   const experienceRef = useRef(null);
@@ -835,8 +852,10 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div
-            className="flex w-full flex-col items-start gap-[16px] rounded-[12px] bg-grey-0 px-[16px] py-[20px] text-left opacity-30"
+          <button
+            type="button"
+            onClick={() => navigate("/experience")}
+            className="flex w-full cursor-pointer flex-col items-start gap-[16px] rounded-[12px] bg-grey-0 px-[16px] py-[20px] text-left transition-opacity active:opacity-80"
             style={{ boxShadow: cardShadow }}
           >
             <div ref={experienceRef} className="flex items-center gap-[10px]">
@@ -848,23 +867,30 @@ export default function HomePage() {
                 경험조각 주고받기
               </p>
             </div>
-            {[
-              "“다이어트”와 관련된 다른사람의 경험이 도착했어요.",
-              "“수능공부”와 관련된 다른사람의 경험이 도착했어요.",
-            ].map((text) => (
-              <SpeechBubble
-                key={text}
-                color="#EFF1F6"
-                direction="left"
-                bordered
-                className="flex w-full items-center gap-[10px] px-[16px] py-[10px]"
-              >
-                <p className="flex-1 text-[16px] font-medium tracking-[-0.32px] text-grey-80">
-                  {text}
-                </p>
-              </SpeechBubble>
-            ))}
-          </div>
+            {inboxArrivals.length > 0 ? (
+              inboxArrivals.slice(0, 2).map((arrival) => (
+                <SpeechBubble
+                  key={arrival.arrivalId}
+                  color="#EFF1F6"
+                  direction="left"
+                  bordered
+                  className="flex w-full items-center gap-[10px] px-[16px] py-[10px]"
+                >
+                  <p className="flex-1 text-[16px] font-medium tracking-[-0.32px] text-grey-80">
+                    {fragmentTopic(arrival) || "새로운 경험"}과 관련된 경험조각이
+                    도착했어요.
+                  </p>
+                  <span className="shrink-0 whitespace-nowrap text-[12px] font-normal text-grey-60">
+                    {formatArrivalTime(arrival.arrivedAt)}
+                  </span>
+                </SpeechBubble>
+              ))
+            ) : (
+              <p className="w-full text-[14px] font-medium tracking-[-0.28px] text-grey-60">
+                아직 나와 비슷한 경험조각이 도착하지 않았어요.
+              </p>
+            )}
+          </button>
         </div>
 
         <MonthYearPickerModal
