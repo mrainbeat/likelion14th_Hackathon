@@ -137,12 +137,18 @@ export default function DiaryListPage() {
         >
           <img src={backIcon} alt="뒤로가기" className="h-full w-full" />
         </button>
-        <img
-          src={profileIcon}
-          alt="프로필"
-          className="size-[38px] shrink-0 rounded-full object-contain"
-          style={{ filter: "drop-shadow(0 0 9.938px rgba(65, 68, 80, 0.16))" }}
-        />
+        <button
+          type="button"
+          onClick={() => navigate("/mypage")}
+          className="size-[38px] shrink-0 cursor-pointer rounded-full border-none bg-transparent p-0 transition-opacity active:opacity-60"
+        >
+          <img
+            src={profileIcon}
+            alt="프로필"
+            className="h-full w-full rounded-full object-contain"
+            style={{ filter: "drop-shadow(0 0 9.938px rgba(65, 68, 80, 0.16))" }}
+          />
+        </button>
       </div>
 
       <div className="flex w-full flex-col items-start gap-[18px]">
