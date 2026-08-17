@@ -161,7 +161,6 @@ export default function DiaryPage() {
     try {
       const response = await apiClient.post(
         "/api/v1/ai/writing-help/questions",
-        { currentContent: htmlToPlainText(content) },
       );
       const { questionId, questionText, remainingCount } = response.data.result;
 

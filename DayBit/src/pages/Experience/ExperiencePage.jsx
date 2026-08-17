@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import apiClient from "../../api/apiClient";
 import ExperienceNotificationBubble from "./components/ExperienceNotificationBubble";
 import ExperiencePieceSection, {
   MoreButton,
@@ -34,6 +35,26 @@ export default function ExperiencePage() {
   const [isReceiving, setIsReceiving] = useState(false);
   const [receiveError, setReceiveError] = useState("");
   const [matchError, setMatchError] = useState("");
+  const [credits, setCredits] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    apiClient
+      .get("/api/me")
+      .then((response) => {
+        if (alive) setCredits(response.data.result?.credit ?? null);
+      })
+      .catch((error) => {
+        console.error(
+          "GET /api/me 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -85,6 +106,9 @@ export default function ExperiencePage() {
       };
       saveReceivedFragment(fragment);
       setReceivedFragments(getReceivedFragments());
+      if (typeof result?.remainingCredit === "number") {
+        setCredits(result.remainingCredit);
+      }
       setMatches((prev) =>
         prev.filter((m) => m.arrivalId !== confirmTarget.arrivalId),
       );
@@ -131,13 +155,6 @@ export default function ExperiencePage() {
     setNotificationsExpanded((prev) => !prev);
   };
 
-  const approvedCount = fragments.filter(
-    (f) => f.status === "APPROVED",
-  ).length;
-  const credits = Math.max(
-    0,
-    Math.floor(approvedCount / 3) - receivedFragments.length,
-  );
   const nickname = localStorage.getItem("nickname") || "";
 
   const receivedAll = receivedFragments
@@ -216,7 +233,7 @@ export default function ExperiencePage() {
                 경험조각 받아보기
               </p>
               <p className="text-[14px] font-medium tracking-[-0.28px] text-grey-60">
-                {nickname ? `${nickname}님은 ` : ""}"{credits}번" 경험조각을
+                {nickname ? `${nickname}님은 ` : ""}"{credits ?? 0}번" 경험조각을
                 받을 수 있어요
               </p>
             </div>

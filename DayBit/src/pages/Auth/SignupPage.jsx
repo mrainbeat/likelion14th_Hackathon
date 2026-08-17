@@ -20,8 +20,10 @@ export default function SignupPage() {
     setIsSubmitting(true);
     setError("");
     try {
-      await signup(email.trim(), password);
-      const destination = await resolveDestinationAfterAuth();
+      const response = await signup(email.trim(), password);
+      const destination = await resolveDestinationAfterAuth(
+        response.data.result,
+      );
       navigate(destination, { replace: true });
     } catch (err) {
       console.error(
