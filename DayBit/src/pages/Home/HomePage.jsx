@@ -12,6 +12,10 @@ import {
   loadCachedMonthItems,
   saveCachedMonthItems,
 } from "../../utils/monthDiariesCache";
+import {
+  loadCachedWeeklyRewards,
+  saveCachedWeeklyRewards,
+} from "../../utils/weeklyRewardsCache";
 import { addDays, generateWeeklyReward } from "../../utils/devDiary";
 import {
   loadExperienceInbox,
@@ -80,6 +84,9 @@ function mondayOf(dateStr) {
   return formatDate(date);
 }
 
+function weeklyRewardsMapFromItems(items) {
+  return new Map((items ?? []).map((item) => [item.weekStartDate, item]));
+}
 
 function buildCalendarWeeks(year, month) {
   const firstOfMonth = new Date(year, month - 1, 1);
@@ -211,6 +218,12 @@ export default function HomePage() {
   const [monthLoaded, setMonthLoaded] = useState(
     () => loadCachedMonthItems(viewYear, viewMonth) != null,
   );
+  const [weeklyRewardsByWeekStart, setWeeklyRewardsByWeekStart] = useState(
+    () => weeklyRewardsMapFromItems(loadCachedWeeklyRewards(viewYear, viewMonth)),
+  );
+  const [weeklyRewardsLoaded, setWeeklyRewardsLoaded] = useState(
+    () => loadCachedWeeklyRewards(viewYear, viewMonth) != null,
+  );
   const [hydratedMonthKey, setHydratedMonthKey] = useState(
     `${viewYear}-${viewMonth}`,
   );
@@ -236,6 +249,9 @@ export default function HomePage() {
     const cached = loadCachedMonthItems(viewYear, viewMonth);
     setMonthItems(cached ?? []);
     setMonthLoaded(cached != null);
+    const cachedWeekly = loadCachedWeeklyRewards(viewYear, viewMonth);
+    setWeeklyRewardsByWeekStart(weeklyRewardsMapFromItems(cachedWeekly));
+    setWeeklyRewardsLoaded(cachedWeekly != null);
   }
 
   useEffect(() => {
@@ -377,15 +393,10 @@ export default function HomePage() {
     navigate("/diary");
   };
 
-  const [weeklyRewardsByWeekStart, setWeeklyRewardsByWeekStart] = useState(
-    () => new Map(),
-  );
-  const [weeklyRewardsLoaded, setWeeklyRewardsLoaded] = useState(false);
   const [notifyReward, setNotifyReward] = useState(null);
 
   useEffect(() => {
     let alive = true;
-    setWeeklyRewardsLoaded(false);
 
     const prevMonthDate = new Date(viewYear, viewMonth - 2, 1);
     const requests = [
@@ -406,6 +417,7 @@ export default function HomePage() {
       });
       setWeeklyRewardsByWeekStart(map);
       setWeeklyRewardsLoaded(true);
+      saveCachedWeeklyRewards(viewYear, viewMonth, Array.from(map.values()));
     });
 
     return () => {
