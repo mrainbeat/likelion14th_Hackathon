@@ -46,10 +46,10 @@ export default function AuthTextField({
                 className="size-[16px] shrink-0 cursor-pointer border-none bg-transparent p-0"
               >
                 <img
-                  src={eyeOffIcon}
+                  src={revealed ? eyeOnIcon : eyeOffIcon}
                   alt={revealed ? "비밀번호 숨기기" : "비밀번호 보기"}
                   className={`h-full w-full object-contain ${
-                    revealed ? "opacity-100" : "opacity-40"
+                    value ? "opacity-100" : "opacity-40"
                   }`}
                 />
               </button>

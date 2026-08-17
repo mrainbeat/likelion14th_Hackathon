@@ -64,7 +64,7 @@ export default function LoginPage() {
           <img
             src={KakaoLoginButton}
             alt="카카오톡으로 시작하기"
-            className="h-full w-full object-contain"
+            className="h-full w-full object-fill"
           />
         </button>
 
@@ -72,7 +72,7 @@ export default function LoginPage() {
           type="button"
           onClick={() => setShowPasscode(true)}
           disabled={isCreating}
-          className="flex h-[51px] w-full items-center justify-center rounded-[12px] border border-solid border-[#858C9C] bg-transparent text-[16px] font-semibold leading-[normal] tracking-[-0.32px] text-grey-90 transition-transform active:scale-[0.98] disabled:opacity-50"
+          className="flex h-[51px] w-full items-center justify-center rounded-[12px] bg-[#5F6473] text-[16px] font-semibold leading-[normal] text-white transition-transform active:scale-[0.98] disabled:opacity-50"
         >
           {isCreating ? "계정 만드는 중..." : "심사용 자동 로그인"}
         </button>
@@ -85,7 +85,7 @@ export default function LoginPage() {
           <img
             src={OtherLoginButton}
             alt="다른 방법으로 시작하기"
-            className="h-full w-full object-contain"
+            className="h-full w-full object-fill"
           />
         </button>
 
