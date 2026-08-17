@@ -83,8 +83,7 @@ export default function ExperienceSentListPage() {
         <ExperiencePieceSection
           title="전달한 나의 경험조각"
           items={items}
-          kebabMode="link"
-          onItemKebabClick={(item) =>
+          onItemClick={(item) =>
             navigate(`/experience/sent/${item.id}`, {
               state: { fragment: item.fragment },
             })

@@ -18,7 +18,6 @@ import {
   fragmentTopic,
   getReceivedFragments,
   saveReceivedFragment,
-  removeReceivedFragment,
 } from "../../utils/experienceFragments";
 
 const NAVIGATE_THRESHOLD = 8;
@@ -176,11 +175,6 @@ export default function ExperiencePage() {
     )
     .map((f) => fragmentToPieceItem(f, "sent"));
 
-  const handleDeleteReceived = (item) => {
-    removeReceivedFragment(item.id);
-    setReceivedFragments(getReceivedFragments());
-  };
-
   return (
     <div className="relative flex h-full w-full select-none flex-col overflow-y-auto bg-[#f6f8fa] px-[16px] py-[16px] scrollbar-hide">
       <div className="flex w-full flex-col items-start gap-[24px] pb-[16px]">
@@ -270,14 +264,11 @@ export default function ExperiencePage() {
           title="받은 경험조각"
           items={receivedAll.slice(0, 2)}
           moreItems={receivedAll.slice(2)}
-          kebabMode="options"
           onItemClick={(item) =>
             navigate(`/experience/diary/${item.id}`, {
               state: { mode: "incoming", fragment: item.fragment },
             })
           }
-          onHideItem={handleDeleteReceived}
-          onDeleteItem={handleDeleteReceived}
           onNavigateMore={() => navigate("/experience/gotten")}
         />
 
@@ -286,8 +277,7 @@ export default function ExperiencePage() {
           subtitle="5일동안 익명화된 내용을 확인하고 전달을 취소할 수 있어요. 이후에는 다른 사람에게 전달될 수 있어요."
           items={pendingAll.slice(0, 2)}
           moreItems={pendingAll.slice(2)}
-          kebabMode="link"
-          onItemKebabClick={(item) =>
+          onItemClick={(item) =>
             navigate(`/experience/diary/${item.id}`, {
               state: { mode: "pending", fragment: item.fragment },
             })
@@ -298,8 +288,7 @@ export default function ExperiencePage() {
           title="전달한 나의 경험조각"
           items={sentAll.slice(0, 2)}
           moreItems={sentAll.slice(2)}
-          kebabMode="link"
-          onItemKebabClick={(item) =>
+          onItemClick={(item) =>
             navigate(`/experience/sent/${item.id}`, {
               state: { fragment: item.fragment },
             })

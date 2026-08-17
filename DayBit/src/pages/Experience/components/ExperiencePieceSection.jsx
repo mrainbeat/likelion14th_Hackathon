@@ -1,6 +1,4 @@
 import { Fragment, useState } from "react";
-import kebabIcon from "../../../assets/icons/menu.svg";
-import ExperiencePieceOptionsMenu from "./ExperiencePieceOptionsMenu";
 
 const NAVIGATE_THRESHOLD = 8;
 
@@ -47,33 +45,12 @@ export function MoreButton({ expanded, onClick }) {
 export default function ExperiencePieceSection({
   title,
   subtitle,
-  items: initialItems,
-  moreItems: initialMoreItems = [],
-  kebabMode = "options",
-  onItemKebabClick,
+  items,
+  moreItems = [],
   onItemClick,
-  onHideItem,
-  onDeleteItem,
   onNavigateMore,
 }) {
-  const [hiddenIds, setHiddenIds] = useState(() => new Set());
   const [expanded, setExpanded] = useState(false);
-  const [openMenuId, setOpenMenuId] = useState(null);
-
-  const items = initialItems.filter((i) => !hiddenIds.has(i.id));
-  const moreItems = initialMoreItems.filter((i) => !hiddenIds.has(i.id));
-
-  const handleHide = (item) => {
-    setHiddenIds((prev) => new Set(prev).add(item.id));
-    setOpenMenuId(null);
-    onHideItem?.(item);
-  };
-
-  const handleDelete = (item) => {
-    setHiddenIds((prev) => new Set(prev).add(item.id));
-    setOpenMenuId(null);
-    onDeleteItem?.(item);
-  };
 
   const totalCount = items.length + moreItems.length;
   const useNavigateMore = totalCount >= NAVIGATE_THRESHOLD && !!onNavigateMore;
@@ -106,63 +83,19 @@ export default function ExperiencePieceSection({
           {visibleItems.map((item, i) => (
             <Fragment key={item.id}>
               {i > 0 && <div className="h-px w-full bg-grey-40" />}
-              <div
-                className={`flex w-full flex-col items-start gap-[8px] ${
-                  onItemClick ? "cursor-pointer" : ""
-                }`}
+              <button
+                type="button"
                 onClick={() => onItemClick?.(item)}
+                className="flex w-full cursor-pointer flex-col items-start gap-[8px] bg-transparent p-0 text-left"
               >
-                <div className="flex w-full items-center justify-between gap-[8px]">
-                  <div className="flex min-w-0 flex-1 items-center gap-[8px]">
-                    <p className="shrink-0 whitespace-nowrap text-[18px] font-semibold leading-[normal] tracking-[-0.36px] text-grey-80">
-                      {item.dateLabel}
-                    </p>
-                    {item.tag && (
-                      <span className="min-w-0 truncate rounded-[8px] bg-grey-60 px-[6px] py-[2px] text-[14px] font-medium tracking-[-0.28px] text-grey-0">
-                        {item.tag}
-                      </span>
-                    )}
-                  </div>
-                  {kebabMode === "options" ? (
-                    <div className="relative shrink-0">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenMenuId((prev) =>
-                            prev === item.id ? null : item.id,
-                          );
-                        }}
-                      >
-                        <img
-                          src={kebabIcon}
-                          alt="더보기"
-                          className="size-[16px]"
-                        />
-                      </button>
-                      {openMenuId === item.id && (
-                        <ExperiencePieceOptionsMenu
-                          onClose={() => setOpenMenuId(null)}
-                          onHide={() => handleHide(item)}
-                          onDelete={() => handleDelete(item)}
-                        />
-                      )}
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      className="shrink-0"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onItemKebabClick?.(item);
-                      }}
-                    >
-                      <img
-                        src={kebabIcon}
-                        alt="더보기"
-                        className="size-[16px]"
-                      />
-                    </button>
+                <div className="flex w-full items-center gap-[8px]">
+                  <p className="shrink-0 whitespace-nowrap text-[18px] font-semibold leading-[normal] tracking-[-0.36px] text-grey-80">
+                    {item.dateLabel}
+                  </p>
+                  {item.tag && (
+                    <span className="min-w-0 truncate rounded-[8px] bg-grey-60 px-[6px] py-[2px] text-[14px] font-medium tracking-[-0.28px] text-grey-0">
+                      {item.tag}
+                    </span>
                   )}
                 </div>
                 <div className="flex w-full items-center gap-[5px] overflow-hidden">
@@ -173,7 +106,7 @@ export default function ExperiencePieceSection({
                     {item.snippet}
                   </p>
                 </div>
-              </div>
+              </button>
             </Fragment>
           ))}
         </div>

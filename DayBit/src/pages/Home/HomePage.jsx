@@ -495,12 +495,15 @@ export default function HomePage() {
   const [tutorialStep, setTutorialStep] = useState(null);
   const [spot, setSpot] = useState(null);
 
+  // 주간 이미지 알림 모달과 겹치지 않도록, 그 알림 확정 여부(weeklyRewardsLoaded)와
+  // 실제 알림 표시 여부(notifyReward)를 먼저 기다린 뒤에만 튜토리얼을 띄운다
   useEffect(() => {
-    if (userId == null) return;
+    if (userId == null || !weeklyRewardsLoaded) return;
+    if (notifyReward) return;
     if (!localStorage.getItem(`home_tutorial_seen_${userId}`)) {
       setTutorialStep(0);
     }
-  }, [userId]);
+  }, [userId, weeklyRewardsLoaded, notifyReward]);
 
   useLayoutEffect(() => {
     if (tutorialStep === null) return;
@@ -928,7 +931,7 @@ export default function HomePage() {
         </button>
       )}
 
-      {tutorialStep !== null && (
+      {tutorialStep !== null && !notifyReward && (
         <HomeTutorial
           step={tutorialStep}
           spot={spot}

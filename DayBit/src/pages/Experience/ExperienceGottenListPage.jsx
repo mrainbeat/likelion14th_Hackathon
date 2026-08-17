@@ -6,25 +6,17 @@ import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
 import {
   getReceivedFragments,
-  removeReceivedFragment,
   fragmentToPieceItem,
 } from "../../utils/experienceFragments";
 
 export default function ExperienceGottenListPage() {
   const navigate = useNavigate();
-  const [receivedFragments, setReceivedFragments] = useState(() =>
-    getReceivedFragments(),
-  );
+  const [receivedFragments] = useState(() => getReceivedFragments());
 
   const items = receivedFragments
     .slice()
     .sort((a, b) => new Date(b.receivedAt) - new Date(a.receivedAt))
     .map((f) => fragmentToPieceItem(f, "received"));
-
-  const handleRemove = (item) => {
-    removeReceivedFragment(item.id);
-    setReceivedFragments(getReceivedFragments());
-  };
 
   return (
     <div className="relative flex h-full w-full select-none flex-col overflow-y-auto bg-[#f6f8fa] px-[16px] py-[16px] scrollbar-hide">
@@ -68,14 +60,11 @@ export default function ExperienceGottenListPage() {
         <ExperiencePieceSection
           title="받은 경험조각"
           items={items}
-          kebabMode="options"
           onItemClick={(item) =>
             navigate(`/experience/diary/${item.id}`, {
               state: { mode: "incoming", fragment: item.fragment },
             })
           }
-          onHideItem={handleRemove}
-          onDeleteItem={handleRemove}
         />
       </div>
     </div>
