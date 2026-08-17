@@ -1,4 +1,6 @@
 import apiClient, { refreshCsrfToken } from "../../api/apiClient";
+import { clearDraft } from "../../utils/diaryDraft";
+import { clearCachedMonthItems } from "../../utils/monthDiariesCache";
 
 export function login(email, password) {
   return apiClient.post("/api/auth/login", { email, password });
@@ -58,6 +60,8 @@ export function clearLocalSession() {
   } catch (error) {
     console.error("sessionStorage 정리 실패:", error);
   }
+  clearDraft();
+  clearCachedMonthItems();
 }
 
 export async function logout() {

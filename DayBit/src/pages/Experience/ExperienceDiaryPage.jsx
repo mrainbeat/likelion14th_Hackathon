@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import FeedbackModal from "./components/FeedbackModal";
 import CancelConfirmModal from "./components/CancelConfirmModal";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
@@ -50,7 +49,7 @@ export default function ExperienceDiaryPage() {
     }
     return null;
   });
-  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showOriginal, setShowOriginal] = useState(false);
   const [review, setReview] = useState(null);
@@ -142,16 +141,16 @@ export default function ExperienceDiaryPage() {
     }
   };
 
-  const handleFeedbackComplete = async (content) => {
+  const handleFeedbackComplete = async () => {
+    const content = feedbackText.trim();
+    if (!content) return;
     if (!fragment?.deliveryId) {
-      setShowFeedback(false);
       setActionError("이 조각에는 반응을 보낼 수 없어요.");
       return;
     }
     setIsSubmitting(true);
     try {
       await sendDeliveryFeedback(fragment.deliveryId, content);
-      setShowFeedback(false);
       navigate("/experience/gotten", { replace: true });
     } catch (error) {
       console.error(
@@ -159,7 +158,6 @@ export default function ExperienceDiaryPage() {
         error.response?.status,
         error.response?.data,
       );
-      setShowFeedback(false);
       setActionError(
         error.response?.status === 409
           ? "이미 반응을 보낸 조각이에요."
@@ -279,6 +277,20 @@ export default function ExperienceDiaryPage() {
                 있어요.
               </p>
             )}
+
+            {mode === "incoming" && (
+              <div className="flex w-full flex-col items-end gap-[12px]">
+                <div className="flex w-full items-center rounded-bl-[12px] rounded-br-[12px] rounded-tl-[12px] border border-solid border-grey-30 bg-[#EFF1F6] px-[16px] py-[10px]">
+                  <textarea
+                    value={feedbackText}
+                    onChange={(e) => setFeedbackText(e.target.value)}
+                    placeholder="반응을 남겨주세요"
+                    rows={1}
+                    className="min-w-0 flex-1 resize-none bg-transparent text-[16px] font-medium tracking-[-0.32px] text-grey-90 placeholder:text-grey-50 focus:outline-none"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -314,20 +326,13 @@ export default function ExperienceDiaryPage() {
         <div className="absolute inset-x-0 bottom-0 flex w-full bg-[#f6f8fa] px-[16px] pb-[30px] pt-[16px]">
           <button
             type="button"
-            disabled={isSubmitting}
-            onClick={() => setShowFeedback(true)}
+            disabled={isSubmitting || !feedbackText.trim()}
+            onClick={handleFeedbackComplete}
             className="h-[49px] w-full rounded-[12px] bg-grey-70 text-[18px] font-semibold tracking-[-0.36px] text-grey-0 disabled:opacity-50"
           >
-            반응 보내기
+            작성 완료
           </button>
         </div>
-      )}
-
-      {showFeedback && (
-        <FeedbackModal
-          onClose={() => setShowFeedback(false)}
-          onComplete={handleFeedbackComplete}
-        />
       )}
 
       {showCancelConfirm && (

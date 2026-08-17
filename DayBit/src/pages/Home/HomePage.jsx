@@ -7,11 +7,11 @@ import HomeTutorial from "./components/HomeTutorial";
 import WeeklyImageNotificationModal from "./components/WeeklyImageNotificationModal";
 import SpeechBubble from "../../components/SpeechBubble";
 import { getTodayColorPalette, hexToRgba } from "../../utils/rewardColor";
+import { getWeeklyRewards } from "../../utils/weeklyRewards";
 import {
-  getWeeklyRewards,
-  isWeeklyRewardNotified,
-  markWeeklyRewardNotified,
-} from "../../utils/weeklyRewards";
+  loadCachedMonthItems,
+  saveCachedMonthItems,
+} from "../../utils/monthDiariesCache";
 import { addDays, generateWeeklyReward } from "../../utils/devDiary";
 import {
   loadExperienceInbox,
@@ -71,6 +71,15 @@ function getSeoulToday() {
 function formatDate(d) {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
+
+function mondayOf(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  const dayOffset = (date.getDay() + 6) % 7;
+  date.setDate(date.getDate() - dayOffset);
+  return formatDate(date);
+}
+
 
 function buildCalendarWeeks(year, month) {
   const firstOfMonth = new Date(year, month - 1, 1);
@@ -142,12 +151,13 @@ const REWARD_BADGE_STYLE = {
   unavailable: "bg-grey-30 text-grey-0",
 };
 
-function RewardBadge({ state, onClick }) {
+function RewardBadge({ state, onClick, weekStartDate }) {
   const isInteractive = state === "available" || state === "viewed";
   return (
     <button
       type="button"
       data-reward-badge
+      data-week-start={weekStartDate}
       onClick={isInteractive ? onClick : undefined}
       disabled={!isInteractive}
       className={`relative flex size-[38px] shrink-0 items-center justify-center overflow-clip rounded-[4px] p-0 ${
@@ -195,8 +205,15 @@ export default function HomePage() {
   const [viewMonth, setViewMonth] = useState(
     returnedMonth?.month ?? today.month,
   );
-  const [monthItems, setMonthItems] = useState([]);
-  const [monthLoaded, setMonthLoaded] = useState(false);
+  const [monthItems, setMonthItems] = useState(
+    () => loadCachedMonthItems(viewYear, viewMonth) ?? [],
+  );
+  const [monthLoaded, setMonthLoaded] = useState(
+    () => loadCachedMonthItems(viewYear, viewMonth) != null,
+  );
+  const [hydratedMonthKey, setHydratedMonthKey] = useState(
+    `${viewYear}-${viewMonth}`,
+  );
   const [awayTodayItem, setAwayTodayItem] = useState(null);
   const [awayLoaded, setAwayLoaded] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
@@ -213,6 +230,14 @@ export default function HomePage() {
     viewYear > today.year ||
     (viewYear === today.year && viewMonth > today.month);
 
+  const currentMonthKey = `${viewYear}-${viewMonth}`;
+  if (hydratedMonthKey !== currentMonthKey) {
+    setHydratedMonthKey(currentMonthKey);
+    const cached = loadCachedMonthItems(viewYear, viewMonth);
+    setMonthItems(cached ?? []);
+    setMonthLoaded(cached != null);
+  }
+
   useEffect(() => {
     let alive = true;
     apiClient
@@ -223,7 +248,9 @@ export default function HomePage() {
       .then((response) => {
         if (!alive) return;
         const result = response.data.result;
-        setMonthItems(Array.isArray(result) ? result : (result?.items ?? []));
+        const items = Array.isArray(result) ? result : (result?.items ?? []);
+        setMonthItems(items);
+        saveCachedMonthItems(viewYear, viewMonth, items);
       })
       .catch((error) => {
         console.error(
@@ -400,8 +427,8 @@ export default function HomePage() {
       (item) =>
         item.status === "COMPLETED" &&
         item.available &&
-        item.weekEndDate < today.dateStr &&
-        !isWeeklyRewardNotified(userId, item.weeklyRewardId),
+        !item.viewed &&
+        item.weekEndDate < today.dateStr,
     );
     if (candidates.length === 0) return;
 
@@ -416,14 +443,11 @@ export default function HomePage() {
   ]);
 
   const handleNotifyClose = () => {
-    if (notifyReward)
-      markWeeklyRewardNotified(userId, notifyReward.weeklyRewardId);
     setNotifyReward(null);
   };
 
   const handleNotifyConfirm = () => {
     if (!notifyReward) return;
-    markWeeklyRewardNotified(userId, notifyReward.weeklyRewardId);
     const id = notifyReward.weeklyRewardId;
     setNotifyReward(null);
     navigate(`/home/weekly-rewards/${id}`);
@@ -504,6 +528,8 @@ export default function HomePage() {
     };
   }, []);
 
+  const currentWeekStart = mondayOf(today.dateStr);
+
   const scrollRef = useRef(null);
   const pencilRef = useRef(null);
   const experienceRef = useRef(null);
@@ -530,42 +556,21 @@ export default function HomePage() {
 
     const collect = () => {
       if (tutorialStep === 0) {
-        const badges = Array.from(
-          scroller.querySelectorAll("[data-reward-badge]"),
+        const el = scroller.querySelector(
+          `[data-reward-badge][data-week-start="${currentWeekStart}"]`,
         );
-        if (!badges.length) return null;
-        const rects = badges.map((b) => b.getBoundingClientRect());
-        return {
-          rect: {
-            top: Math.min(...rects.map((r) => r.top)),
-            left: Math.min(...rects.map((r) => r.left)),
-            right: Math.max(...rects.map((r) => r.right)),
-            bottom: Math.max(...rects.map((r) => r.bottom)),
-          },
-          radius: 4,
-          pad: 4,
-          el: badges[0],
-        };
+        if (!el) return null;
+        return { rect: el.getBoundingClientRect(), radius: 8, pad: 4, el };
       }
       const el = tutorialStep === 1 ? pencilRef.current : experienceRef.current;
       if (!el) return null;
       return {
         rect: el.getBoundingClientRect(),
-        radius: tutorialStep === 1 ? 999 : 8,
-        pad: 6,
+        radius: 12,
+        pad: tutorialStep === 1 ? 2 : 0,
         el,
       };
     };
-
-    const initial = collect();
-    if (initial) {
-      const base = scroller.getBoundingClientRect();
-      const visibleHeight = scroller.clientHeight - TUTORIAL_SHEET_HEIGHT;
-      const targetHeight = initial.rect.bottom - initial.rect.top;
-      const topInContent = initial.rect.top - base.top + scroller.scrollTop;
-      const desiredTop = Math.max(16, (visibleHeight - targetHeight) / 2);
-      scroller.scrollTop = Math.max(0, topInContent - desiredTop);
-    }
 
     const measure = () => {
       const target = collect();
@@ -581,10 +586,27 @@ export default function HomePage() {
       });
     };
 
+    const initial = collect();
+    if (initial) {
+      const base = scroller.getBoundingClientRect();
+      const visibleHeight = scroller.clientHeight - TUTORIAL_SHEET_HEIGHT;
+      const targetHeight = initial.rect.bottom - initial.rect.top;
+      const topInContent = initial.rect.top - base.top + scroller.scrollTop;
+      const desiredTop = Math.max(16, (visibleHeight - targetHeight) / 2);
+      scroller.scrollTo({
+        top: Math.max(0, topInContent - desiredTop),
+        behavior: "smooth",
+      });
+    }
+
     measure();
+    scroller.addEventListener("scroll", measure);
     const raf = requestAnimationFrame(measure);
-    return () => cancelAnimationFrame(raf);
-  }, [tutorialStep, monthLoaded]);
+    return () => {
+      scroller.removeEventListener("scroll", measure);
+      cancelAnimationFrame(raf);
+    };
+  }, [tutorialStep, monthLoaded, currentWeekStart]);
 
   useLayoutEffect(() => {
     if (tutorialStep !== null || !tutorialJustFinished.current) return;
@@ -789,6 +811,7 @@ export default function HomePage() {
                           {canEarnReward && (
                             <RewardBadge
                               state={getRewardBadgeState(weekStartDate)}
+                              weekStartDate={weekStartDate}
                               onClick={() =>
                                 handleRewardBadgeClick(weekStartDate)
                               }
@@ -876,12 +899,13 @@ export default function HomePage() {
           </div>
 
           <button
+            ref={experienceRef}
             type="button"
             onClick={() => navigate("/experience")}
             className="flex w-full cursor-pointer flex-col items-start gap-[16px] rounded-[12px] bg-grey-0 px-[16px] py-[20px] text-left transition-opacity active:opacity-80"
             style={{ boxShadow: cardShadow }}
           >
-            <div ref={experienceRef} className="flex items-center gap-[10px]">
+            <div className="flex items-center gap-[10px]">
               <LogoSymbol
                 dotColor={accentColor ?? "#414450"}
                 className="h-[28px] w-[22px] shrink-0"
