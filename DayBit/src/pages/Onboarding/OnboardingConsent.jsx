@@ -51,6 +51,7 @@ export default function OnboardingConsent() {
   const handleAgree = async () => {
     if (isSubmitting) return;
     const nickname = localStorage.getItem("nickname") || "";
+    const job = "미입력";
     const alarmLabel = localStorage.getItem("alarmTime") || "";
     const reminderTime = toServerTime(alarmLabel);
     const dayStartTime = localStorage.getItem("dayStartTime") || null;
@@ -59,6 +60,7 @@ export default function OnboardingConsent() {
     try {
       await apiClient.patch("/api/me", {
         nickname,
+        job,
         reminderTime,
         dayStartTime,
         aiMemoryConsent: true,
