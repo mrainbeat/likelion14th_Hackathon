@@ -145,20 +145,25 @@ export function fragmentToPieceItem(fragment, kind) {
   };
 }
 
-export async function findExperienceMatches(fragments, cap = 5) {
-  const diaryIds = [...new Set(fragments.map((f) => f.diaryId))].slice(
-    0,
-    cap,
-  );
+export async function findExperienceMatches(sourceDiaryIds, cap = 10) {
+  const diaryIds = [...new Set(sourceDiaryIds.filter(Boolean))].slice(0, cap);
   const results = await Promise.allSettled(
     diaryIds.map((diaryId) => findExperienceMatch(diaryId)),
   );
+
   const matches = [];
+  const seen = new Set();
+  let errorCount = 0;
+
   results.forEach((r) => {
     if (r.status === "fulfilled") {
       const match = r.value.data.result;
-      if (match) matches.push(match);
+      if (match && !seen.has(match.shareId)) {
+        seen.add(match.shareId);
+        matches.push(match);
+      }
     } else {
+      errorCount += 1;
       console.error(
         "POST /api/v1/experience-fragments/matches 실패:",
         r.reason?.response?.status,
@@ -166,5 +171,6 @@ export async function findExperienceMatches(fragments, cap = 5) {
       );
     }
   });
-  return matches;
+
+  return { matches, errorCount, searchedCount: diaryIds.length };
 }

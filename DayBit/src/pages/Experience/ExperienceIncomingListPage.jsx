@@ -26,10 +26,13 @@ export default function ExperienceIncomingListPage() {
       .then((response) => {
         const fragments = response.data.result ?? [];
         if (!alive || fragments.length === 0) return [];
-        return findExperienceMatches(fragments, 10);
+        return findExperienceMatches(
+          fragments.map((f) => f.diaryId),
+          10,
+        );
       })
       .then((found) => {
-        if (alive && found) setMatches(found);
+        if (alive && found) setMatches(found.matches);
       })
       .catch((error) => {
         console.error(
