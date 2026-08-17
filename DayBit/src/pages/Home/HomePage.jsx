@@ -16,6 +16,11 @@ import {
   loadCachedWeeklyRewards,
   saveCachedWeeklyRewards,
 } from "../../utils/weeklyRewardsCache";
+import { loadUnreadNotificationCount } from "../../utils/notifications";
+import {
+  loadCachedUnreadCount,
+  saveCachedUnreadCount,
+} from "../../utils/notificationsCache";
 import { addDays, generateWeeklyReward } from "../../utils/devDiary";
 import {
   loadExperienceInbox,
@@ -26,6 +31,7 @@ import { useDevAccess } from "../../contexts/devAccess";
 import LogoSymbol from "../../assets/icons/LogoSymbol.jsx";
 import profileIcon from "../../assets/icons/profile.svg";
 import bellIcon from "../../assets/icons/notification-bell.svg";
+import unreadDotIcon from "../../assets/icons/notification-unread-dot.svg";
 import arrowIcon from "../../assets/icons/back.svg";
 import editIcon from "../../assets/icons/edit-pencil.svg";
 import {
@@ -37,6 +43,8 @@ let resumeCheckedThisSession = false;
 let weeklyNotifyCheckedThisSession = false;
 
 const WEEKDAYS = ["월", "화", "수", "목", "금", "토", "일"];
+
+const UNREAD_POLL_INTERVAL_MS = 60000;
 
 function maskedIcon(src, color) {
   return {
@@ -540,6 +548,29 @@ export default function HomePage() {
     };
   }, []);
 
+  const [unreadCount, setUnreadCount] = useState(
+    () => loadCachedUnreadCount() ?? 0,
+  );
+
+  useEffect(() => {
+    let alive = true;
+
+    const sync = () => {
+      loadUnreadNotificationCount().then((count) => {
+        if (!alive) return;
+        setUnreadCount(count);
+        saveCachedUnreadCount(count);
+      });
+    };
+
+    sync();
+    const timer = setInterval(sync, UNREAD_POLL_INTERVAL_MS);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, []);
+
   const currentWeekStart = mondayOf(today.dateStr);
 
   const scrollRef = useRef(null);
@@ -719,13 +750,23 @@ export default function HomePage() {
             <button
               type="button"
               onClick={() => navigate("/notifications")}
-              className="flex shrink-0 cursor-pointer items-center justify-center border-none bg-transparent px-[6px] py-[3px] transition-opacity active:opacity-60"
+              aria-label={unreadCount > 0 ? "알림 (안 읽은 알림 있음)" : "알림"}
+              className="flex shrink-0 cursor-pointer items-center justify-center border-none bg-transparent p-0 transition-opacity active:opacity-60"
             >
-              <img
-                src={bellIcon}
-                alt="알림"
-                className="h-[24.375px] w-[18.963px] object-contain"
-              />
+              <span className="relative block size-[30px]">
+                <img
+                  src={bellIcon}
+                  alt=""
+                  className="absolute left-[5.517px] top-[3.126px] h-[24.375px] w-[18.963px] object-contain"
+                />
+                {unreadCount > 0 && (
+                  <img
+                    src={unreadDotIcon}
+                    alt=""
+                    className="absolute left-[17px] top-[5px] size-[8px]"
+                  />
+                )}
+              </span>
             </button>
           </div>
         </div>

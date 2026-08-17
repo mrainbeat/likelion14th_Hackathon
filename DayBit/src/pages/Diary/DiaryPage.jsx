@@ -173,14 +173,19 @@ export default function DiaryPage() {
     setIsAskingQuestion(true);
     setQuestionError("");
     try {
+      const latestContent = htmlToPlainText(
+        editorRef.current?.innerHTML ?? content,
+      );
       const response = await apiClient.post(
         "/api/v1/ai/writing-help/questions",
+        latestContent ? { currentContent: latestContent } : undefined,
       );
-      const { questionId, questionText, remainingCount } = response.data.result;
+      const { questionId, questionText, remainingCount, contextType } =
+        response.data.result;
 
       setRemainingQuestions(remainingCount);
       setQuestions((prev) => {
-        const updated = [...prev, { questionId, questionText }];
+        const updated = [...prev, { questionId, questionText, contextType }];
         localStorage.setItem("diary_questions", JSON.stringify(updated));
         return updated;
       });

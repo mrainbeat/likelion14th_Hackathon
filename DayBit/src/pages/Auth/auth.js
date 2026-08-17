@@ -2,6 +2,7 @@ import apiClient, { refreshCsrfToken } from "../../api/apiClient";
 import { clearDraft } from "../../utils/diaryDraft";
 import { clearCachedMonthItems } from "../../utils/monthDiariesCache";
 import { clearCachedWeeklyRewards } from "../../utils/weeklyRewardsCache";
+import { clearCachedNotifications } from "../../utils/notificationsCache";
 
 export function login(email, password) {
   return apiClient.post("/api/auth/login", { email, password });
@@ -64,6 +65,7 @@ export function clearLocalSession() {
   clearDraft();
   clearCachedMonthItems();
   clearCachedWeeklyRewards();
+  clearCachedNotifications();
 }
 
 export async function logout() {
