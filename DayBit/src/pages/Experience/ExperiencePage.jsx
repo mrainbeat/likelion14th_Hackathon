@@ -17,6 +17,7 @@ import {
   fragmentToPieceItem,
   fragmentTopic,
   getReceivedFragments,
+  loadReceivedFragments,
   saveReceivedFragment,
 } from "../../utils/experienceFragments";
 
@@ -82,6 +83,16 @@ export default function ExperiencePage() {
       setMatchError(
         failed ? "경험조각을 불러오지 못했어요. 잠시 후 다시 시도해주세요." : "",
       );
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    loadReceivedFragments().then(({ fragments }) => {
+      if (alive) setReceivedFragments(fragments);
     });
     return () => {
       alive = false;

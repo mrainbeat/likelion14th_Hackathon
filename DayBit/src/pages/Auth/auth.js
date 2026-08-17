@@ -3,6 +3,7 @@ import { clearDraft } from "../../utils/diaryDraft";
 import { clearCachedMonthItems } from "../../utils/monthDiariesCache";
 import { clearCachedWeeklyRewards } from "../../utils/weeklyRewardsCache";
 import { clearCachedNotifications } from "../../utils/notificationsCache";
+import { clearReceivedFragments } from "../../utils/experienceFragments";
 
 export function login(email, password) {
   return apiClient.post("/api/auth/login", { email, password });
@@ -66,6 +67,7 @@ export function clearLocalSession() {
   clearCachedMonthItems();
   clearCachedWeeklyRewards();
   clearCachedNotifications();
+  clearReceivedFragments();
 }
 
 export async function logout() {

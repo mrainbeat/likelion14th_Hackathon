@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ExperiencePieceSection from "./components/ExperiencePieceSection";
 import backIcon from "../../assets/icons/back.svg";
@@ -6,12 +6,25 @@ import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
 import {
   getReceivedFragments,
+  loadReceivedFragments,
   fragmentToPieceItem,
 } from "../../utils/experienceFragments";
 
 export default function ExperienceGottenListPage() {
   const navigate = useNavigate();
-  const [receivedFragments] = useState(() => getReceivedFragments());
+  const [receivedFragments, setReceivedFragments] = useState(() =>
+    getReceivedFragments(),
+  );
+
+  useEffect(() => {
+    let alive = true;
+    loadReceivedFragments().then(({ fragments }) => {
+      if (alive) setReceivedFragments(fragments);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const items = receivedFragments
     .slice()

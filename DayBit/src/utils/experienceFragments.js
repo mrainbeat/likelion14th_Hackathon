@@ -41,6 +41,10 @@ export function getExperienceFragmentFeedbacks(shareId) {
   return apiClient.get(`/api/v1/experience-fragments/${shareId}/feedbacks`);
 }
 
+export function getReceivedExperienceFragments() {
+  return apiClient.get("/api/v1/experience-fragments/received");
+}
+
 const AUTO_APPROVE_DAYS = 5;
 
 export function getAutoApproveAt(reviewAvailableAt) {
@@ -73,12 +77,58 @@ export function getReceivedFragments() {
   }
 }
 
+function writeReceivedFragments(list) {
+  try {
+    localStorage.setItem(RECEIVED_KEY, JSON.stringify(list));
+  } catch {
+    return;
+  }
+}
+
 export function saveReceivedFragment(fragment) {
   const list = getReceivedFragments().filter(
     (f) => f.shareId !== fragment.shareId,
   );
   list.unshift(fragment);
-  localStorage.setItem(RECEIVED_KEY, JSON.stringify(list));
+  writeReceivedFragments(list);
+}
+
+export function clearReceivedFragments() {
+  try {
+    localStorage.removeItem(RECEIVED_KEY);
+  } catch {
+    return;
+  }
+}
+
+export function markReceivedFragmentFeedbackSubmitted(deliveryId) {
+  const list = getReceivedFragments().map((fragment) =>
+    fragment.deliveryId === deliveryId
+      ? {
+          ...fragment,
+          feedbackSubmitted: true,
+          feedbackSubmittedAt: new Date().toISOString(),
+        }
+      : fragment,
+  );
+  writeReceivedFragments(list);
+}
+
+export async function loadReceivedFragments() {
+  try {
+    const response = await getReceivedExperienceFragments();
+    const result = response.data.result;
+    const items = Array.isArray(result) ? result : [];
+    writeReceivedFragments(items);
+    return { fragments: items, failed: false };
+  } catch (error) {
+    console.error(
+      "GET /api/v1/experience-fragments/received 실패:",
+      error.response?.status,
+      error.response?.data,
+    );
+    return { fragments: getReceivedFragments(), failed: true };
+  }
 }
 
 export function formatFragmentDate(iso) {
