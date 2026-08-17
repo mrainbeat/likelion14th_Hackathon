@@ -19,7 +19,7 @@ export default function HideConfirmModal({ month, day, onCancel, onConfirm }) {
             <p className="font-semibold">숨기시겠어요?</p>
           </div>
           <div className="w-full text-[16px] font-medium leading-[normal] tracking-[-0.32px] text-grey-70">
-            숨긴 일기는 마이페이지의 숨긴일기에서 다시 볼 수 있어요.
+            숨긴 일기는 마이페이지의 숨긴 일기에서 다시 볼 수 있어요.
           </div>
         </div>
         <div className="flex w-full items-center gap-[14px]">
