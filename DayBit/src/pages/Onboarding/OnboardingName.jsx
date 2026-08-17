@@ -39,7 +39,7 @@ export default function OnboardingName() {
         step={0}
         onBack={() => navigate("/login")}
         lines={["안녕하세요, 전 데이빗이에요 :)", "뭐라고 부르면 될까요?"]}
-        caption="설정에서 언제든지 변경 가능해요."
+        caption="앞으로 사용하실 닉네임을 알려주세요."
       />
 
       <div className="absolute left-[9.23%] right-[9.23%] top-[336px] flex flex-col gap-[8px]">
