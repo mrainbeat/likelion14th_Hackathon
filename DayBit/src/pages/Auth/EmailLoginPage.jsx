@@ -1,15 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login, resolveDestinationAfterAuth } from "./auth";
+import AuthTextField from "./AuthTextField";
 import backIcon from "../../assets/icons/back.svg";
-
-const TEST_ACCOUNTS = [
-  { email: "test1@naver.com", password: "12341234" },
-  { email: "test2@naver.com", password: "12341234" },
-  { email: "test3@naver.com", password: "12341234" },
-  { email: "test4@naver.com", password: "12341234" },
-  { email: "test5@naver.com", password: "12341234" },
-];
 
 export default function EmailLoginPage() {
   const navigate = useNavigate();
@@ -17,7 +10,6 @@ export default function EmailLoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isAutoLoggingIn, setIsAutoLoggingIn] = useState(false);
 
   const canSubmit = email.trim().length > 0 && password.length > 0;
 
@@ -46,28 +38,6 @@ export default function EmailLoginPage() {
     }
   };
 
-  const handleAutoLogin = async () => {
-    if (isAutoLoggingIn) return;
-
-    setIsAutoLoggingIn(true);
-    setError("");
-    const account =
-      TEST_ACCOUNTS[Math.floor(Math.random() * TEST_ACCOUNTS.length)];
-    try {
-      await login(account.email, account.password);
-      const destination = await resolveDestinationAfterAuth();
-      navigate(destination, { replace: true });
-    } catch (err) {
-      console.error(
-        "POST /api/auth/login 실패 (심사용 자동 로그인):",
-        err.response?.status,
-        err.response?.data,
-      );
-      setError("자동 로그인에 실패했어요.");
-      setIsAutoLoggingIn(false);
-    }
-  };
-
   return (
     <div className="relative flex h-full w-full select-none flex-col overflow-y-auto bg-[#F6F8FA] px-[16px] py-[16px] scrollbar-hide">
       <button
@@ -84,84 +54,65 @@ export default function EmailLoginPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="flex w-full flex-col items-center pt-[27px]"
+        className="flex w-full flex-col items-center gap-[80px] pb-[16px] pt-[30px]"
       >
-        <div className="flex w-full flex-col gap-[13px] items-center">
-          <div className="flex w-full flex-col gap-[55px] items-start">
-            <p className="w-full text-[20px] font-semibold tracking-[-0.2px] text-grey-90">
-              로그인
-            </p>
+        <div className="flex w-full flex-col items-start gap-[100px] px-[16px]">
+          <p className="w-full text-[22px] font-semibold leading-[normal] tracking-[-0.66px] text-grey-90">
+            로그인
+          </p>
 
-            <div className="flex w-full flex-col gap-[8px] items-start">
-              <label
-                htmlFor="email"
-                className="w-full text-[16px] font-medium text-grey-90"
-              >
-                이메일
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="이메일을 입력해주세요."
-                autoComplete="email"
-                className="w-full border-b border-solid border-grey-30 bg-transparent py-[10px] text-[14px] font-medium text-grey-90 placeholder-grey-40 focus:outline-none"
-              />
-            </div>
-
-            <div className="flex w-full flex-col gap-[8px] items-start">
-              <label
-                htmlFor="password"
-                className="w-full text-[16px] font-medium text-grey-90"
-              >
-                비밀번호
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="비밀번호를 입력해주세요."
-                autoComplete="current-password"
-                className="w-full border-b border-solid border-grey-30 bg-transparent py-[10px] text-[14px] font-medium text-grey-90 placeholder-grey-40 focus:outline-none"
-              />
-            </div>
+          <div className="flex w-full flex-col items-start gap-[56px]">
+            <AuthTextField
+              id="email"
+              label="이메일"
+              value={email}
+              onChange={setEmail}
+              placeholder="이메일을 입력해주세요."
+              autoComplete="email"
+            />
+            <AuthTextField
+              id="password"
+              label="비밀번호"
+              type="password"
+              value={password}
+              onChange={setPassword}
+              placeholder="비밀번호를 입력해주세요."
+              autoComplete="current-password"
+              helperText="8~64자로 입력해주세요."
+            />
           </div>
+        </div>
 
-          <div className="flex w-full flex-col gap-[17px] items-center">
-            {error && (
-              <p className="w-full text-[13px] font-medium text-red-500">
-                {error}
-              </p>
-            )}
+        <div className="flex w-full flex-col items-center gap-[12px]">
+          {error && (
+            <p className="w-full px-[16px] text-[13px] font-medium leading-[1.5] text-red-500">
+              {error}
+            </p>
+          )}
 
+          <button
+            type="submit"
+            disabled={!canSubmit || isSubmitting}
+            className="flex h-[49px] w-full items-center justify-center rounded-[12px] bg-grey-80 px-[26px] text-[18px] font-semibold leading-[normal] tracking-[-0.36px] text-white text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)] disabled:bg-grey-20"
+          >
+            {isSubmitting ? "로그인 중..." : "로그인"}
+          </button>
+
+          <div className="flex items-center justify-center gap-[16px]">
             <button
-              type="submit"
-              disabled={!canSubmit || isSubmitting}
-              className="flex w-full items-center justify-center rounded-[12px] bg-grey-70 px-[10px] py-[16px] text-[16px] font-semibold text-grey-0 disabled:bg-grey-20 disabled:text-grey-0"
+              type="button"
+              className="whitespace-nowrap text-center text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-grey-70"
             >
-              {isSubmitting ? "로그인 중..." : "로그인"}
+              계정 찾기
             </button>
-
-            <div className="flex flex-wrap items-center gap-[16px]">
-              <button
-                type="button"
-                onClick={handleAutoLogin}
-                disabled={isAutoLoggingIn}
-                className="whitespace-nowrap text-[12px] font-medium text-grey-90 disabled:opacity-50"
-              >
-                {isAutoLoggingIn ? "로그인 중..." : "심사용 자동 로그인"}
-              </button>
-              <div className="h-[14px] w-px bg-grey-30" />
-              <button
-                type="button"
-                onClick={() => navigate("/signup")}
-                className="whitespace-nowrap text-[12px] font-medium text-grey-90"
-              >
-                회원가입
-              </button>
-            </div>
+            <div className="h-[22px] w-px shrink-0 bg-grey-30" />
+            <button
+              type="button"
+              onClick={() => navigate("/signup")}
+              className="whitespace-nowrap text-center text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-grey-70"
+            >
+              회원가입
+            </button>
           </div>
         </div>
       </form>
