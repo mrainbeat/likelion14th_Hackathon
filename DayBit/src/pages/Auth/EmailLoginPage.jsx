@@ -78,7 +78,7 @@ export default function EmailLoginPage() {
               onChange={setPassword}
               placeholder="비밀번호를 입력해주세요."
               autoComplete="current-password"
-              helperText="8~64자로 입력해주세요."
+              helperText="8자 이상 입력해주세요."
             />
           </div>
         </div>
