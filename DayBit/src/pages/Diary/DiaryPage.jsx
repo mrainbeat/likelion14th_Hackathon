@@ -11,7 +11,13 @@ import backIcon from "../../assets/icons/back.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
 import logoImageDisabled from "../../assets/logos/logo-symbol-disabled.svg";
 import profileIcon from "../../assets/icons/profile.svg";
-import { saveDraft, clearDraft, loadTodayDraft } from "../../utils/diaryDraft";
+import {
+  saveDraft,
+  clearDraft,
+  loadTodayDraft,
+  getLastTimestampAt,
+  markTimestampAppended,
+} from "../../utils/diaryDraft";
 
 function htmlToPlainText(html) {
   if (!html) return "";
@@ -101,8 +107,6 @@ export default function DiaryPage() {
   useEffect(() => {
     if (isTimeAppended.current) return;
 
-    const timeStr = getFormattedTime();
-    const timeHtml = `<span data-time-badge style="color: #5F6473; font-weight: 500;">${timeStr}</span><br><span style="color: #2D3038;">\u200B</span>`;
     const savedDiary = loadTodayDraft();
 
     let priorText = "";
@@ -112,9 +116,19 @@ export default function DiaryPage() {
       priorText = (tempPrior.textContent || tempPrior.innerText || "").trim();
     }
 
-    const newContent = savedDiary
-      ? `${savedDiary}<br><br>${timeHtml}`
-      : timeHtml;
+    const lastTimestampAt = getLastTimestampAt();
+    const withinTenMinutes =
+      lastTimestampAt !== null && Date.now() - lastTimestampAt < 10 * 60 * 1000;
+
+    let newContent;
+    if (withinTenMinutes) {
+      newContent = savedDiary || "";
+    } else {
+      const timeStr = getFormattedTime();
+      const timeHtml = `<span data-time-badge style="color: #5F6473; font-weight: 500;">${timeStr}</span><br><span style="color: #2D3038;">\u200B</span>`;
+      newContent = savedDiary ? `${savedDiary}<br><br>${timeHtml}` : timeHtml;
+      markTimestampAppended();
+    }
 
     if (priorText.length > 0) {
       setHadPriorContent(true);
