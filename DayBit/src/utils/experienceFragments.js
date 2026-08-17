@@ -81,11 +81,6 @@ export function saveReceivedFragment(fragment) {
   localStorage.setItem(RECEIVED_KEY, JSON.stringify(list));
 }
 
-export function removeReceivedFragment(shareId) {
-  const list = getReceivedFragments().filter((f) => f.shareId !== shareId);
-  localStorage.setItem(RECEIVED_KEY, JSON.stringify(list));
-}
-
 export function formatFragmentDate(iso) {
   if (!iso) return "";
   const d = new Date(iso);

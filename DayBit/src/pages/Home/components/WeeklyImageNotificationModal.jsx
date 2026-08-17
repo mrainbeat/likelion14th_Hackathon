@@ -13,7 +13,7 @@ export default function WeeklyImageNotificationModal({
         className="flex w-[calc(100%-40px)] max-w-[350px] flex-col items-start justify-center gap-[16px] rounded-[12px] bg-[#F6F8FA] px-[16px] py-[20px]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex w-full flex-col items-center gap-[6px]">
+        <div className="flex w-full flex-col items-center gap-[16px]">
           <div className="flex w-full flex-col items-start gap-[6px]">
             <p className="w-full text-[20px] font-semibold leading-[normal] tracking-[-0.4px] text-grey-90">
               지난주를 돌아볼까요?
@@ -23,15 +23,17 @@ export default function WeeklyImageNotificationModal({
             </p>
           </div>
           {imageUrl && (
-            <div
-              className="h-[156px] w-[222px] shrink-0 rounded-[4px]"
-              style={{
-                backgroundImage: `url("${imageUrl}")`,
-                backgroundSize: "cover",
-                backgroundPosition: "50% 50%",
-                filter: "blur(2.5px)",
-              }}
-            />
+            <div className="h-[156px] w-[222px] shrink-0 overflow-hidden rounded-[4px]">
+              <div
+                className="h-full w-full rounded-[4px]"
+                style={{
+                  backgroundImage: `url("${imageUrl}")`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "50% 50%",
+                  filter: "blur(8.5px)",
+                }}
+              />
+            </div>
           )}
         </div>
         <div className="flex w-full items-center gap-[14px]">
