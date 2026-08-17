@@ -6,7 +6,7 @@ export default function DiaryManagementPage() {
       title="일기 관리"
       items={[
         { label: "일기 관리", to: "/mypage/diary-list" },
-        { label: "숨긴 일기", disabled: true },
+        { label: "숨긴 일기", to: "/mypage/hidden" },
         { label: "휴지통", to: "/mypage/trash" },
       ]}
     />

@@ -36,6 +36,7 @@ import PrivacyPolicyPage from "./pages/MyPage/PrivacyPolicyPage";
 import DatedDiaryPage from "./pages/MyPage/DatedDiaryPage";
 import WeeklyImagePage from "./pages/Home/WeeklyImagePage";
 import TrashPage from "./pages/MyPage/TrashPage";
+import HiddenDiaryPage from "./pages/MyPage/HiddenDiaryPage";
 
 function App() {
   return (
@@ -115,6 +116,7 @@ function App() {
               element={<KakaoCallbackPage />}
             />
             <Route path="/mypage/trash" element={<TrashPage />} />
+            <Route path="/mypage/hidden" element={<HiddenDiaryPage />} />
           </Route>
         </Routes>
       </DevAccessProvider>

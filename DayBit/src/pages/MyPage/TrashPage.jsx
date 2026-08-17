@@ -169,7 +169,7 @@ export default function TrashPage() {
                       onClick={() => handleRestore(entry.diaryId)}
                       disabled={restoringId === entry.diaryId}
                       aria-label="복원하기"
-                      className="flex size-[20px] shrink-0 cursor-pointer items-center justify-center bg-transparent p-0 disabled:opacity-40"
+                      className="flex h-[20px] w-[21px] shrink-0 cursor-pointer items-center justify-center bg-transparent p-0 disabled:opacity-40"
                     >
                       <img
                         src={trashRestoreIcon}
@@ -186,7 +186,7 @@ export default function TrashPage() {
                         })
                       }
                       aria-label="완전히 삭제하기"
-                      className="flex size-[20px] shrink-0 cursor-pointer items-center justify-center bg-transparent p-0"
+                      className="flex h-[20px] w-[21px] shrink-0 cursor-pointer items-center justify-center bg-transparent p-0"
                     >
                       <img
                         src={trashClearIcon}
@@ -202,7 +202,13 @@ export default function TrashPage() {
                   </p>
                   <p className="truncate">{entry.content}</p>
                 </div>
-                <div className="h-0 w-full border-t border-[#D6D9E2]" />
+                <div
+                  className="h-[1px] w-full"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, rgba(205, 209, 218, 0.00) 0%, #CDD1DA 15%, #CDD1DA 84.62%, rgba(205, 209, 218, 0.00) 100%)",
+                  }}
+                />{" "}
               </div>
             ))}
           </div>
