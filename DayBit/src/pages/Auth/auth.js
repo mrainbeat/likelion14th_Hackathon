@@ -8,9 +8,41 @@ export function signup(email, password) {
   return apiClient.post("/api/auth/signup", { email, password });
 }
 
-export async function resolveDestinationAfterAuth() {
-  const response = await apiClient.get("/api/me");
-  const user = response.data.result;
+const REVIEW_PASSWORD = "12341234";
+const REVIEW_SEQ_KEY = "review_account_seq";
+const REVIEW_SEQ_START = 6;
+const REVIEW_MAX_TRIES = 50;
+
+// 이미 쓰인 번호면 서버가 거절하므로 +1 해가며 비어 있는 번호를 찾는다
+export async function signupNextReviewAccount() {
+  const saved = Number(localStorage.getItem(REVIEW_SEQ_KEY));
+  let seq = Number.isFinite(saved) && saved >= REVIEW_SEQ_START
+    ? saved
+    : REVIEW_SEQ_START;
+
+  for (let attempt = 0; attempt < REVIEW_MAX_TRIES; attempt += 1, seq += 1) {
+    const email = `test${seq}@gmail.com`;
+    try {
+      await signup(email, REVIEW_PASSWORD);
+      localStorage.setItem(REVIEW_SEQ_KEY, String(seq + 1));
+      return email;
+    } catch (error) {
+      const status = error.response?.status;
+      if (status === 400 || status === 409) continue;
+      throw error;
+    }
+  }
+
+  throw new Error("사용 가능한 심사용 계정 번호를 찾지 못했어요.");
+}
+
+// 로그인/가입 응답이 이미 MeResponse라 그대로 넘기면 /api/me 왕복을 한 번 아낀다
+export async function resolveDestinationAfterAuth(authUser) {
+  let user = authUser;
+  if (!user) {
+    const response = await apiClient.get("/api/me");
+    user = response.data.result;
+  }
 
   try {
     await refreshCsrfToken();
@@ -18,7 +50,7 @@ export async function resolveDestinationAfterAuth() {
     console.error("GET /api/auth/csrf 실패:", csrfError);
   }
 
-  return user.onboardingCompleted ? "/home" : "/onboarding";
+  return user?.onboardingCompleted ? "/home" : "/onboarding";
 }
 
 export function clearLocalSession() {

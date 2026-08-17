@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { signup, resolveDestinationAfterAuth } from "./auth";
+import AuthTextField from "./AuthTextField";
 import backIcon from "../../assets/icons/back.svg";
 
 export default function SignupPage() {
@@ -10,7 +11,7 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const canSubmit = email.trim().length > 0 && password.length > 0;
+  const canSubmit = email.trim().length > 0 && password.length >= 8;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,8 +20,10 @@ export default function SignupPage() {
     setIsSubmitting(true);
     setError("");
     try {
-      await signup(email.trim(), password);
-      const destination = await resolveDestinationAfterAuth();
+      const response = await signup(email.trim(), password);
+      const destination = await resolveDestinationAfterAuth(
+        response.data.result,
+      );
       navigate(destination, { replace: true });
     } catch (err) {
       console.error(
@@ -53,74 +56,49 @@ export default function SignupPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="flex w-full flex-col items-center pt-[27px]"
+        className="flex w-full flex-col items-center gap-[80px] pb-[16px] pt-[30px]"
       >
-        <div className="flex w-full flex-col gap-[13px] items-center">
-          <div className="flex w-full flex-col gap-[55px] items-start">
-            <p className="w-full text-[20px] font-semibold tracking-[-0.2px] text-grey-90">
-              회원가입
+        <div className="flex w-full flex-col items-start gap-[100px] px-[16px]">
+          <p className="w-full text-[22px] font-semibold leading-[normal] tracking-[-0.66px] text-grey-90">
+            회원가입
+          </p>
+
+          <div className="flex w-full flex-col items-start gap-[56px]">
+            <AuthTextField
+              id="email"
+              label="이메일"
+              value={email}
+              onChange={setEmail}
+              placeholder="이메일을 입력해주세요."
+              autoComplete="email"
+            />
+            <AuthTextField
+              id="password"
+              label="비밀번호"
+              type="password"
+              value={password}
+              onChange={setPassword}
+              placeholder="비밀번호를 입력해주세요."
+              autoComplete="new-password"
+              helperText="8자 이상 입력해주세요."
+            />
+          </div>
+        </div>
+
+        <div className="flex w-full flex-col items-center gap-[12px]">
+          {error && (
+            <p className="w-full px-[16px] text-[13px] font-medium leading-[1.5] text-red-500">
+              {error}
             </p>
+          )}
 
-            <div className="flex w-full flex-col gap-[8px] items-start">
-              <label
-                htmlFor="email"
-                className="w-full text-[16px] font-medium text-grey-90"
-              >
-                이메일
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="이메일을 입력해주세요."
-                autoComplete="email"
-                className="w-full border-b border-solid border-grey-30 bg-transparent py-[10px] text-[14px] font-medium text-grey-90 placeholder-grey-40 focus:outline-none"
-              />
-            </div>
-
-            <div className="flex w-full flex-col gap-[8px] items-start">
-              <label
-                htmlFor="password"
-                className="w-full text-[16px] font-medium text-grey-90"
-              >
-                비밀번호
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="비밀번호를 입력해주세요."
-                autoComplete="new-password"
-                className="w-full border-b border-solid border-grey-30 bg-transparent py-[10px] text-[14px] font-medium text-grey-90 placeholder-grey-40 focus:outline-none"
-              />
-            </div>
-          </div>
-
-          <div className="flex w-full flex-col gap-[17px] items-center">
-            {error && (
-              <p className="w-full text-[13px] font-medium text-red-500">
-                {error}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={!canSubmit || isSubmitting}
-              className="flex w-full items-center justify-center rounded-[12px] bg-grey-70 px-[10px] py-[16px] text-[16px] font-semibold text-grey-0 disabled:bg-grey-20 disabled:text-grey-0"
-            >
-              {isSubmitting ? "가입 중..." : "회원가입"}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => navigate("/login/email")}
-              className="whitespace-nowrap text-[12px] font-medium text-grey-90"
-            >
-              이미 계정이 있어요
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={!canSubmit || isSubmitting}
+            className="flex h-[49px] w-full items-center justify-center rounded-[12px] bg-grey-80 px-[26px] text-[18px] font-semibold leading-[normal] tracking-[-0.36px] text-white text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)] disabled:bg-grey-20"
+          >
+            {isSubmitting ? "가입 중..." : "회원가입"}
+          </button>
         </div>
       </form>
     </div>
