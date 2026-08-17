@@ -28,12 +28,14 @@ import NotificationsPage from "./pages/Notification/NotificationsPage";
 import ProfileSettingsPage from "./pages/MyPage/ProfileSettingsPage";
 import NotificationSettingsPage from "./pages/MyPage/NotificationSettingsPage";
 import DiaryManagementPage from "./pages/MyPage/DiaryManagementPage";
+import MyPageDiaryListPage from "./pages/MyPage/DiaryListPage";
 import SubscriptionPage from "./pages/MyPage/SubscriptionPage";
 import CustomerServicePage from "./pages/MyPage/CustomerServicePage";
 import TermsPage from "./pages/MyPage/TermsPage";
 import PrivacyPolicyPage from "./pages/MyPage/PrivacyPolicyPage";
 import DatedDiaryPage from "./pages/MyPage/DatedDiaryPage";
 import WeeklyImagePage from "./pages/Home/WeeklyImagePage";
+
 function App() {
   return (
     <BrowserRouter>
@@ -91,6 +93,10 @@ function App() {
             <Route
               path="/mypage/diary-management"
               element={<DiaryManagementPage />}
+            />
+            <Route
+              path="/mypage/diary-list"
+              element={<MyPageDiaryListPage />}
             />
             <Route path="/mypage/subscription" element={<SubscriptionPage />} />
             <Route path="/mypage/support" element={<CustomerServicePage />} />

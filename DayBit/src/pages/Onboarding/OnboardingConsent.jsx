@@ -14,32 +14,20 @@ const SECTIONS = [
       "기록에  등장한 사람, 관심사, 이슈등을 기억해요.",
       "새로운 정보를 기억하기 전에는 먼저 물어볼게요:)",
     ],
-    fullWidth: true,
   },
   {
     title: "이전 기록 활용하기",
     lines: ["최근 기록을 반영해 자연스럽게 이어지는", "질문을 드려요."],
   },
 ];
-function renderWithTightSpaces(text) {
-  const words = text.split(" ");
-  return words.map((word, i) => (
-    <span key={i}>
-      {word}
-      {i < words.length - 1 && <span className="tracking-[-0.8px]"></span>}
-    </span>
-  ));
-}
-function SpeechBubble({ lines, fullWidth }) {
+function SpeechBubble({ lines }) {
   return (
-    <div
-      className={`relative flex items-center rounded-tr-[12px] rounded-br-[12px] rounded-bl-[12px] border border-solid border-[#DFE2EA] bg-[#EFF1F6] px-[16px] py-[10px] ${
-        fullWidth ? "w-full shrink-0" : "shrink-0"
-      }`}
-    >
-      <div className="shrink-0 whitespace-nowrap text-[16px] font-medium tracking-[-0.32px] text-grey-80">
+    <div className="relative flex shrink-0 items-center rounded-tr-[12px] rounded-br-[12px] rounded-bl-[12px] border border-solid border-[#DFE2EA] bg-[#EFF1F6] px-[16px] py-[10px]">
+      <div className="text-[16px] font-medium tracking-[-0.32px] text-grey-80">
         {lines.map((line, i) => (
-          <p key={i}>{renderWithTightSpaces(line)}</p>
+          <p key={i} className="leading-[normal] whitespace-pre">
+            {line}
+          </p>
         ))}
       </div>
     </div>
@@ -98,7 +86,7 @@ export default function OnboardingConsent() {
       <div className="absolute inset-x-0 bottom-[115px] top-[302px] overflow-y-auto overscroll-contain pl-[9.23%] pr-[9.23%] [&::-webkit-scrollbar]:hidden">
         {" "}
         <div className="flex w-full flex-col gap-[16px] pb-[8px]">
-          {SECTIONS.map(({ title, lines, fullWidth }) => (
+          {SECTIONS.map(({ title, lines }) => (
             <div
               key={title}
               className="flex w-full flex-col items-start gap-[6px]"
@@ -106,7 +94,7 @@ export default function OnboardingConsent() {
               <p className="whitespace-nowrap text-[18px] font-semibold tracking-[-0.36px] text-grey-80">
                 {title}
               </p>
-              <SpeechBubble lines={lines} fullWidth={fullWidth} />
+              <SpeechBubble lines={lines} />
             </div>
           ))}
         </div>
