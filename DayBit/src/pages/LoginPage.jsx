@@ -2,8 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LogoSymbol from "../assets/logos/logo-symbol.svg";
 import LogoText from "../assets/logos/logo-text.svg";
-import KakaoLoginButton from "../assets/buttons/kakaologinbutton.svg";
-import OtherLoginButton from "../assets/buttons/otherloginbutton.svg";
+import kakaoSymbol from "../assets/icons/kakao-symbol.svg";
 import ReviewPasscodeModal from "./Auth/ReviewPasscodeModal";
 import {
   signupNextReviewAccount,
@@ -59,13 +58,12 @@ export default function LoginPage() {
         <button
           type="button"
           onClick={handleKakaoLogin}
-          className="h-[51px] w-full transition-transform active:scale-[0.98]"
+          className="flex h-[51px] w-full items-center justify-center gap-[10px] rounded-[12px] bg-[#FEE500] transition-transform active:scale-[0.98]"
         >
-          <img
-            src={KakaoLoginButton}
-            alt="카카오톡으로 시작하기"
-            className="h-full w-full object-fill"
-          />
+          <img src={kakaoSymbol} alt="" className="h-[19.187px] w-[19.735px]" />
+          <span className="text-[16px] font-semibold leading-[normal] text-black">
+            카카오톡으로 시작하기
+          </span>
         </button>
 
         <button
@@ -80,13 +78,11 @@ export default function LoginPage() {
         <button
           type="button"
           onClick={handleOtherLogin}
-          className="h-[51px] w-full transition-transform active:scale-[0.98]"
+          className="flex h-[51px] w-full items-center justify-center rounded-[12px] border border-solid border-[#787E8C] transition-transform active:scale-[0.98]"
         >
-          <img
-            src={OtherLoginButton}
-            alt="다른 방법으로 시작하기"
-            className="h-full w-full object-fill"
-          />
+          <span className="text-[16px] font-semibold leading-[normal] text-black">
+            다른 방법으로 시작하기
+          </span>
         </button>
 
         {reviewError && (
