@@ -1,4 +1,12 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import apiClient from "../../api/apiClient";
 import MonthYearPickerModal from "./components/MonthYearPickerModal";
@@ -59,6 +67,8 @@ function maskedIcon(src, color) {
     WebkitMaskSize: "contain",
   };
 }
+
+const EDIT_ICON_MASK = maskedIcon(editIcon, "#5F6473");
 
 function pad2(n) {
   return String(n).padStart(2, "0");
@@ -126,7 +136,7 @@ function buildCalendarWeeks(year, month) {
   return weeks;
 }
 
-function DayCell({ cell, item, onClick }) {
+const DayCell = memo(function DayCell({ cell, item, onSelect }) {
   if (!cell.inMonth) {
     return (
       <div className="relative size-[38px] shrink-0 overflow-clip rounded-[2px]">
@@ -144,7 +154,7 @@ function DayCell({ cell, item, onClick }) {
   return (
     <button
       type="button"
-      onClick={item ? onClick : undefined}
+      onClick={item ? () => onSelect(item) : undefined}
       disabled={!item}
       className={`relative size-[38px] shrink-0 overflow-clip rounded-[2px] border-none p-0 ${item ? "cursor-pointer" : "cursor-default"}`}
       style={{ backgroundColor: colorHex || "#ffffff" }}
@@ -158,7 +168,7 @@ function DayCell({ cell, item, onClick }) {
       </div>
     </button>
   );
-}
+});
 
 const REWARD_BADGE_STYLE = {
   available: "bg-[#5F6473] text-grey-0",
@@ -166,14 +176,18 @@ const REWARD_BADGE_STYLE = {
   unavailable: "bg-grey-30 text-grey-0",
 };
 
-function RewardBadge({ state, onClick, weekStartDate }) {
+const RewardBadge = memo(function RewardBadge({
+  state,
+  onSelect,
+  weekStartDate,
+}) {
   const isInteractive = state === "available" || state === "viewed";
   return (
     <button
       type="button"
       data-reward-badge
       data-week-start={weekStartDate}
-      onClick={isInteractive ? onClick : undefined}
+      onClick={isInteractive ? () => onSelect(weekStartDate) : undefined}
       disabled={!isInteractive}
       className={`relative flex size-[38px] shrink-0 items-center justify-center overflow-clip rounded-[4px] p-0 ${
         isInteractive ? "cursor-pointer" : "cursor-default"
@@ -184,7 +198,7 @@ function RewardBadge({ state, onClick, weekStartDate }) {
       </p>
     </button>
   );
-}
+});
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -322,11 +336,12 @@ export default function HomePage() {
     };
   }, [isCurrentMonth, today]);
 
-  const itemByDate = new Map(
-    monthItems.map((item) => [item.recordedDate, item]),
+  const itemByDate = useMemo(
+    () => new Map(monthItems.map((item) => [item.recordedDate, item])),
+    [monthItems],
   );
 
-  const calendarMent = (() => {
+  const calendarMent = useMemo(() => {
     if (isPastMonth) {
       return {
         line1: `${viewMonth}월의 조각이`,
@@ -351,7 +366,7 @@ export default function HomePage() {
       };
     }
     return { line1: `${viewMonth}월의 조각을`, line2: "데이빗과 모아봐요 :)" };
-  })();
+  }, [isPastMonth, isFutureMonth, viewYear, viewMonth, monthItems]);
 
   const todayItem = isCurrentMonth
     ? (itemByDate.get(today.dateStr) ?? null)
@@ -366,13 +381,19 @@ export default function HomePage() {
   const palette = themeColor ? getTodayColorPalette(themeColor) : null;
 
   const accentColor = palette ? palette.uiAccentColor : null;
-  const profileShadowColor = accentColor
-    ? hexToRgba(accentColor, 0.16)
-    : "rgba(65, 68, 80, 0.16)";
+  const profileShadowColor = useMemo(
+    () =>
+      accentColor ? hexToRgba(accentColor, 0.16) : "rgba(65, 68, 80, 0.16)",
+    [accentColor],
+  );
 
-  const cardShadow = accentColor
-    ? `0 0 10px 0 ${hexToRgba(accentColor, 0.05)}, 0 0 30px 0 ${hexToRgba(accentColor, 0.05)}`
-    : "0 0 10px 0 rgba(77, 80, 91, 0.05), 0 0 30px 0 rgba(65, 68, 80, 0.05)";
+  const cardShadow = useMemo(
+    () =>
+      accentColor
+        ? `0 0 10px 0 ${hexToRgba(accentColor, 0.05)}, 0 0 30px 0 ${hexToRgba(accentColor, 0.05)}`
+        : "0 0 10px 0 rgba(77, 80, 91, 0.05), 0 0 30px 0 rgba(65, 68, 80, 0.05)",
+    [accentColor],
+  );
 
   useEffect(() => {
     if (!todayLoaded || resumeCheckedThisSession) return;
@@ -443,17 +464,17 @@ export default function HomePage() {
       return;
     weeklyNotifyCheckedThisSession = true;
 
-    const candidates = Array.from(weeklyRewardsByWeekStart.values()).filter(
-      (item) =>
+    let latest = null;
+    weeklyRewardsByWeekStart.forEach((item) => {
+      const isUnseen =
         item.status === "COMPLETED" &&
         item.available &&
         !item.viewed &&
-        item.weekEndDate < today.dateStr,
-    );
-    if (candidates.length === 0) return;
-
-    candidates.sort((a, b) => (a.weekEndDate < b.weekEndDate ? 1 : -1));
-    setNotifyReward(candidates[0]);
+        item.weekEndDate < today.dateStr;
+      if (!isUnseen) return;
+      if (!latest || item.weekEndDate > latest.weekEndDate) latest = item;
+    });
+    if (latest) setNotifyReward(latest);
   }, [
     weeklyRewardsLoaded,
     weeklyRewardsByWeekStart,
@@ -476,28 +497,7 @@ export default function HomePage() {
   const [claimingWeek, setClaimingWeek] = useState(null);
   const [rewardClaimError, setRewardClaimError] = useState("");
 
-  const countDiariesInWeek = (weekStartDate) => {
-    let count = 0;
-    for (let i = 0; i < 7; i += 1) {
-      if (itemByDate.has(addDays(weekStartDate, i))) count += 1;
-    }
-    return count;
-  };
-
-  const isWeekClaimable = (weekStartDate, item) => {
-    if (addDays(weekStartDate, 6) >= today.dateStr) return false;
-    return (item?.diaryCount ?? countDiariesInWeek(weekStartDate)) >= 3;
-  };
-
-  const getRewardBadgeState = (weekStartDate) => {
-    const item = weeklyRewardsByWeekStart.get(weekStartDate);
-    if (item?.status === "COMPLETED" && item.available) {
-      return item.viewed ? "viewed" : "available";
-    }
-    return isWeekClaimable(weekStartDate, item) ? "available" : "unavailable";
-  };
-
-  const handleRewardBadgeClick = async (weekStartDate) => {
+  const handleRewardBadgeClick = useCallback(async (weekStartDate) => {
     const item = weeklyRewardsByWeekStart.get(weekStartDate);
 
     if (item?.weeklyRewardId) {
@@ -534,7 +534,14 @@ export default function HomePage() {
     } finally {
       setClaimingWeek(null);
     }
-  };
+  }, [
+    weeklyRewardsByWeekStart,
+    claimingWeek,
+    devPassword,
+    navigate,
+    viewYear,
+    viewMonth,
+  ]);
 
   const [inboxArrivals, setInboxArrivals] = useState([]);
 
@@ -571,7 +578,7 @@ export default function HomePage() {
     };
   }, []);
 
-  const currentWeekStart = mondayOf(today.dateStr);
+  const currentWeekStart = useMemo(() => mondayOf(today.dateStr), [today]);
 
   const scrollRef = useRef(null);
   const pencilRef = useRef(null);
@@ -620,13 +627,23 @@ export default function HomePage() {
       if (!target) return;
       const base = scroller.getBoundingClientRect();
       const { rect, pad } = target;
-      setSpot({
+      const next = {
         top: rect.top - base.top - pad,
         left: rect.left - base.left - pad,
         width: rect.right - rect.left + pad * 2,
         height: rect.bottom - rect.top + pad * 2,
         radius: target.radius,
-      });
+      };
+      setSpot((prev) =>
+        prev &&
+        prev.top === next.top &&
+        prev.left === next.left &&
+        prev.width === next.width &&
+        prev.height === next.height &&
+        prev.radius === next.radius
+          ? prev
+          : next,
+      );
     };
 
     const initial = collect();
@@ -643,7 +660,7 @@ export default function HomePage() {
     }
 
     measure();
-    scroller.addEventListener("scroll", measure);
+    scroller.addEventListener("scroll", measure, { passive: true });
     const raf = requestAnimationFrame(measure);
     return () => {
       scroller.removeEventListener("scroll", measure);
@@ -675,7 +692,43 @@ export default function HomePage() {
     setTutorialStep((prev) => prev + 1);
   };
 
-  const weeks = buildCalendarWeeks(viewYear, viewMonth);
+  const weeks = useMemo(
+    () => buildCalendarWeeks(viewYear, viewMonth),
+    [viewYear, viewMonth],
+  );
+
+  const calendarRows = useMemo(() => {
+    const resolveRewardState = (weekStartDate, cells) => {
+      const reward = weeklyRewardsByWeekStart.get(weekStartDate);
+      if (reward?.status === "COMPLETED" && reward.available) {
+        return reward.viewed ? "viewed" : "available";
+      }
+      if (addDays(weekStartDate, 6) >= today.dateStr) return "unavailable";
+
+      const diaryCount =
+        reward?.diaryCount ??
+        cells.reduce(
+          (count, cell) =>
+            cell.inMonth && itemByDate.has(cell.dateStr) ? count + 1 : count,
+          0,
+        );
+      return diaryCount >= 3 ? "available" : "unavailable";
+    };
+
+    return weeks.map(({ cells, weekStartDate }) => {
+      const inMonthCount = cells.reduce(
+        (count, cell) => (cell.inMonth ? count + 1 : count),
+        0,
+      );
+      return {
+        cells,
+        weekStartDate,
+        canEarnReward: inMonthCount >= 3,
+        rewardState:
+          inMonthCount >= 3 ? resolveRewardState(weekStartDate, cells) : null,
+      };
+    });
+  }, [weeks, weeklyRewardsByWeekStart, itemByDate, today]);
 
   const handlePrevMonth = () => {
     if (viewMonth === 1) {
@@ -702,6 +755,21 @@ export default function HomePage() {
   };
 
   const handleGoToWrite = () => navigate("/diary");
+
+  const handleSelectDay = useCallback(
+    (item) => {
+      navigate("/diary/today-color", {
+        state: {
+          reward: item.reward,
+          diaryId: item.diaryId,
+          recordedDate: item.recordedDate,
+          mode: "review",
+          fromMonth: { year: viewYear, month: viewMonth },
+        },
+      });
+    },
+    [navigate, viewYear, viewMonth],
+  );
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#f6f8fa]">
@@ -823,56 +891,39 @@ export default function HomePage() {
                   </div>
 
                   <div className="flex flex-col gap-[2px]">
-                    {weeks.map(({ cells, weekStartDate }, weekIdx) => {
-                      const daysInMonthCount = cells.filter(
-                        (cell) => cell.inMonth,
-                      ).length;
-                      const canEarnReward = daysInMonthCount >= 3;
-                      return (
+                    {calendarRows.map(
+                      (
+                        { cells, weekStartDate, canEarnReward, rewardState },
+                        weekIdx,
+                      ) => (
                         <div
                           key={weekIdx}
                           className="flex w-full items-center justify-between"
                         >
                           <div className="flex items-center gap-[2px]">
-                            {cells.map((cell, i) => {
-                              const item = cell.inMonth
-                                ? itemByDate.get(cell.dateStr)
-                                : undefined;
-                              return (
-                                <DayCell
-                                  key={i}
-                                  cell={cell}
-                                  item={item}
-                                  onClick={() =>
-                                    navigate("/diary/today-color", {
-                                      state: {
-                                        reward: item.reward,
-                                        diaryId: item.diaryId,
-                                        recordedDate: item.recordedDate,
-                                        mode: "review",
-                                        fromMonth: {
-                                          year: viewYear,
-                                          month: viewMonth,
-                                        },
-                                      },
-                                    })
-                                  }
-                                />
-                              );
-                            })}
+                            {cells.map((cell, i) => (
+                              <DayCell
+                                key={i}
+                                cell={cell}
+                                item={
+                                  cell.inMonth
+                                    ? itemByDate.get(cell.dateStr)
+                                    : undefined
+                                }
+                                onSelect={handleSelectDay}
+                              />
+                            ))}
                           </div>
                           {canEarnReward && (
                             <RewardBadge
-                              state={getRewardBadgeState(weekStartDate)}
+                              state={rewardState}
                               weekStartDate={weekStartDate}
-                              onClick={() =>
-                                handleRewardBadgeClick(weekStartDate)
-                              }
+                              onSelect={handleRewardBadgeClick}
                             />
                           )}
                         </div>
-                      );
-                    })}
+                      ),
+                    )}
                   </div>
                 </div>
 
@@ -887,7 +938,7 @@ export default function HomePage() {
                     <div
                       aria-hidden
                       className="size-[19.503px]"
-                      style={maskedIcon(editIcon, "#5F6473")}
+                      style={EDIT_ICON_MASK}
                     />
                   </button>
                   <button

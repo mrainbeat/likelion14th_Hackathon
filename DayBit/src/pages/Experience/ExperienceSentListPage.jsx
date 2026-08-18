@@ -6,7 +6,7 @@ import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
 import {
   getMyExperienceFragments,
-  fragmentToPieceItem,
+  fragmentsToPieceItems,
 } from "../../utils/experienceFragments";
 
 export default function ExperienceSentListPage() {
@@ -32,14 +32,11 @@ export default function ExperienceSentListPage() {
     };
   }, []);
 
-  const items = fragments
-    .filter((f) => f.status === "APPROVED")
-    .sort(
-      (a, b) =>
-        new Date(b.approvedAt ?? b.createdAt) -
-        new Date(a.approvedAt ?? a.createdAt),
-    )
-    .map((f) => fragmentToPieceItem(f, "sent"));
+  const items = fragmentsToPieceItems(
+    fragments.filter((f) => f.status === "APPROVED"),
+    "sent",
+    (f) => f.approvedAt ?? f.createdAt,
+  );
 
   return (
     <div className="relative flex h-full w-full select-none flex-col overflow-y-auto bg-[#f6f8fa] px-[16px] py-[16px] scrollbar-hide">

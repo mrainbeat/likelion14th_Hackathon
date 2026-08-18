@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useLayoutEffect, useRef, useMemo } from "react";
+﻿import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
 import QuestionModal from "./components/QuestionModal";
@@ -36,6 +36,7 @@ export default function DiaryPage() {
   const navigate = useNavigate();
   const { dateStr } = useCurrentTime() || {};
   const [content, setContent] = useState("");
+  const [currentText, setCurrentText] = useState("");
   const [initialText, setInitialText] = useState("");
   const [hadPriorContent, setHadPriorContent] = useState(false);
   const [questions, setQuestions] = useState(() => {
@@ -138,9 +139,9 @@ export default function DiaryPage() {
       editorRef.current.innerHTML = newContent;
       setContent(newContent);
 
-      const temp = document.createElement("div");
-      temp.innerHTML = newContent;
-      setInitialText(temp.textContent || temp.innerText || "");
+      const plainText = editorRef.current.textContent || "";
+      setInitialText(plainText);
+      setCurrentText(plainText);
 
       setTimeout(() => {
         try {
@@ -159,6 +160,7 @@ export default function DiaryPage() {
 
   const handleInput = (e) => {
     setContent(e.currentTarget.innerHTML);
+    setCurrentText(e.currentTarget.textContent || "");
   };
 
   const handlePaste = (e) => {
@@ -217,13 +219,6 @@ export default function DiaryPage() {
       setIsAskingQuestion(false);
     }
   };
-
-  const currentText = useMemo(() => {
-    if (typeof document === "undefined") return "";
-    const temp = document.createElement("div");
-    temp.innerHTML = content;
-    return temp.textContent || temp.innerText || "";
-  }, [content]);
 
   const hasUserWritten =
     hadPriorContent ||

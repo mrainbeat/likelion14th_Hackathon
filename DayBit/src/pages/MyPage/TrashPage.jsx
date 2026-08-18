@@ -23,18 +23,22 @@ function formatTimeLabel(createdAt) {
   return `${period} ${hour}:${minute}`;
 }
 
-function daysRemaining(deletedAt) {
-  const datePart = deletedAt.split("T")[0];
-  const [y, m, d] = datePart.split("-").map(Number);
-  const deletedDate = new Date(y, m - 1, d);
+const RETENTION_DAYS = 30;
+
+function startOfTodayMs() {
   const today = new Date();
-  const todayDateOnly = new Date(
+  return new Date(
     today.getFullYear(),
     today.getMonth(),
     today.getDate(),
-  );
-  const elapsedDays = Math.floor((todayDateOnly - deletedDate) / 86400000);
-  return Math.max(0, 30 - elapsedDays);
+  ).getTime();
+}
+
+function daysRemaining(deletedAt, todayMs) {
+  const [y, m, d] = deletedAt.split("T")[0].split("-").map(Number);
+  const deletedMs = new Date(y, m - 1, d).getTime();
+  const elapsedDays = Math.floor((todayMs - deletedMs) / 86400000);
+  return Math.max(0, RETENTION_DAYS - elapsedDays);
 }
 
 export default function TrashPage() {
@@ -103,6 +107,8 @@ export default function TrashPage() {
     }
   };
 
+  const todayMs = startOfTodayMs();
+
   return (
     <div className="flex h-full w-full select-none flex-col gap-[24px] overflow-y-auto bg-[#F6F8FA] p-[16px] scrollbar-hide">
       <div className="flex w-full shrink-0 items-center justify-between">
@@ -160,7 +166,7 @@ export default function TrashPage() {
                   <p className="whitespace-nowrap text-[18px] font-semibold leading-[normal] tracking-[-0.36px] text-[#2D3038]">
                     {formatDateLabel(entry.recordedDate)}{" "}
                     <span className="text-[14px] font-medium tracking-[-0.28px] text-[#787E8C]">
-                      • {daysRemaining(entry.deletedAt)}일남음
+                      • {daysRemaining(entry.deletedAt, todayMs)}일남음
                     </span>{" "}
                   </p>
                   <div className="flex shrink-0 items-center gap-[16px]">

@@ -79,8 +79,11 @@ export default function NotificationsPage() {
     });
   };
 
-  const unreadItems = items.filter((item) => !item.read);
-  const readItems = items.filter((item) => item.read);
+  const unreadItems = [];
+  const readItems = [];
+  for (const item of items) {
+    (item.read ? readItems : unreadItems).push(item);
+  }
 
   const renderCard = (item) => (
     <button

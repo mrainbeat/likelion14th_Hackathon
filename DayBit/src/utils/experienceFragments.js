@@ -203,6 +203,16 @@ export function fragmentToPieceItem(fragment, kind) {
   };
 }
 
+export function fragmentsToPieceItems(fragments, kind, sortKey) {
+  return fragments
+    .map((fragment) => ({
+      fragment,
+      sortedAt: new Date(sortKey(fragment)).getTime(),
+    }))
+    .sort((a, b) => b.sortedAt - a.sortedAt)
+    .map(({ fragment }) => fragmentToPieceItem(fragment, kind));
+}
+
 export async function loadExperienceInbox() {
   try {
     const response = await getExperienceInbox();

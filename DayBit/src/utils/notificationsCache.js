@@ -33,7 +33,9 @@ export function loadCachedNotifications() {
 export function saveCachedNotifications(items) {
   try {
     localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
-    saveCachedUnreadCount(items.filter((item) => !item.read).length);
+    saveCachedUnreadCount(
+      items.reduce((count, item) => (item.read ? count : count + 1), 0),
+    );
   } catch {
     return;
   }

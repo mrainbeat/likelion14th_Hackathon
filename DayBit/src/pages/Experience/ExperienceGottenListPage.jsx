@@ -7,7 +7,7 @@ import logoImage from "../../assets/logos/logo-symbol.svg";
 import {
   getReceivedFragments,
   loadReceivedFragments,
-  fragmentToPieceItem,
+  fragmentsToPieceItems,
 } from "../../utils/experienceFragments";
 
 export default function ExperienceGottenListPage() {
@@ -26,10 +26,11 @@ export default function ExperienceGottenListPage() {
     };
   }, []);
 
-  const items = receivedFragments
-    .slice()
-    .sort((a, b) => new Date(b.receivedAt) - new Date(a.receivedAt))
-    .map((f) => fragmentToPieceItem(f, "received"));
+  const items = fragmentsToPieceItems(
+    receivedFragments,
+    "received",
+    (f) => f.receivedAt,
+  );
 
   return (
     <div className="relative flex h-full w-full select-none flex-col overflow-y-auto bg-[#f6f8fa] px-[16px] py-[16px] scrollbar-hide">
