@@ -418,13 +418,13 @@ export default function DiaryPage() {
             </div>
 
             <div className="flex flex-col gap-[10px] w-full shrink-0 ">
-              <div className="flex w-full gap-[14px] z-20 relative">
+              <div className="flex w-full gap-[12px] items-center z-20 relative">
                 <button
                   ref={questionButtonRef}
                   type="button"
                   onClick={handleGetQuestions}
                   disabled={isAllQuestionsLoaded || isAskingQuestion}
-                  className={`w-[217px] h-[48px] border-[1.5px] bg-grey-0 rounded-[12px] px-[26px] text-[18px] font-semibold tracking-[-0.36px] flex items-center justify-center gap-[6px] whitespace-nowrap active:bg-gray-50 transition-all ${
+                  className={`shrink-0 h-[48px] border-[1.5px] bg-grey-0 rounded-[12px] px-[26px] text-[18px] font-semibold tracking-[-0.36px] flex items-center justify-center gap-[6px] whitespace-nowrap active:bg-gray-50 transition-all ${
                     isAllQuestionsLoaded
                       ? "border-[#E8EBF0] text-grey-30"
                       : "border-grey-60 text-grey-95"
@@ -448,7 +448,7 @@ export default function DiaryPage() {
                   type="button"
                   onClick={handleComplete}
                   disabled={!hasUserWritten && tutorialStep !== 2}
-                  className="w-[118px] h-[48px] rounded-[12px] px-[26px] text-[18px] font-semibold tracking-[-0.18px] bg-grey-70 text-grey-0 disabled:bg-grey-20 disabled:text-grey-0 disabled:cursor-not-allowed transition-colors duration-200 ease-out whitespace-nowrap"
+                  className="flex-1 min-w-0 h-[48px] rounded-[12px] px-[26px] text-[18px] font-semibold tracking-[-0.36px] bg-grey-80 text-grey-0 disabled:bg-grey-20 disabled:text-grey-0 disabled:cursor-not-allowed transition-colors duration-200 ease-out whitespace-nowrap flex items-center justify-center"
                 >
                   작성 완료
                 </button>
