@@ -78,6 +78,7 @@ export default function DiaryPage() {
   const questionButtonRef = useRef(null);
   const completeButtonRef = useRef(null);
   const profileButtonRef = useRef(null);
+  const diaryTutorialKeyRef = useRef(null);
 
   useEffect(() => {
     let alive = true;
@@ -85,9 +86,14 @@ export default function DiaryPage() {
       .get("/api/me")
       .then((response) => {
         if (!alive) return;
-        if (response.data.result?.tutorialCompleted === false) {
-          setTutorialStep(0);
-        }
+        const result = response.data.result;
+        if (result?.tutorialCompleted !== false) return;
+
+        const key = `diary_tutorial_seen_${result.id}`;
+        diaryTutorialKeyRef.current = key;
+        if (localStorage.getItem(key)) return;
+
+        setTutorialStep(0);
       })
       .catch((error) => {
         console.error(
@@ -109,11 +115,13 @@ export default function DiaryPage() {
         if (!alive) return;
         const result = response.data.result;
         const list = Array.isArray(result) ? result : (result?.questions ?? []);
-        const synced = list.map(({ questionId, questionText, contextType }) => ({
-          questionId,
-          questionText,
-          contextType,
-        }));
+        const synced = list.map(
+          ({ questionId, questionText, contextType }) => ({
+            questionId,
+            questionText,
+            contextType,
+          }),
+        );
         setQuestions(synced);
         saveQuestions(synced);
       })
@@ -461,13 +469,9 @@ export default function DiaryPage() {
 
   const handleTutorialNext = () => {
     if (tutorialStep === 3) {
-      apiClient.patch("/api/me/tutorial-completion").catch((error) => {
-        console.error(
-          "PATCH /api/me/tutorial-completion 실패:",
-          error.response?.status,
-          error.response?.data,
-        );
-      });
+      if (diaryTutorialKeyRef.current) {
+        localStorage.setItem(diaryTutorialKeyRef.current, "true");
+      }
       setTutorialStep(null);
       return;
     }

@@ -80,6 +80,7 @@ export default function DiaryTutorial({ step, spot, onNext }) {
     <div className="absolute inset-0 z-50 overflow-hidden">
       {spot ? (
         <div
+          key="spot"
           className="pointer-events-auto absolute transition-[top,left,width,height] duration-300 ease-out"
           style={{
             top: spot.top,
@@ -92,6 +93,7 @@ export default function DiaryTutorial({ step, spot, onNext }) {
         />
       ) : (
         <div
+          key="dim"
           className="pointer-events-auto absolute inset-0"
           style={{ backgroundColor: DIM_COLOR }}
         />
