@@ -78,6 +78,11 @@ export default function WeeklyImagePage() {
         const result = response.data.result;
         setReward(result);
         saveCachedWeeklyRewardDetail(weeklyRewardId, result);
+        console.log({
+          categoryKeyword: result.categoryKeyword,
+          imageSource: result.imageSource,
+          status: result.status,
+        });
 
         if (result.status === "PENDING" || result.status === "GENERATING") {
           pollRef.current = setTimeout(fetchDetail, POLL_INTERVAL_MS);
