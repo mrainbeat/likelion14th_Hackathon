@@ -14,9 +14,10 @@ import {
   receiveInboxArrival,
   loadExperienceInbox,
   formatArrivalTime,
-  fragmentToPieceItem,
+  fragmentsToPieceItems,
   fragmentTopic,
   getReceivedFragments,
+  loadReceivedFragments,
   saveReceivedFragment,
 } from "../../utils/experienceFragments";
 
@@ -88,6 +89,16 @@ export default function ExperiencePage() {
     };
   }, []);
 
+  useEffect(() => {
+    let alive = true;
+    loadReceivedFragments().then(({ fragments }) => {
+      if (alive) setReceivedFragments(fragments);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   const handleConfirmView = async () => {
     if (!confirmTarget) return;
     setIsReceiving(true);
@@ -132,13 +143,16 @@ export default function ExperiencePage() {
     }
   };
 
-  const notificationItems = matches.map((m) => ({
-    id: m.arrivalId,
-    arrivalId: m.arrivalId,
-    keyword: fragmentTopic(m) || "새로운 경험",
-    message: `${fragmentTopic(m) || "새로운 경험"}과 관련된 경험조각이 도착했어요.`,
-    relativeTime: formatArrivalTime(m.arrivedAt),
-  }));
+  const notificationItems = matches.map((m) => {
+    const keyword = fragmentTopic(m) || "새로운 경험";
+    return {
+      id: m.arrivalId,
+      arrivalId: m.arrivalId,
+      keyword,
+      message: `${keyword}과 관련된 경험조각이 도착했어요.`,
+      relativeTime: formatArrivalTime(m.arrivedAt),
+    };
+  });
 
   const notificationsTotal = notificationItems.length;
   const useNavigateNotifications = notificationsTotal >= NAVIGATE_THRESHOLD;
@@ -156,24 +170,25 @@ export default function ExperiencePage() {
 
   const nickname = localStorage.getItem("nickname") || "";
 
-  const receivedAll = receivedFragments
-    .slice()
-    .sort((a, b) => new Date(b.receivedAt) - new Date(a.receivedAt))
-    .map((f) => fragmentToPieceItem(f, "received"));
+  const receivedAll = fragmentsToPieceItems(
+    receivedFragments,
+    "received",
+    (f) => f.receivedAt,
+  );
 
-  const pendingAll = fragments
-    .filter((f) => f.status === "REQUESTED" || f.status === "REVIEW_REQUIRED")
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .map((f) => fragmentToPieceItem(f, "pending"));
+  const pendingAll = fragmentsToPieceItems(
+    fragments.filter(
+      (f) => f.status === "REQUESTED" || f.status === "REVIEW_REQUIRED",
+    ),
+    "pending",
+    (f) => f.createdAt,
+  );
 
-  const sentAll = fragments
-    .filter((f) => f.status === "APPROVED")
-    .sort(
-      (a, b) =>
-        new Date(b.approvedAt ?? b.createdAt) -
-        new Date(a.approvedAt ?? a.createdAt),
-    )
-    .map((f) => fragmentToPieceItem(f, "sent"));
+  const sentAll = fragmentsToPieceItems(
+    fragments.filter((f) => f.status === "APPROVED"),
+    "sent",
+    (f) => f.approvedAt ?? f.createdAt,
+  );
 
   return (
     <div className="relative flex h-full w-full select-none flex-col overflow-y-auto bg-[#f6f8fa] px-[16px] py-[16px] scrollbar-hide">

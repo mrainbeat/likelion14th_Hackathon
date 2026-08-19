@@ -1,4 +1,12 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import apiClient from "../../api/apiClient";
 import MonthYearPickerModal from "./components/MonthYearPickerModal";
@@ -7,11 +15,20 @@ import HomeTutorial from "./components/HomeTutorial";
 import WeeklyImageNotificationModal from "./components/WeeklyImageNotificationModal";
 import SpeechBubble from "../../components/SpeechBubble";
 import { getTodayColorPalette, hexToRgba } from "../../utils/rewardColor";
+import { getWeeklyRewards } from "../../utils/weeklyRewards";
 import {
-  getWeeklyRewards,
-  isWeeklyRewardNotified,
-  markWeeklyRewardNotified,
-} from "../../utils/weeklyRewards";
+  loadCachedMonthItems,
+  saveCachedMonthItems,
+} from "../../utils/monthDiariesCache";
+import {
+  loadCachedWeeklyRewards,
+  saveCachedWeeklyRewards,
+} from "../../utils/weeklyRewardsCache";
+import { loadUnreadNotificationCount } from "../../utils/notifications";
+import {
+  loadCachedUnreadCount,
+  saveCachedUnreadCount,
+} from "../../utils/notificationsCache";
 import { addDays, generateWeeklyReward } from "../../utils/devDiary";
 import {
   loadExperienceInbox,
@@ -22,6 +39,7 @@ import { useDevAccess } from "../../contexts/devAccess";
 import LogoSymbol from "../../assets/icons/LogoSymbol.jsx";
 import profileIcon from "../../assets/icons/profile.svg";
 import bellIcon from "../../assets/icons/notification-bell.svg";
+import unreadDotIcon from "../../assets/icons/notification-unread-dot.svg";
 import arrowIcon from "../../assets/icons/back.svg";
 import editIcon from "../../assets/icons/edit-pencil.svg";
 import {
@@ -33,6 +51,8 @@ let resumeCheckedThisSession = false;
 let weeklyNotifyCheckedThisSession = false;
 
 const WEEKDAYS = ["월", "화", "수", "목", "금", "토", "일"];
+
+const UNREAD_POLL_INTERVAL_MS = 60000;
 
 function maskedIcon(src, color) {
   return {
@@ -47,6 +67,8 @@ function maskedIcon(src, color) {
     WebkitMaskSize: "contain",
   };
 }
+
+const EDIT_ICON_MASK = maskedIcon(editIcon, "#5F6473");
 
 function pad2(n) {
   return String(n).padStart(2, "0");
@@ -70,6 +92,18 @@ function getSeoulToday() {
 
 function formatDate(d) {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function mondayOf(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  const dayOffset = (date.getDay() + 6) % 7;
+  date.setDate(date.getDate() - dayOffset);
+  return formatDate(date);
+}
+
+function weeklyRewardsMapFromItems(items) {
+  return new Map((items ?? []).map((item) => [item.weekStartDate, item]));
 }
 
 function buildCalendarWeeks(year, month) {
@@ -102,7 +136,7 @@ function buildCalendarWeeks(year, month) {
   return weeks;
 }
 
-function DayCell({ cell, item, onClick }) {
+const DayCell = memo(function DayCell({ cell, item, onSelect }) {
   if (!cell.inMonth) {
     return (
       <div className="relative size-[38px] shrink-0 overflow-clip rounded-[2px]">
@@ -120,7 +154,7 @@ function DayCell({ cell, item, onClick }) {
   return (
     <button
       type="button"
-      onClick={item ? onClick : undefined}
+      onClick={item ? () => onSelect(item) : undefined}
       disabled={!item}
       className={`relative size-[38px] shrink-0 overflow-clip rounded-[2px] border-none p-0 ${item ? "cursor-pointer" : "cursor-default"}`}
       style={{ backgroundColor: colorHex || "#ffffff" }}
@@ -134,7 +168,7 @@ function DayCell({ cell, item, onClick }) {
       </div>
     </button>
   );
-}
+});
 
 const REWARD_BADGE_STYLE = {
   available: "bg-[#5F6473] text-grey-0",
@@ -142,13 +176,18 @@ const REWARD_BADGE_STYLE = {
   unavailable: "bg-grey-30 text-grey-0",
 };
 
-function RewardBadge({ state, onClick }) {
+const RewardBadge = memo(function RewardBadge({
+  state,
+  onSelect,
+  weekStartDate,
+}) {
   const isInteractive = state === "available" || state === "viewed";
   return (
     <button
       type="button"
       data-reward-badge
-      onClick={isInteractive ? onClick : undefined}
+      data-week-start={weekStartDate}
+      onClick={isInteractive ? () => onSelect(weekStartDate) : undefined}
       disabled={!isInteractive}
       className={`relative flex size-[38px] shrink-0 items-center justify-center overflow-clip rounded-[4px] p-0 ${
         isInteractive ? "cursor-pointer" : "cursor-default"
@@ -159,7 +198,7 @@ function RewardBadge({ state, onClick }) {
       </p>
     </button>
   );
-}
+});
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -195,8 +234,21 @@ export default function HomePage() {
   const [viewMonth, setViewMonth] = useState(
     returnedMonth?.month ?? today.month,
   );
-  const [monthItems, setMonthItems] = useState([]);
-  const [monthLoaded, setMonthLoaded] = useState(false);
+  const [monthItems, setMonthItems] = useState(
+    () => loadCachedMonthItems(viewYear, viewMonth) ?? [],
+  );
+  const [monthLoaded, setMonthLoaded] = useState(
+    () => loadCachedMonthItems(viewYear, viewMonth) != null,
+  );
+  const [weeklyRewardsByWeekStart, setWeeklyRewardsByWeekStart] = useState(
+    () => weeklyRewardsMapFromItems(loadCachedWeeklyRewards(viewYear, viewMonth)),
+  );
+  const [weeklyRewardsLoaded, setWeeklyRewardsLoaded] = useState(
+    () => loadCachedWeeklyRewards(viewYear, viewMonth) != null,
+  );
+  const [hydratedMonthKey, setHydratedMonthKey] = useState(
+    `${viewYear}-${viewMonth}`,
+  );
   const [awayTodayItem, setAwayTodayItem] = useState(null);
   const [awayLoaded, setAwayLoaded] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
@@ -213,6 +265,17 @@ export default function HomePage() {
     viewYear > today.year ||
     (viewYear === today.year && viewMonth > today.month);
 
+  const currentMonthKey = `${viewYear}-${viewMonth}`;
+  if (hydratedMonthKey !== currentMonthKey) {
+    setHydratedMonthKey(currentMonthKey);
+    const cached = loadCachedMonthItems(viewYear, viewMonth);
+    setMonthItems(cached ?? []);
+    setMonthLoaded(cached != null);
+    const cachedWeekly = loadCachedWeeklyRewards(viewYear, viewMonth);
+    setWeeklyRewardsByWeekStart(weeklyRewardsMapFromItems(cachedWeekly));
+    setWeeklyRewardsLoaded(cachedWeekly != null);
+  }
+
   useEffect(() => {
     let alive = true;
     apiClient
@@ -223,7 +286,9 @@ export default function HomePage() {
       .then((response) => {
         if (!alive) return;
         const result = response.data.result;
-        setMonthItems(Array.isArray(result) ? result : (result?.items ?? []));
+        const items = Array.isArray(result) ? result : (result?.items ?? []);
+        setMonthItems(items);
+        saveCachedMonthItems(viewYear, viewMonth, items);
       })
       .catch((error) => {
         console.error(
@@ -271,11 +336,12 @@ export default function HomePage() {
     };
   }, [isCurrentMonth, today]);
 
-  const itemByDate = new Map(
-    monthItems.map((item) => [item.recordedDate, item]),
+  const itemByDate = useMemo(
+    () => new Map(monthItems.map((item) => [item.recordedDate, item])),
+    [monthItems],
   );
 
-  const calendarMent = (() => {
+  const calendarMent = useMemo(() => {
     if (isPastMonth) {
       return {
         line1: `${viewMonth}월의 조각이`,
@@ -300,7 +366,7 @@ export default function HomePage() {
       };
     }
     return { line1: `${viewMonth}월의 조각을`, line2: "데이빗과 모아봐요 :)" };
-  })();
+  }, [isPastMonth, isFutureMonth, viewYear, viewMonth, monthItems]);
 
   const todayItem = isCurrentMonth
     ? (itemByDate.get(today.dateStr) ?? null)
@@ -315,13 +381,19 @@ export default function HomePage() {
   const palette = themeColor ? getTodayColorPalette(themeColor) : null;
 
   const accentColor = palette ? palette.uiAccentColor : null;
-  const profileShadowColor = accentColor
-    ? hexToRgba(accentColor, 0.16)
-    : "rgba(65, 68, 80, 0.16)";
+  const profileShadowColor = useMemo(
+    () =>
+      accentColor ? hexToRgba(accentColor, 0.16) : "rgba(65, 68, 80, 0.16)",
+    [accentColor],
+  );
 
-  const cardShadow = accentColor
-    ? `0 0 10px 0 ${hexToRgba(accentColor, 0.05)}, 0 0 30px 0 ${hexToRgba(accentColor, 0.05)}`
-    : "0 0 10px 0 rgba(77, 80, 91, 0.05), 0 0 30px 0 rgba(65, 68, 80, 0.05)";
+  const cardShadow = useMemo(
+    () =>
+      accentColor
+        ? `0 0 10px 0 ${hexToRgba(accentColor, 0.05)}, 0 0 30px 0 ${hexToRgba(accentColor, 0.05)}`
+        : "0 0 10px 0 rgba(77, 80, 91, 0.05), 0 0 30px 0 rgba(65, 68, 80, 0.05)",
+    [accentColor],
+  );
 
   useEffect(() => {
     if (!todayLoaded || resumeCheckedThisSession) return;
@@ -350,15 +422,10 @@ export default function HomePage() {
     navigate("/diary");
   };
 
-  const [weeklyRewardsByWeekStart, setWeeklyRewardsByWeekStart] = useState(
-    () => new Map(),
-  );
-  const [weeklyRewardsLoaded, setWeeklyRewardsLoaded] = useState(false);
   const [notifyReward, setNotifyReward] = useState(null);
 
   useEffect(() => {
     let alive = true;
-    setWeeklyRewardsLoaded(false);
 
     const prevMonthDate = new Date(viewYear, viewMonth - 2, 1);
     const requests = [
@@ -379,6 +446,7 @@ export default function HomePage() {
       });
       setWeeklyRewardsByWeekStart(map);
       setWeeklyRewardsLoaded(true);
+      saveCachedWeeklyRewards(viewYear, viewMonth, Array.from(map.values()));
     });
 
     return () => {
@@ -396,17 +464,17 @@ export default function HomePage() {
       return;
     weeklyNotifyCheckedThisSession = true;
 
-    const candidates = Array.from(weeklyRewardsByWeekStart.values()).filter(
-      (item) =>
+    let latest = null;
+    weeklyRewardsByWeekStart.forEach((item) => {
+      const isUnseen =
         item.status === "COMPLETED" &&
         item.available &&
-        item.weekEndDate < today.dateStr &&
-        !isWeeklyRewardNotified(userId, item.weeklyRewardId),
-    );
-    if (candidates.length === 0) return;
-
-    candidates.sort((a, b) => (a.weekEndDate < b.weekEndDate ? 1 : -1));
-    setNotifyReward(candidates[0]);
+        !item.viewed &&
+        item.weekEndDate < today.dateStr;
+      if (!isUnseen) return;
+      if (!latest || item.weekEndDate > latest.weekEndDate) latest = item;
+    });
+    if (latest) setNotifyReward(latest);
   }, [
     weeklyRewardsLoaded,
     weeklyRewardsByWeekStart,
@@ -416,14 +484,11 @@ export default function HomePage() {
   ]);
 
   const handleNotifyClose = () => {
-    if (notifyReward)
-      markWeeklyRewardNotified(userId, notifyReward.weeklyRewardId);
     setNotifyReward(null);
   };
 
   const handleNotifyConfirm = () => {
     if (!notifyReward) return;
-    markWeeklyRewardNotified(userId, notifyReward.weeklyRewardId);
     const id = notifyReward.weeklyRewardId;
     setNotifyReward(null);
     navigate(`/home/weekly-rewards/${id}`);
@@ -432,28 +497,7 @@ export default function HomePage() {
   const [claimingWeek, setClaimingWeek] = useState(null);
   const [rewardClaimError, setRewardClaimError] = useState("");
 
-  const countDiariesInWeek = (weekStartDate) => {
-    let count = 0;
-    for (let i = 0; i < 7; i += 1) {
-      if (itemByDate.has(addDays(weekStartDate, i))) count += 1;
-    }
-    return count;
-  };
-
-  const isWeekClaimable = (weekStartDate, item) => {
-    if (addDays(weekStartDate, 6) >= today.dateStr) return false;
-    return (item?.diaryCount ?? countDiariesInWeek(weekStartDate)) >= 3;
-  };
-
-  const getRewardBadgeState = (weekStartDate) => {
-    const item = weeklyRewardsByWeekStart.get(weekStartDate);
-    if (item?.status === "COMPLETED" && item.available) {
-      return item.viewed ? "viewed" : "available";
-    }
-    return isWeekClaimable(weekStartDate, item) ? "available" : "unavailable";
-  };
-
-  const handleRewardBadgeClick = async (weekStartDate) => {
+  const handleRewardBadgeClick = useCallback(async (weekStartDate) => {
     const item = weeklyRewardsByWeekStart.get(weekStartDate);
 
     if (item?.weeklyRewardId) {
@@ -490,7 +534,14 @@ export default function HomePage() {
     } finally {
       setClaimingWeek(null);
     }
-  };
+  }, [
+    weeklyRewardsByWeekStart,
+    claimingWeek,
+    devPassword,
+    navigate,
+    viewYear,
+    viewMonth,
+  ]);
 
   const [inboxArrivals, setInboxArrivals] = useState([]);
 
@@ -504,14 +555,38 @@ export default function HomePage() {
     };
   }, []);
 
+  const [unreadCount, setUnreadCount] = useState(
+    () => loadCachedUnreadCount() ?? 0,
+  );
+
+  useEffect(() => {
+    let alive = true;
+
+    const sync = () => {
+      loadUnreadNotificationCount().then((count) => {
+        if (!alive) return;
+        setUnreadCount(count);
+        saveCachedUnreadCount(count);
+      });
+    };
+
+    sync();
+    const timer = setInterval(sync, UNREAD_POLL_INTERVAL_MS);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, []);
+
+  const currentWeekStart = useMemo(() => mondayOf(today.dateStr), [today]);
+
   const scrollRef = useRef(null);
   const pencilRef = useRef(null);
   const experienceRef = useRef(null);
 
   const TUTORIAL_STEP_COUNT = 3;
-  const TUTORIAL_SHEET_HEIGHT = 282;
+  const TUTORIAL_SHEET_HEIGHT = 312;
   const tutorialJustFinished = useRef(false);
-  const hasPositionedOnceRef = useRef(false);
   const [tutorialStep, setTutorialStep] = useState(null);
   const [spot, setSpot] = useState(null);
 
@@ -531,107 +606,67 @@ export default function HomePage() {
 
     const collect = () => {
       if (tutorialStep === 0) {
-        const badges = Array.from(
-          scroller.querySelectorAll("[data-reward-badge]"),
+        const el = scroller.querySelector(
+          `[data-reward-badge][data-week-start="${currentWeekStart}"]`,
         );
-        if (!badges.length) return null;
-        return {
-          rect: badges[0].getBoundingClientRect(),
-          radius: 4,
-          pad: 4,
-        };
+        if (!el) return null;
+        return { rect: el.getBoundingClientRect(), radius: 8, pad: 4, el };
       }
       const el = tutorialStep === 1 ? pencilRef.current : experienceRef.current;
       if (!el) return null;
       return {
         rect: el.getBoundingClientRect(),
-        radius: tutorialStep === 1 ? 999 : 8,
-        pad: 6,
+        radius: 12,
+        pad: tutorialStep === 1 ? 2 : 0,
+        el,
       };
     };
 
-    const computeSpot = (target) => {
+    const measure = () => {
+      const target = collect();
+      if (!target) return;
       const base = scroller.getBoundingClientRect();
       const { rect, pad } = target;
-      return {
+      const next = {
         top: rect.top - base.top - pad,
         left: rect.left - base.left - pad,
         width: rect.right - rect.left + pad * 2,
         height: rect.bottom - rect.top + pad * 2,
         radius: target.radius,
       };
+      setSpot((prev) =>
+        prev &&
+        prev.top === next.top &&
+        prev.left === next.left &&
+        prev.width === next.width &&
+        prev.height === next.height &&
+        prev.radius === next.radius
+          ? prev
+          : next,
+      );
     };
 
     const initial = collect();
-    if (!initial) return;
-
-    const base = scroller.getBoundingClientRect();
-    const maxScroll = Math.max(
-      0,
-      scroller.scrollHeight - scroller.clientHeight,
-    );
-    const visibleHeight = scroller.clientHeight - TUTORIAL_SHEET_HEIGHT;
-    const targetHeight = initial.rect.bottom - initial.rect.top;
-    const topInContent = initial.rect.top - base.top + scroller.scrollTop;
-    const desiredTop = Math.max(16, (visibleHeight - targetHeight) / 2);
-    const targetScrollTop = Math.min(
-      maxScroll,
-      Math.max(0, topInContent - desiredTop),
-    );
-
-    const fromScrollTop = scroller.scrollTop;
-    const initialSpot = computeSpot(initial);
-
-    let rafId = null;
-
-    if (!hasPositionedOnceRef.current) {
-      scroller.scrollTop = targetScrollTop;
-      hasPositionedOnceRef.current = true;
-      const settledNow = collect();
-      if (settledNow) setSpot(computeSpot(settledNow));
-
-      rafId = requestAnimationFrame(() => {
-        const settled = collect();
-        if (settled) setSpot(computeSpot(settled));
+    if (initial) {
+      const base = scroller.getBoundingClientRect();
+      const visibleHeight = scroller.clientHeight - TUTORIAL_SHEET_HEIGHT;
+      const targetHeight = initial.rect.bottom - initial.rect.top;
+      const topInContent = initial.rect.top - base.top + scroller.scrollTop;
+      const desiredTop = Math.max(16, (visibleHeight - targetHeight) / 2);
+      scroller.scrollTo({
+        top: Math.max(0, topInContent - desiredTop),
+        behavior: "smooth",
       });
-    } else {
-      const delta = targetScrollTop - fromScrollTop;
-      const toSpot = { ...initialSpot, top: initialSpot.top - delta };
-      const fromSpot = spot ?? initialSpot;
-      const spotEl = document.querySelector("[data-tutorial-spot]");
-
-      const DURATION = 300;
-      const startTime = performance.now();
-
-      const tick = (now) => {
-        const t = Math.min(1, Math.max(0, (now - startTime) / DURATION));
-
-        scroller.scrollTop = fromScrollTop + delta * t;
-
-        if (spotEl) {
-          spotEl.style.top = `${fromSpot.top + (toSpot.top - fromSpot.top) * t}px`;
-          spotEl.style.left = `${fromSpot.left + (toSpot.left - fromSpot.left) * t}px`;
-          spotEl.style.width = `${fromSpot.width + (toSpot.width - fromSpot.width) * t}px`;
-          spotEl.style.height = `${fromSpot.height + (toSpot.height - fromSpot.height) * t}px`;
-          spotEl.style.borderRadius = `${fromSpot.radius + (toSpot.radius - fromSpot.radius) * t}px`;
-        }
-
-        if (t < 1) {
-          rafId = requestAnimationFrame(tick);
-        } else {
-          const settled = collect();
-          if (settled) setSpot(computeSpot(settled));
-        }
-      };
-
-      rafId = requestAnimationFrame(tick);
     }
 
+    measure();
+    scroller.addEventListener("scroll", measure, { passive: true });
+    const raf = requestAnimationFrame(measure);
     return () => {
-      if (rafId != null) cancelAnimationFrame(rafId);
+      scroller.removeEventListener("scroll", measure);
+      cancelAnimationFrame(raf);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tutorialStep, monthLoaded]);
+  }, [tutorialStep, monthLoaded, currentWeekStart]);
 
   useLayoutEffect(() => {
     if (tutorialStep !== null || !tutorialJustFinished.current) return;
@@ -657,7 +692,43 @@ export default function HomePage() {
     setTutorialStep((prev) => prev + 1);
   };
 
-  const weeks = buildCalendarWeeks(viewYear, viewMonth);
+  const weeks = useMemo(
+    () => buildCalendarWeeks(viewYear, viewMonth),
+    [viewYear, viewMonth],
+  );
+
+  const calendarRows = useMemo(() => {
+    const resolveRewardState = (weekStartDate, cells) => {
+      const reward = weeklyRewardsByWeekStart.get(weekStartDate);
+      if (reward?.status === "COMPLETED" && reward.available) {
+        return reward.viewed ? "viewed" : "available";
+      }
+      if (addDays(weekStartDate, 6) >= today.dateStr) return "unavailable";
+
+      const diaryCount =
+        reward?.diaryCount ??
+        cells.reduce(
+          (count, cell) =>
+            cell.inMonth && itemByDate.has(cell.dateStr) ? count + 1 : count,
+          0,
+        );
+      return diaryCount >= 3 ? "available" : "unavailable";
+    };
+
+    return weeks.map(({ cells, weekStartDate }) => {
+      const inMonthCount = cells.reduce(
+        (count, cell) => (cell.inMonth ? count + 1 : count),
+        0,
+      );
+      return {
+        cells,
+        weekStartDate,
+        canEarnReward: inMonthCount >= 3,
+        rewardState:
+          inMonthCount >= 3 ? resolveRewardState(weekStartDate, cells) : null,
+      };
+    });
+  }, [weeks, weeklyRewardsByWeekStart, itemByDate, today]);
 
   const handlePrevMonth = () => {
     if (viewMonth === 1) {
@@ -684,6 +755,21 @@ export default function HomePage() {
   };
 
   const handleGoToWrite = () => navigate("/diary");
+
+  const handleSelectDay = useCallback(
+    (item) => {
+      navigate("/diary/today-color", {
+        state: {
+          reward: item.reward,
+          diaryId: item.diaryId,
+          recordedDate: item.recordedDate,
+          mode: "review",
+          fromMonth: { year: viewYear, month: viewMonth },
+        },
+      });
+    },
+    [navigate, viewYear, viewMonth],
+  );
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#f6f8fa]">
@@ -732,13 +818,23 @@ export default function HomePage() {
             <button
               type="button"
               onClick={() => navigate("/notifications")}
-              className="flex shrink-0 cursor-pointer items-center justify-center border-none bg-transparent px-[6px] py-[3px] transition-opacity active:opacity-60"
+              aria-label={unreadCount > 0 ? "알림 (안 읽은 알림 있음)" : "알림"}
+              className="flex shrink-0 cursor-pointer items-center justify-center border-none bg-transparent p-0 transition-opacity active:opacity-60"
             >
-              <img
-                src={bellIcon}
-                alt="알림"
-                className="h-[24.375px] w-[18.963px] object-contain"
-              />
+              <span className="relative block size-[30px]">
+                <img
+                  src={bellIcon}
+                  alt=""
+                  className="absolute left-[5.517px] top-[3.126px] h-[24.375px] w-[18.963px] object-contain"
+                />
+                {unreadCount > 0 && (
+                  <img
+                    src={unreadDotIcon}
+                    alt=""
+                    className="absolute left-[17px] top-[5px] size-[8px]"
+                  />
+                )}
+              </span>
             </button>
           </div>
         </div>
@@ -795,55 +891,39 @@ export default function HomePage() {
                   </div>
 
                   <div className="flex flex-col gap-[2px]">
-                    {weeks.map(({ cells, weekStartDate }, weekIdx) => {
-                      const daysInMonthCount = cells.filter(
-                        (cell) => cell.inMonth,
-                      ).length;
-                      const canEarnReward = daysInMonthCount >= 3;
-                      return (
+                    {calendarRows.map(
+                      (
+                        { cells, weekStartDate, canEarnReward, rewardState },
+                        weekIdx,
+                      ) => (
                         <div
                           key={weekIdx}
                           className="flex w-full items-center justify-between"
                         >
                           <div className="flex items-center gap-[2px]">
-                            {cells.map((cell, i) => {
-                              const item = cell.inMonth
-                                ? itemByDate.get(cell.dateStr)
-                                : undefined;
-                              return (
-                                <DayCell
-                                  key={i}
-                                  cell={cell}
-                                  item={item}
-                                  onClick={() =>
-                                    navigate("/diary/today-color", {
-                                      state: {
-                                        reward: item.reward,
-                                        diaryId: item.diaryId,
-                                        recordedDate: item.recordedDate,
-                                        mode: "review",
-                                        fromMonth: {
-                                          year: viewYear,
-                                          month: viewMonth,
-                                        },
-                                      },
-                                    })
-                                  }
-                                />
-                              );
-                            })}
+                            {cells.map((cell, i) => (
+                              <DayCell
+                                key={i}
+                                cell={cell}
+                                item={
+                                  cell.inMonth
+                                    ? itemByDate.get(cell.dateStr)
+                                    : undefined
+                                }
+                                onSelect={handleSelectDay}
+                              />
+                            ))}
                           </div>
                           {canEarnReward && (
                             <RewardBadge
-                              state={getRewardBadgeState(weekStartDate)}
-                              onClick={() =>
-                                handleRewardBadgeClick(weekStartDate)
-                              }
+                              state={rewardState}
+                              weekStartDate={weekStartDate}
+                              onSelect={handleRewardBadgeClick}
                             />
                           )}
                         </div>
-                      );
-                    })}
+                      ),
+                    )}
                   </div>
                 </div>
 
@@ -858,7 +938,7 @@ export default function HomePage() {
                     <div
                       aria-hidden
                       className="size-[19.503px]"
-                      style={maskedIcon(editIcon, "#5F6473")}
+                      style={EDIT_ICON_MASK}
                     />
                   </button>
                   <button
@@ -923,12 +1003,13 @@ export default function HomePage() {
           </div>
 
           <button
+            ref={experienceRef}
             type="button"
             onClick={() => navigate("/experience")}
             className="flex w-full cursor-pointer flex-col items-start gap-[16px] rounded-[12px] bg-grey-0 px-[16px] py-[20px] text-left transition-opacity active:opacity-80"
             style={{ boxShadow: cardShadow }}
           >
-            <div ref={experienceRef} className="flex items-center gap-[10px]">
+            <div className="flex items-center gap-[10px]">
               <LogoSymbol
                 dotColor={accentColor ?? "#414450"}
                 className="h-[28px] w-[22px] shrink-0"

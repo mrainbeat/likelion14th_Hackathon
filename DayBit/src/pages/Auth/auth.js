@@ -1,4 +1,9 @@
 import apiClient, { refreshCsrfToken } from "../../api/apiClient";
+import { clearDraft } from "../../utils/diaryDraft";
+import { clearCachedMonthItems } from "../../utils/monthDiariesCache";
+import { clearCachedWeeklyRewards } from "../../utils/weeklyRewardsCache";
+import { clearCachedNotifications } from "../../utils/notificationsCache";
+import { clearReceivedFragments } from "../../utils/experienceFragments";
 
 export function login(email, password) {
   return apiClient.post("/api/auth/login", { email, password });
@@ -58,6 +63,11 @@ export function clearLocalSession() {
   } catch (error) {
     console.error("sessionStorage 정리 실패:", error);
   }
+  clearDraft();
+  clearCachedMonthItems();
+  clearCachedWeeklyRewards();
+  clearCachedNotifications();
+  clearReceivedFragments();
 }
 
 export async function logout() {

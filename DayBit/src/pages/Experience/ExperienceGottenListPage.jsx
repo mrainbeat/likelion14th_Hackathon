@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ExperiencePieceSection from "./components/ExperiencePieceSection";
 import backIcon from "../../assets/icons/back.svg";
@@ -6,17 +6,31 @@ import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
 import {
   getReceivedFragments,
-  fragmentToPieceItem,
+  loadReceivedFragments,
+  fragmentsToPieceItems,
 } from "../../utils/experienceFragments";
 
 export default function ExperienceGottenListPage() {
   const navigate = useNavigate();
-  const [receivedFragments] = useState(() => getReceivedFragments());
+  const [receivedFragments, setReceivedFragments] = useState(() =>
+    getReceivedFragments(),
+  );
 
-  const items = receivedFragments
-    .slice()
-    .sort((a, b) => new Date(b.receivedAt) - new Date(a.receivedAt))
-    .map((f) => fragmentToPieceItem(f, "received"));
+  useEffect(() => {
+    let alive = true;
+    loadReceivedFragments().then(({ fragments }) => {
+      if (alive) setReceivedFragments(fragments);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const items = fragmentsToPieceItems(
+    receivedFragments,
+    "received",
+    (f) => f.receivedAt,
+  );
 
   return (
     <div className="relative flex h-full w-full select-none flex-col overflow-y-auto bg-[#f6f8fa] px-[16px] py-[16px] scrollbar-hide">

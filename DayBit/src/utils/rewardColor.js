@@ -1,8 +1,20 @@
 const L_THRESHOLD = 0.92;
 const CHROMA_GAIN = 0.6;
 const MAX_CHROMA_BOOST = 0.04;
+const GAMUT_SEARCH_STEPS = 24;
+
+const paletteCache = new Map();
 
 export function getTodayColorPalette(hex) {
+  const cached = paletteCache.get(hex);
+  if (cached) return cached;
+
+  const palette = buildTodayColorPalette(hex);
+  paletteCache.set(hex, palette);
+  return palette;
+}
+
+function buildTodayColorPalette(hex) {
   const todayColorRGB = hexToRgb(hex);
   const todayColor = rgbToHex(todayColorRGB);
   const { l, c, h } = rgbToOklch(todayColorRGB);
@@ -40,21 +52,25 @@ function adjustForUi({ l, c, h }) {
 }
 
 function oklchToSrgb({ l, c, h }) {
-  if (isInSrgbGamut(oklchToLinearRgb({ l, c, h }))) {
-    return toRgb255(oklchToLinearRgb({ l, c, h }));
+  const exact = oklchToLinearRgb({ l, c, h });
+  if (isInSrgbGamut(exact)) {
+    return toRgb255(exact);
   }
 
   let low = 0;
   let high = c;
-  for (let i = 0; i < 24; i += 1) {
+  let fitted = null;
+  for (let i = 0; i < GAMUT_SEARCH_STEPS; i += 1) {
     const mid = (low + high) / 2;
-    if (isInSrgbGamut(oklchToLinearRgb({ l, c: mid, h }))) {
+    const candidate = oklchToLinearRgb({ l, c: mid, h });
+    if (isInSrgbGamut(candidate)) {
       low = mid;
+      fitted = candidate;
     } else {
       high = mid;
     }
   }
-  return toRgb255(oklchToLinearRgb({ l, c: low, h }));
+  return toRgb255(fitted ?? oklchToLinearRgb({ l, c: low, h }));
 }
 
 function toRgb255({ r, g, b }) {

@@ -1,58 +1,105 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import NotificationCard from "./components/NotificationCard";
-
-const UNREAD_SECTION = [
-  {
-    title: "다른사람의 경험조각 도착",
-    time: "12분 전",
-    body: "나의 일기와 닿아 있는 조각이 도착했어요.",
-    unread: true,
-  },
-  {
-    title: "일기 작성 알림",
-    time: "52분 전",
-    body: "일기 작성을 완료해 오늘의 색을 받아보세요 :)",
-    unread: true,
-  },
-  {
-    title: "일기 작성 알림",
-    time: "1일 전",
-    body: "일기 작성을 완료해 오늘의 색을 받아보세요 :)",
-    unread: false,
-  },
-];
-
-const READ_SECTION = [
-  {
-    title: "내 경험조각에 대한 반응 도착",
-    time: "3시간 전",
-    body: "내가 전달한 조각에 대한 반응을 확인해보세요!",
-    unread: true,
-  },
-  {
-    title: "다른사람의 경험조각 도착",
-    time: "2일 전",
-    body: "나에게 도착한 새로운 경험조각이 있어요.",
-    unread: false,
-  },
-  {
-    title: "일기 작성 알림",
-    time: "3일 전",
-    body: "일기 작성을 완료해 오늘의 색을 받아보세요 :)",
-    unread: false,
-  },
-  {
-    title: "다른사람의 경험조각 도착",
-    time: "3일 전",
-    body: "나에게 도착한 새로운 경험조각이 있어요.",
-    unread: false,
-  },
-];
+import {
+  loadNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  notificationTitle,
+  notificationRoute,
+  formatNotificationTime,
+} from "../../utils/notifications";
+import {
+  loadCachedNotifications,
+  saveCachedNotifications,
+} from "../../utils/notificationsCache";
 
 export default function NotificationsPage() {
   const navigate = useNavigate();
+  const [items, setItems] = useState(() => loadCachedNotifications() ?? []);
+  const [loaded, setLoaded] = useState(
+    () => loadCachedNotifications() != null,
+  );
+  const [loadFailed, setLoadFailed] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    loadNotifications().then(({ items: list, failed }) => {
+      if (!alive) return;
+      if (failed) {
+        setLoadFailed(true);
+      } else {
+        setItems(list);
+        setLoadFailed(false);
+        saveCachedNotifications(list);
+      }
+      setLoaded(true);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const applyItems = (updater) => {
+    setItems((prev) => {
+      const next = updater(prev);
+      saveCachedNotifications(next);
+      return next;
+    });
+  };
+
+  const handleCardClick = (item) => {
+    if (!item.read) {
+      applyItems((prev) =>
+        prev.map((n) => (n.id === item.id ? { ...n, read: true } : n)),
+      );
+      markNotificationRead(item.id).catch((error) => {
+        console.error(
+          "PATCH /api/v1/notifications/{notificationId}/read 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      });
+    }
+
+    const route = notificationRoute(item);
+    if (route) navigate(route);
+  };
+
+  const handleReadAll = () => {
+    applyItems((prev) => prev.map((n) => ({ ...n, read: true })));
+    markAllNotificationsRead().catch((error) => {
+      console.error(
+        "PATCH /api/v1/notifications/read-all 실패:",
+        error.response?.status,
+        error.response?.data,
+      );
+    });
+  };
+
+  const unreadItems = [];
+  const readItems = [];
+  for (const item of items) {
+    (item.read ? readItems : unreadItems).push(item);
+  }
+
+  const renderCard = (item) => (
+    <button
+      key={item.id}
+      type="button"
+      onClick={() => handleCardClick(item)}
+      className="w-full cursor-pointer border-none bg-transparent p-0 text-left transition-opacity active:opacity-80"
+    >
+      <NotificationCard
+        title={notificationTitle(item.type)}
+        time={formatNotificationTime(item.createdAt)}
+        body={item.message}
+        unread={!item.read}
+      />
+    </button>
+  );
 
   return (
     <div className="flex h-full w-full select-none flex-col gap-[24px] overflow-y-auto bg-[#F6F8FA] p-[16px] scrollbar-hide">
@@ -80,31 +127,53 @@ export default function NotificationsPage() {
         </button>
       </div>
       <div className="flex w-full flex-col items-start gap-[18px]">
-        <p className="whitespace-nowrap text-[22px] font-semibold leading-[normal] tracking-[-0.66px] text-[#4F5563]">
-          알림
-        </p>
-        <div className="flex w-full flex-col items-start gap-[20px]">
-          <div className="flex w-full flex-col items-start gap-[8px]">
-            <p className="whitespace-nowrap text-[14px] font-semibold leading-[normal] tracking-[-0.28px] text-grey-70">
-              확인하지 않은 알림
-            </p>
-            <div className="flex w-full flex-col items-start gap-[16px]">
-              {UNREAD_SECTION.map((item, i) => (
-                <NotificationCard key={i} {...item} />
-              ))}
-            </div>
-          </div>
-          <div className="flex w-full flex-col items-start gap-[8px]">
-            <p className="whitespace-nowrap text-[14px] font-semibold leading-[normal] tracking-[-0.28px] text-grey-70">
-              확인한 알림
-            </p>
-            <div className="flex w-full flex-col items-start gap-[16px]">
-              {READ_SECTION.map((item, i) => (
-                <NotificationCard key={i} {...item} />
-              ))}
-            </div>
-          </div>
+        <div className="flex w-full items-center justify-between">
+          <p className="whitespace-nowrap text-[22px] font-semibold leading-[normal] tracking-[-0.66px] text-[#4F5563]">
+            알림
+          </p>
+          {unreadItems.length > 0 && (
+            <button
+              type="button"
+              onClick={handleReadAll}
+              className="shrink-0 cursor-pointer whitespace-nowrap border-none bg-transparent p-0 text-[14px] font-semibold tracking-[-0.28px] text-grey-60 transition-opacity active:opacity-60"
+            >
+              모두 읽음
+            </button>
+          )}
         </div>
+
+        {!loaded ? null : loadFailed && items.length === 0 ? (
+          <p className="w-full text-[14px] font-medium tracking-[-0.28px] text-grey-60">
+            알림을 불러오지 못했어요. 잠시 후 다시 시도해주세요.
+          </p>
+        ) : items.length === 0 ? (
+          <p className="w-full text-[14px] font-medium tracking-[-0.28px] text-grey-60">
+            아직 도착한 알림이 없어요.
+          </p>
+        ) : (
+          <div className="flex w-full flex-col items-start gap-[20px]">
+            {unreadItems.length > 0 && (
+              <div className="flex w-full flex-col items-start gap-[8px]">
+                <p className="whitespace-nowrap text-[14px] font-semibold leading-[normal] tracking-[-0.28px] text-grey-70">
+                  확인하지 않은 알림
+                </p>
+                <div className="flex w-full flex-col items-start gap-[16px]">
+                  {unreadItems.map(renderCard)}
+                </div>
+              </div>
+            )}
+            {readItems.length > 0 && (
+              <div className="flex w-full flex-col items-start gap-[8px]">
+                <p className="whitespace-nowrap text-[14px] font-semibold leading-[normal] tracking-[-0.28px] text-grey-70">
+                  확인한 알림
+                </p>
+                <div className="flex w-full flex-col items-start gap-[16px]">
+                  {readItems.map(renderCard)}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

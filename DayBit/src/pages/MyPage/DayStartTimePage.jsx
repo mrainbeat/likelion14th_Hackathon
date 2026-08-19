@@ -92,7 +92,7 @@ export default function DayStartTimePage() {
                 alt=""
                 className="h-[61px] w-[48px] object-cover"
               />
-              <div className="flex flex-col items-start gap-[2px] whitespace-nowrap text-[20px] font-semibold leading-[normal] tracking-[-0.4px] text-[#2D3038]">
+              <div className="flex flex-col items-start gap-[2px] whitespace-nowrap text-[20px] font-semibold leading-[1.19] tracking-[-0.4px] text-[#2D3038]">
                 <p>일기작성이 초기화 되는</p>
                 <p>하루 전환시간을 설정할게요.</p>
               </div>
@@ -102,13 +102,11 @@ export default function DayStartTimePage() {
 
         <div className="flex w-full flex-col items-start px-[16px]">
           <div className="flex w-full flex-col items-start gap-[16px]">
-            +{" "}
-            <div className="flex flex-col items-start gap-[6px] whitespace-nowrap">
-              {" "}
-              <p className="text-[20px] font-semibold leading-[normal] tracking-[-0.4px] text-[#2D3038]">
+            <div className="flex flex-col items-start gap-[6px]">
+              <p className="whitespace-nowrap text-[20px] font-semibold leading-[1.19] tracking-[-0.4px] text-[#2D3038]">
                 몇시에 하루를 전환할까요?
               </p>
-              <p className="text-[12px] font-normal leading-[normal] tracking-[-0.12px] text-[#787E8C]">
+              <p className="whitespace-nowrap text-[12px] font-normal leading-[1.19] tracking-[-0.12px] text-[#787E8C]">
                 언제든지 변경할 수 있어요.
               </p>
             </div>
@@ -130,8 +128,8 @@ export default function DayStartTimePage() {
                           onClick={() => setSelectedTime(time.value)}
                           className={`flex shrink-0 items-center justify-center whitespace-nowrap rounded-[38px] border px-[12px] py-[8px] text-[16px] leading-[normal] ${
                             isSelected
-                              ? "border-[#4F5563] font-semibold text-[#2D3038]"
-                              : `${widthClass} border-[#DFE2EA] font-medium tracking-[-0.32px] text-[#AFB6C4]`
+                              ? "border-grey-80 font-semibold text-grey-90"
+                              : `${widthClass} border-grey-30 font-medium tracking-[-0.32px] text-grey-50`
                           }`}
                         >
                           {time.label}
