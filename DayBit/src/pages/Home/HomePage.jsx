@@ -55,9 +55,7 @@ import {
   draftHasContent,
   clearQuestions,
 } from "../../utils/diaryDraft";
-let resumeCheckedThisSession = false;
-let weeklyNotifyCheckedThisSession = false;
-let autoCompletionCheckedThisSession = false;
+import { homeSessionFlags } from "../../utils/homeSessionFlags";
 
 const WEEKDAYS = ["월", "화", "수", "목", "금", "토", "일"];
 
@@ -459,8 +457,8 @@ export default function HomePage() {
   );
 
   useEffect(() => {
-    if (!todayLoaded || resumeCheckedThisSession) return;
-    resumeCheckedThisSession = true;
+    if (!todayLoaded || homeSessionFlags.resumeChecked) return;
+    homeSessionFlags.resumeChecked = true;
 
     if (isTodayWritten) {
       clearDraft();
@@ -484,6 +482,7 @@ export default function HomePage() {
   };
 
   const [notifyReward, setNotifyReward] = useState(null);
+  const [weeklyRewardsFetched, setWeeklyRewardsFetched] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -507,6 +506,9 @@ export default function HomePage() {
       });
       setWeeklyRewardsByWeekStart(map);
       setWeeklyRewardsLoaded(true);
+      if (viewYear === today.year && viewMonth === today.month) {
+        setWeeklyRewardsFetched(true);
+      }
       saveCachedWeeklyRewards(viewYear, viewMonth, Array.from(map.values()));
     });
 
@@ -517,13 +519,13 @@ export default function HomePage() {
 
   useEffect(() => {
     if (
-      !weeklyRewardsLoaded ||
+      !weeklyRewardsFetched ||
       !isCurrentMonth ||
       userId == null ||
-      weeklyNotifyCheckedThisSession
+      homeSessionFlags.weeklyNotifyChecked
     )
       return;
-    weeklyNotifyCheckedThisSession = true;
+    homeSessionFlags.weeklyNotifyChecked = true;
 
     let latest = null;
     weeklyRewardsByWeekStart.forEach((item) => {
@@ -537,7 +539,7 @@ export default function HomePage() {
     });
     if (latest) setNotifyReward(latest);
   }, [
-    weeklyRewardsLoaded,
+    weeklyRewardsFetched,
     weeklyRewardsByWeekStart,
     isCurrentMonth,
     today,
@@ -545,26 +547,39 @@ export default function HomePage() {
   ]);
 
   const [autoCompletionNotice, setAutoCompletionNotice] = useState(null);
+  const dismissedNoticeIdsRef = useRef(new Set());
 
   useEffect(() => {
-    if (userId == null || autoCompletionCheckedThisSession) return;
-    autoCompletionCheckedThisSession = true;
+    if (userId == null) return;
 
     let alive = true;
-    getPendingAutoCompletionNotice()
-      .then((notice) => {
-        if (!alive || !notice || notice.viewed) return;
-        setAutoCompletionNotice(notice);
-      })
-      .catch((error) => {
-        console.error(
-          "GET /api/v1/diaries/auto-completion-notices/pending 실패:",
-          error.response?.status,
-          error.response?.data,
-        );
-      });
+
+    const checkNotice = () => {
+      getPendingAutoCompletionNotice()
+        .then((notice) => {
+          if (!alive || !notice || notice.viewed) return;
+          const noticeId = notice.noticeId ?? notice.id;
+          if (dismissedNoticeIdsRef.current.has(noticeId)) return;
+          setAutoCompletionNotice((prev) =>
+            prev?.noticeId === noticeId || prev?.id === noticeId
+              ? prev
+              : notice,
+          );
+        })
+        .catch((error) => {
+          console.error(
+            "GET /api/v1/diaries/auto-completion-notices/pending 실패:",
+            error.response?.status,
+            error.response?.data,
+          );
+        });
+    };
+
+    checkNotice();
+    const timer = setInterval(checkNotice, UNREAD_POLL_INTERVAL_MS);
     return () => {
       alive = false;
+      clearInterval(timer);
     };
   }, [userId]);
 
@@ -573,6 +588,7 @@ export default function HomePage() {
     setAutoCompletionNotice(null);
     const noticeId = notice?.noticeId ?? notice?.id;
     if (noticeId == null) return notice;
+    dismissedNoticeIdsRef.current.add(noticeId);
     markAutoCompletionNoticeViewed(noticeId).catch((error) => {
       console.error(
         "PATCH /api/v1/diaries/auto-completion-notices/{noticeId}/view 실패:",

@@ -229,7 +229,7 @@ export default function TodayColorPage() {
               }}
             />
 
-            <div className="h-full overflow-y-auto scrollbar-hide px-[36px] pb-[80px] pt-[32px]">
+            <div className="h-full overflow-y-auto scrollbar-hide px-[36px] pb-[80px]">
               {isReady ? (
                 <div className="flex w-full flex-col items-start gap-[20px]">
                   <div className="flex w-full flex-col items-start gap-[4px]">

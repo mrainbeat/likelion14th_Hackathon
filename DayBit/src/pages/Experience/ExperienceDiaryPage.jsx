@@ -264,7 +264,11 @@ export default function ExperienceDiaryPage() {
                 <button
                   type="button"
                   onClick={() => setShowOriginal((prev) => !prev)}
-                  className="shrink-0 self-start rounded-[12px] bg-grey-70 px-[16px] py-[10px] text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-grey-0"
+                  className={
+                    showOriginal
+                      ? "shrink-0 self-start rounded-[12px] bg-grey-70 px-[16px] py-[10px] text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-grey-0"
+                      : "shrink-0 self-start rounded-[12px] border-[1.5px] border-solid border-grey-60 bg-grey-0 px-[16px] py-[10px] text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-grey-95"
+                  }
                 >
                   {showOriginal ? "익명화보기" : "원문보기"}
                 </button>

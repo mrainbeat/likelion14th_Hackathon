@@ -9,6 +9,7 @@ import {
   clearReceivedFragments,
   clearCachedMyFragments,
 } from "../../utils/experienceFragments";
+import { resetHomeSessionFlags } from "../../utils/homeSessionFlags";
 
 export async function login(email, password) {
   clearLocalSession();
@@ -79,6 +80,7 @@ export function clearLocalSession() {
   clearCachedWeeklyRewardDetails();
   clearCachedMyFragments();
   clearCachedNotifications();
+  resetHomeSessionFlags();
   clearReceivedFragments();
 }
 
