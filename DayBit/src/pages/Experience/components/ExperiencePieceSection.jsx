@@ -2,8 +2,6 @@ import { Fragment, useLayoutEffect, useRef, useState } from "react";
 
 const NAVIGATE_THRESHOLD = 8;
 
-const COLLAPSE_SCROLL_MARGIN = 16;
-
 const MOTION_DURATION = "0.3s";
 const MOTION_EASING = "ease-out";
 
@@ -202,39 +200,25 @@ export default function ExperiencePieceSection({
   const hasMore = moreItems.length > 0;
 
   const handleMoreClick = () => {
-    const nextExpanded = !expanded;
-    const card = cardRef.current;
-    const scroller = findScrollParent(card);
+    const scroller = findScrollParent(cardRef.current);
+    const keptScrollTop = scroller?.scrollTop;
 
-    if (nextExpanded) {
-      const keptScrollTop = scroller?.scrollTop;
-      setExpanded(true);
-      if (!scroller || keptScrollTop == null) return;
-      const hold = () => {
-        if (scroller.scrollTop !== keptScrollTop) {
-          scroller.scrollTop = keptScrollTop;
-        }
-      };
-      hold();
-      requestAnimationFrame(hold);
-      return;
-    }
+    setExpanded((prev) => !prev);
 
-    setExpanded(false);
-    if (!card || !scroller) return;
-
-    const offset =
-      card.getBoundingClientRect().top -
-      scroller.getBoundingClientRect().top +
-      scroller.scrollTop -
-      COLLAPSE_SCROLL_MARGIN;
-    scroller.scrollTo({ top: Math.max(0, offset), behavior: "smooth" });
+    if (!scroller || keptScrollTop == null) return;
+    const hold = () => {
+      if (scroller.scrollTop !== keptScrollTop) {
+        scroller.scrollTop = keptScrollTop;
+      }
+    };
+    hold();
+    requestAnimationFrame(hold);
   };
 
   return (
     <div
       ref={cardRef}
-      className="relative w-full shrink-0 scroll-mt-[16px] overflow-hidden rounded-[12px] bg-grey-0 p-[16px] shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]"
+      className="relative w-full shrink-0 overflow-hidden rounded-[12px] bg-grey-0 p-[16px] shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]"
     >
       <div className="flex w-full flex-col items-start gap-[16px]">
         <div className="flex w-full flex-col items-start gap-[4px]">
@@ -242,14 +226,14 @@ export default function ExperiencePieceSection({
             {title}
           </p>
           {subtitle && (
-            <p className="w-full text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-[#787E8C]">
+            <p className="w-full whitespace-pre-line text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-[#787E8C]">
               {subtitle}
             </p>
           )}
         </div>
 
         {items.length === 0 && !hasMore && emptyText && (
-          <p className="w-full text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-[#787E8C]">
+          <p className="w-full whitespace-pre-line text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-[#787E8C]">
             {emptyText}
           </p>
         )}
