@@ -396,7 +396,19 @@ export default function HomePage() {
     [monthItems],
   );
 
+  const todayItem = isCurrentMonth
+    ? (itemByDate.get(today.dateStr) ?? null)
+    : awayTodayItem;
+  const todayLoaded = isCurrentMonth ? monthLoaded : awayLoaded;
+  const isTodayWritten = Boolean(todayItem);
+
   const calendarMent = useMemo(() => {
+    if (isCurrentMonth && !isTodayWritten) {
+      return {
+        line1: `${today.month}월 ${today.day}일의`,
+        line2: "기록을 남겨볼까요?",
+      };
+    }
     if (isPastMonth) {
       return {
         line1: `${viewMonth}월의 조각이`,
@@ -421,13 +433,16 @@ export default function HomePage() {
       };
     }
     return { line1: `${viewMonth}월의 조각을`, line2: "데이빗과 모아봐요 :)" };
-  }, [isPastMonth, isFutureMonth, viewYear, viewMonth, monthItems]);
-
-  const todayItem = isCurrentMonth
-    ? (itemByDate.get(today.dateStr) ?? null)
-    : awayTodayItem;
-  const todayLoaded = isCurrentMonth ? monthLoaded : awayLoaded;
-  const isTodayWritten = Boolean(todayItem);
+  }, [
+    isCurrentMonth,
+    isTodayWritten,
+    isPastMonth,
+    isFutureMonth,
+    viewYear,
+    viewMonth,
+    monthItems,
+    today,
+  ]);
 
   const themeColor =
     todayItem?.reward?.status === "COMPLETED"
