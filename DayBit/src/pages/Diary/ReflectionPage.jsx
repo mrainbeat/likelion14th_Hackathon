@@ -60,7 +60,7 @@ export default function ReflectionPage() {
       try {
         const response = await apiClient.post("/api/v1/diaries", {
           content: diaryContent,
-          reflectionUsesDiaryContent: useDiaryContent,
+          personalizationUsesDiaryContent: useDiaryContent,
         });
         const result = response.data.result;
 

@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import apiClient from "../../api/apiClient";
-import { getWeeklyRewardDetail, markWeeklyRewardViewed } from "../../utils/weeklyRewards";
+import {
+  getWeeklyRewardDetail,
+  markWeeklyRewardViewed,
+} from "../../utils/weeklyRewards";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import LogoSymbol from "../../assets/icons/LogoSymbol.jsx";
@@ -191,7 +194,10 @@ export default function WeeklyImagePage() {
       ) : (
         <div className="absolute inset-x-0 bottom-0 top-[65px] z-10 flex flex-col overflow-hidden rounded-t-[12px] bg-grey-0 shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">
           <div className="relative z-10 flex w-full shrink-0 items-start gap-[6px] px-[16px] pb-[32px] pt-[32px]">
-            <LogoSymbol dotColor={ACCENT_COLOR} className="h-[27.872px] w-[22px] shrink-0" />
+            <LogoSymbol
+              dotColor={ACCENT_COLOR}
+              className="h-[27.872px] w-[22px] shrink-0"
+            />
             <p className="text-[24px] font-bold leading-[normal] tracking-[-0.48px] text-grey-80">
               주간 이미지
             </p>
@@ -241,8 +247,17 @@ export default function WeeklyImagePage() {
                     </p>
                   )}
 
-                  {(reward.keywords?.length > 0 || reward.summary) && (
+                  {(reward.categoryKeyword ||
+                    reward.keywords?.length > 0 ||
+                    reward.summary) && (
                     <div className="flex w-full flex-col items-start justify-center gap-[12px] rounded-[4px] border border-solid border-[#E8EBF0] bg-[#F8F9FC] px-[16px] py-[20px]">
+                      {reward.categoryKeyword && (
+                        <div className="flex items-center justify-center rounded-[100px] border border-solid border-[#AFB6C4] px-[8px] py-[4px]">
+                          <p className="whitespace-nowrap text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-grey-80">
+                            {reward.categoryKeyword}
+                          </p>
+                        </div>
+                      )}
                       {reward.keywords?.length > 0 && (
                         <div className="flex flex-wrap items-center gap-[4px]">
                           {reward.keywords.map((keyword) => (

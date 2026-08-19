@@ -20,6 +20,7 @@ import {
   loadTodayQuestions,
   saveQuestions,
 } from "../../utils/diaryDraft";
+import { getServerDraft, putServerDraft } from "../../utils/diaryDraftApi";
 
 function htmlToPlainText(html) {
   if (!html) return "";
@@ -32,6 +33,11 @@ function htmlToPlainText(html) {
   return (temp.textContent || temp.innerText || "")
     .replace(/\u200B/g, "")
     .trim();
+}
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 export default function DiaryPage() {
@@ -59,6 +65,7 @@ export default function DiaryPage() {
   const [tutorialSpot, setTutorialSpot] = useState(null);
 
   const isTimeAppended = useRef(false);
+  const hadLocalDraftRef = useRef(false);
   const editorRef = useRef(null);
   const scrollContainerRef = useRef(null);
   const pageRef = useRef(null);
@@ -126,6 +133,8 @@ export default function DiaryPage() {
       markTimestampAppended();
     }
 
+    hadLocalDraftRef.current = priorText.length > 0;
+
     if (priorText.length > 0) {
       setHadPriorContent(true);
     }
@@ -152,6 +161,53 @@ export default function DiaryPage() {
 
     isTimeAppended.current = true;
   }, []);
+  useEffect(() => {
+    let alive = true;
+
+    getServerDraft()
+      .then((draft) => {
+        if (!alive) return;
+        const text = draft?.content?.trim();
+        if (!text || hadLocalDraftRef.current) return;
+
+        const el = editorRef.current;
+        if (!el) return;
+
+        const restoredHtml = escapeHtml(text).replace(/\n/g, "<br>");
+        el.innerHTML = `${restoredHtml}<br><br>${el.innerHTML}`;
+
+        setContent(el.innerHTML);
+        const plainText = el.textContent || "";
+        setInitialText(plainText);
+        setCurrentText(plainText);
+        setHadPriorContent(true);
+      })
+      .catch((error) => {
+        console.error(
+          "GET /api/v1/diaries/draft 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hasUserWritten) return;
+    const timer = setTimeout(() => {
+      putServerDraft(htmlToPlainText(content)).catch((error) => {
+        console.error(
+          "PUT /api/v1/diaries/draft 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      });
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [content, hasUserWritten]);
 
   const handleInput = (e) => {
     setContent(e.currentTarget.innerHTML);
@@ -224,6 +280,20 @@ export default function DiaryPage() {
     const timer = setTimeout(() => {
       saveDraft(content);
     }, 500);
+    return () => clearTimeout(timer);
+  }, [content, hasUserWritten]);
+
+  useEffect(() => {
+    if (!hasUserWritten) return;
+    const timer = setTimeout(() => {
+      putServerDraft(htmlToPlainText(content)).catch((error) => {
+        console.error(
+          "PUT /api/v1/diaries/draft 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      });
+    }, 1000);
     return () => clearTimeout(timer);
   }, [content, hasUserWritten]);
 
