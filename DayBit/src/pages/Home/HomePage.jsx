@@ -47,6 +47,7 @@ import {
   loadTodayDraft,
   clearDraft,
   draftHasContent,
+  clearQuestions,
 } from "../../utils/diaryDraft";
 let resumeCheckedThisSession = false;
 let weeklyNotifyCheckedThisSession = false;
@@ -471,6 +472,7 @@ export default function HomePage() {
 
     if (isTodayWritten) {
       clearDraft();
+      clearQuestions();
       setHasTodayDraft(false);
       return;
     }

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/apiClient";
 import backIcon from "../../assets/icons/back.svg";
 import logoSymbol from "../../assets/logos/logo-symbol.svg";
+import { TimePill } from "../Onboarding/components/OnboardingUi";
 
 const PRESET_TIMES = [
   { label: "오전12시", value: "00:00" },
@@ -12,6 +13,11 @@ const PRESET_TIMES = [
   { label: "오전4시", value: "04:00" },
   { label: "오전5시", value: "05:00" },
 ];
+
+const WIDEST_TIME_LABEL = PRESET_TIMES.reduce(
+  (widest, time) => (time.label.length > widest.length ? time.label : widest),
+  "",
+);
 
 export default function DayStartTimePage() {
   const navigate = useNavigate();
@@ -117,25 +123,15 @@ export default function DayStartTimePage() {
                     key={rowIdx}
                     className="flex w-full items-center gap-[8px]"
                   >
-                    {row.map((time) => {
-                      const isSelected = selectedTime === time.value;
-                      const widthClass =
-                        time.value === "01:00" ? "w-[75px]" : "w-[79px]";
-                      return (
-                        <button
-                          key={time.value}
-                          type="button"
-                          onClick={() => setSelectedTime(time.value)}
-                          className={`flex shrink-0 items-center justify-center whitespace-nowrap rounded-[38px] border px-[12px] py-[8px] text-[16px] leading-[normal] ${
-                            isSelected
-                              ? "border-grey-80 font-semibold text-grey-90"
-                              : `${widthClass} border-grey-30 font-medium tracking-[-0.32px] text-grey-50`
-                          }`}
-                        >
-                          {time.label}
-                        </button>
-                      );
-                    })}
+                    {row.map((time) => (
+                      <TimePill
+                        key={time.value}
+                        label={time.label}
+                        widthLabel={WIDEST_TIME_LABEL}
+                        selected={selectedTime === time.value}
+                        onClick={() => setSelectedTime(time.value)}
+                      />
+                    ))}
                   </div>
                 ),
               )}

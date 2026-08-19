@@ -5,6 +5,8 @@ export function getTodaySeoulDate() {
 }
 
 const LAST_TIMESTAMP_KEY = "diary_last_timestamp_at";
+const QUESTIONS_KEY = "diary_questions";
+const QUESTIONS_DATE_KEY = "diary_questions_date";
 
 export function saveDraft(content) {
   localStorage.setItem("diary_content", content);
@@ -15,6 +17,34 @@ export function clearDraft() {
   localStorage.removeItem("diary_content");
   localStorage.removeItem("diary_content_date");
   localStorage.removeItem(LAST_TIMESTAMP_KEY);
+}
+
+export function loadTodayQuestions() {
+  try {
+    if (localStorage.getItem(QUESTIONS_DATE_KEY) !== getTodaySeoulDate()) {
+      clearQuestions();
+      return [];
+    }
+    const raw = localStorage.getItem(QUESTIONS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveQuestions(questions) {
+  try {
+    localStorage.setItem(QUESTIONS_KEY, JSON.stringify(questions));
+    localStorage.setItem(QUESTIONS_DATE_KEY, getTodaySeoulDate());
+  } catch {
+    return;
+  }
+}
+
+export function clearQuestions() {
+  localStorage.removeItem(QUESTIONS_KEY);
+  localStorage.removeItem(QUESTIONS_DATE_KEY);
 }
 
 export function loadTodayDraft() {
