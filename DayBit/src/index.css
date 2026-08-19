@@ -53,10 +53,6 @@ body {
   animation: fade-in 0.3s ease-out;
 }
 
-:root {
-  --diary-modal-min-h: 200px;
-}
-
 .scrollbar-hide {
   scrollbar-width: none;
   -ms-overflow-style: none;

@@ -168,6 +168,7 @@ export default function DiaryPage() {
 
     isTimeAppended.current = true;
   }, []);
+
   useEffect(() => {
     let alive = true;
 
@@ -201,20 +202,6 @@ export default function DiaryPage() {
       alive = false;
     };
   }, []);
-
-  useEffect(() => {
-    if (!hasUserWritten) return;
-    const timer = setTimeout(() => {
-      putServerDraft(htmlToPlainText(content)).catch((error) => {
-        console.error(
-          "PUT /api/v1/diaries/draft 실패:",
-          error.response?.status,
-          error.response?.data,
-        );
-      });
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [content, hasUserWritten]);
 
   const handleInput = (e) => {
     setContent(e.currentTarget.innerHTML);
@@ -293,7 +280,7 @@ export default function DiaryPage() {
   useEffect(() => {
     if (!hasUserWritten) return;
     const timer = setTimeout(() => {
-      putServerDraft(htmlToPlainText(content)).catch((error) => {
+      putServerDraft(htmlToPlainText(content), pendingUseDiaryContent).catch((error) => {
         console.error(
           "PUT /api/v1/diaries/draft 실패:",
           error.response?.status,
@@ -302,7 +289,7 @@ export default function DiaryPage() {
       });
     }, 1000);
     return () => clearTimeout(timer);
-  }, [content, hasUserWritten]);
+  }, [content, hasUserWritten, pendingUseDiaryContent]);
 
   const performBack = () => {
     if (hasUserWritten) {
@@ -338,6 +325,13 @@ export default function DiaryPage() {
     setShowReflectionConsent(false);
     setPendingUseDiaryContent(useDiaryContent);
     setShowAnonymousShare(true);
+    putServerDraft(htmlToPlainText(content), useDiaryContent).catch((error) => {
+      console.error(
+        "PUT /api/v1/diaries/draft 실패:",
+        error.response?.status,
+        error.response?.data,
+      );
+    });
   };
 
   const handleAnonymousShareChoice = (shareAnonymously) => {
