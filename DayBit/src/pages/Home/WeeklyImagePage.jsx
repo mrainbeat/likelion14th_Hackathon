@@ -5,6 +5,7 @@ import { getWeeklyRewardDetail, markWeeklyRewardViewed } from "../../utils/weekl
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import LogoSymbol from "../../assets/icons/LogoSymbol.jsx";
+import WeeklyImagePreviewModal from "./components/WeeklyImagePreviewModal";
 
 const BLOBS = [
   {
@@ -55,6 +56,7 @@ export default function WeeklyImagePage() {
   const fromMonth = location.state?.fromMonth ?? null;
   const [reward, setReward] = useState(null);
   const [errorText, setErrorText] = useState("");
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const pollRef = useRef(null);
   const viewedRef = useRef(false);
@@ -208,12 +210,18 @@ export default function WeeklyImagePage() {
               {isReady ? (
                 <div className="flex w-full flex-col items-start gap-[20px]">
                   <div className="flex w-full flex-col items-start gap-[4px]">
-                    <img
-                      src={reward.imageUrl}
-                      alt=""
-                      onError={handleImageError}
-                      className="w-full rounded-[4px]"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setIsPreviewOpen(true)}
+                      className="w-full cursor-pointer border-none bg-transparent p-0"
+                    >
+                      <img
+                        src={reward.imageUrl}
+                        alt=""
+                        onError={handleImageError}
+                        className="w-full rounded-[4px]"
+                      />
+                    </button>
                     {reward.dailyColors?.length > 0 && (
                       <div className="flex flex-wrap items-start gap-[4px]">
                         {reward.dailyColors.map((day) => (
@@ -281,6 +289,13 @@ export default function WeeklyImagePage() {
             </button>
           </div>
         </div>
+      )}
+
+      {isPreviewOpen && (
+        <WeeklyImagePreviewModal
+          imageUrl={reward.imageUrl}
+          onClose={() => setIsPreviewOpen(false)}
+        />
       )}
     </div>
   );
