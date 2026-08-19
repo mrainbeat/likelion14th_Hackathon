@@ -10,10 +10,18 @@ import profileIcon from "../../assets/icons/profile.svg";
 import kebabIcon from "../../assets/icons/menu.svg";
 import { getServiceToday } from "../../utils/serviceDate";
 
+const ROW_DIVIDER_GRADIENT =
+  "linear-gradient(90deg, rgba(205, 209, 218, 0.00) 0%, #CDD1DA 15%, #CDD1DA 84.62%, rgba(205, 209, 218, 0.00) 100%)";
+const TIME_PATTERN = /^(AM|PM)\s*\d{1,2}:\d{2}$/i;
+
 function firstBlock(content) {
   if (!content) return { time: "", text: "" };
   const [firstLine, ...rest] = content.split("\n");
-  return { time: firstLine?.trim() ?? "", text: rest.join(" ").trim() };
+  const head = firstLine?.trim() ?? "";
+  if (TIME_PATTERN.test(head)) {
+    return { time: head, text: rest.join(" ").trim() };
+  }
+  return { time: "", text: content.split("\n").join(" ").trim() };
 }
 
 export default function DiaryListPage() {
@@ -123,7 +131,7 @@ export default function DiaryListPage() {
   };
 
   return (
-    <div className="relative flex h-full w-full select-none flex-col gap-[16px] overflow-y-auto bg-[#f6f8fa] px-[16px] py-[16px] scrollbar-hide">
+    <div className="relative flex h-full w-full select-none flex-col gap-[24px] overflow-y-auto bg-[#f6f8fa] p-[16px] scrollbar-hide">
       <div className="flex w-full items-center justify-between">
         <button
           type="button"
@@ -182,12 +190,12 @@ export default function DiaryListPage() {
           </button>
         </div>
 
-        <div className="flex flex-col gap-[12px]">
+        <div className="flex flex-col gap-[20px]">
           {items.map((item) => {
             const { time, text } = firstBlock(item.content);
             const [, month, day] = item.recordedDate.split("-").map(Number);
             return (
-              <div key={item.diaryId} className="flex flex-col gap-[12px]">
+              <div key={item.diaryId} className="flex flex-col gap-[20px]">
                 <div className="flex flex-col items-start gap-[8px]">
                   <div className="flex w-full items-center justify-between">
                     <p className="whitespace-nowrap text-[18px] font-semibold leading-[normal] tracking-[-0.36px] text-grey-90">
@@ -224,15 +232,20 @@ export default function DiaryListPage() {
                     onClick={() => navigate(`/home/diaries/${item.diaryId}`)}
                     className="flex w-full cursor-pointer items-center gap-[5px] overflow-hidden text-left"
                   >
-                    <p className="shrink-0 whitespace-nowrap text-[16px] font-medium tracking-[-0.32px] text-grey-70">
-                      {time}
-                    </p>
-                    <p className="min-w-0 flex-1 truncate text-[16px] font-medium tracking-[-0.32px] text-grey-70">
+                    {time && (
+                      <p className="shrink-0 whitespace-nowrap text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-[#AFB6C4]">
+                        {time}
+                      </p>
+                    )}
+                    <p className="min-w-0 flex-1 truncate text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-[#AFB6C4]">
                       {text}
                     </p>
                   </button>
                 </div>
-                <div className="h-px w-full bg-grey-30" />
+                <div
+                  className="h-px w-full shrink-0"
+                  style={{ background: ROW_DIVIDER_GRADIENT }}
+                />
               </div>
             );
           })}
