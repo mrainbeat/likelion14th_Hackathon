@@ -75,6 +75,9 @@ function maskedIcon(src, color) {
 
 const EDIT_ICON_MASK = maskedIcon(editIcon, "#5F6473");
 
+const STATS_DIVIDER_GRADIENT =
+  "linear-gradient(180deg, rgba(205, 209, 218, 0.00) 0%, #CDD1DA 15%, #CDD1DA 84.62%, rgba(205, 209, 218, 0.00) 100%)";
+
 function pad2(n) {
   return String(n).padStart(2, "0");
 }
@@ -1129,11 +1132,11 @@ export default function HomePage() {
           </div>
 
           <div
-            className="flex w-full flex-col items-center rounded-[12px] bg-grey-0 px-[16px] py-[12px]"
+            className="flex w-full flex-col items-center rounded-[12px] bg-grey-0 py-[12px]"
             style={{ boxShadow: cardShadow }}
           >
-            <div className="flex items-center gap-[47px]">
-              <div className="flex w-[66px] flex-col items-center gap-[6px]">
+            <div className="flex w-full items-stretch">
+              <div className="flex flex-1 flex-col items-center gap-[6px]">
                 <p className="whitespace-nowrap text-[16px] font-semibold text-grey-90">
                   오늘 작성
                 </p>
@@ -1158,8 +1161,11 @@ export default function HomePage() {
                       : "작성 전"}
                 </p>
               </div>
-              <div className="h-full w-px shrink-0 bg-grey-20" />
-              <div className="flex flex-col items-center gap-[6px]">
+              <div
+                className="w-px shrink-0 self-stretch"
+                style={{ background: STATS_DIVIDER_GRADIENT }}
+              />
+              <div className="flex flex-1 flex-col items-center gap-[6px]">
                 <p className="whitespace-nowrap text-[16px] font-semibold text-grey-90">
                   이달 기록
                 </p>
