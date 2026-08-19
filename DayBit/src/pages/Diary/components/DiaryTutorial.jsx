@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import MiniProgressBar from "./MiniProgressBar";
 
 const DIM_COLOR = "rgba(45, 48, 56, 0.25)";
-
 const STEPS = [
   {
     title: "무엇을 쓸지 막막한가요?",
@@ -30,11 +29,10 @@ function StepPanel({ stepIndex, onNext }) {
   return (
     <div className="flex w-full flex-1 flex-col items-start justify-between">
       <div className="flex w-full flex-col items-start gap-[6px]">
-        <p className="w-full text-[22px] font-semibold tracking-[-0.4px] text-grey-90">
+        <p className="w-full text-[22px] font-semibold tracking-[-0.66px] text-grey-90">
           {data.title}
         </p>
         <div className="w-full text-[16px] font-medium leading-[22px] tracking-[-0.32px] text-grey-70">
-          {" "}
           {data.desc.map((line, i) => (
             <p key={i}>{line}</p>
           ))}
@@ -102,7 +100,7 @@ export default function DiaryTutorial({ step, spot, onNext }) {
       {outgoingStep !== null && (
         <div
           key={`out-${outgoingStep}`}
-          className="absolute inset-x-0 bottom-0 h-[312px]"
+          className="absolute inset-x-0 bottom-0 h-[282px]"
           style={{ animation: "tutorial-push-out 300ms ease-out forwards" }}
         >
           <div className="flex h-full w-full flex-col items-start justify-between rounded-t-[8px] bg-grey-0 px-[16px] pb-[30px] pt-[16px]">
@@ -112,7 +110,7 @@ export default function DiaryTutorial({ step, spot, onNext }) {
       )}
       <div
         key={`in-${displayedStep}`}
-        className="absolute inset-x-0 bottom-0 h-[312px]"
+        className="absolute inset-x-0 bottom-0 h-[282px]"
         style={
           outgoingStep !== null
             ? { animation: "tutorial-push-in 300ms ease-out forwards" }

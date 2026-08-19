@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import MiniProgressBar from "../../Diary/components/MiniProgressBar";
 
-const DIM_COLOR = "rgba(45, 48, 56, 0.3)";
-
+const DIM_COLOR = "rgba(45, 48, 56, 0.35)";
 const STEPS = [
   {
     title: "이번 주의 색을 모아볼까요?",
