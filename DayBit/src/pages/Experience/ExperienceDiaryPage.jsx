@@ -15,6 +15,7 @@ import {
   formatFragmentDate,
   fragmentTopic,
   describeAutoApprove,
+  formatAnonymizedContent,
 } from "../../utils/experienceFragments";
 
 const TIME_PATTERN = /^\[?(AM|PM)\s*\d{1,2}:\d{2}\]?$/i;
@@ -206,7 +207,7 @@ export default function ExperienceDiaryPage() {
   const blocks = showOriginal
     ? parseDiaryBlocks(review?.originalContent ?? "")
     : anonymizedContent
-      ? [{ time: "", text: anonymizedContent }]
+      ? [{ time: "", text: formatAnonymizedContent(anonymizedContent) }]
       : [];
   const autoApproveText =
     isPending && fragment?.status === "REVIEW_REQUIRED"
@@ -246,7 +247,7 @@ export default function ExperienceDiaryPage() {
           <p className="text-heading-28 whitespace-nowrap drop-shadow-[0px_0px_1px_rgba(0,0,0,0.05)] text-grey-80">
             {formatFragmentDate(dateSource)}
           </p>
-          {topic && (
+          {!isPending && topic && (
             <span className="shrink-0 rounded-[8px] bg-grey-60 px-[6px] py-[2px] text-[14px] font-medium tracking-[-0.28px] text-grey-0">
               {topic}
             </span>
