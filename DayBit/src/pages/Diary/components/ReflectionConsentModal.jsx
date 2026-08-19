@@ -8,7 +8,7 @@ export default function ReflectionConsentModal({ onSkip, onUse, onClose }) {
       onClick={onClose}
     >
       <div
-        className="flex w-[calc(100%-40px)] max-w-[350px] flex-col gap-[16px] rounded-[12px] bg-[#F6F8FA] px-[16px] py-[20px]"
+        className="flex min-h-[var(--diary-modal-min-h)] w-[calc(100%-32px)] max-w-[358px] flex-col items-start justify-center gap-[16px] rounded-[12px] bg-[#F6F8FA] px-[16px] py-[20px]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex w-full flex-col items-start gap-[10px]">

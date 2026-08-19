@@ -137,7 +137,7 @@ export default function MonthYearPickerModal({
       />
 
       <div
-        className={`relative flex w-[350px] flex-col items-center gap-[16px] overflow-hidden rounded-[12px] bg-[#f6f8fa] px-[16px] py-[20px] transition-all duration-200 ease-out ${
+        className={`relative flex w-[calc(100%-32px)] max-w-[358px] flex-col items-center gap-[16px] overflow-hidden rounded-[12px] bg-[#f6f8fa] px-[16px] py-[20px] transition-all duration-200 ease-out ${
           shown ? "scale-100 opacity-100" : "scale-95 opacity-0"
         }`}
       >

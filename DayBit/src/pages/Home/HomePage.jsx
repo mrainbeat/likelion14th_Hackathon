@@ -37,6 +37,7 @@ import {
   formatArrivalTime,
 } from "../../utils/experienceFragments";
 import { useDevAccess } from "../../contexts/devAccess";
+import { getServiceToday, saveDayStartTime } from "../../utils/serviceDate";
 import LogoSymbol from "../../assets/icons/LogoSymbol.jsx";
 import profileIcon from "../../assets/icons/profile.svg";
 import bellIcon from "../../assets/icons/notification-bell.svg";
@@ -90,22 +91,6 @@ function monthIndex(year, month) {
 function gridHeightOf(rowCount) {
   if (rowCount <= 0) return 0;
   return rowCount * CALENDAR_ROW_HEIGHT + (rowCount - 1) * CALENDAR_ROW_GAP;
-}
-
-function getSeoulToday() {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
-  const map = Object.fromEntries(parts.map((p) => [p.type, p.value]));
-  return {
-    year: Number(map.year),
-    month: Number(map.month),
-    day: Number(map.day),
-    dateStr: `${map.year}-${map.month}-${map.day}`,
-  };
 }
 
 function formatDate(d) {
@@ -259,7 +244,7 @@ const CalendarGrid = memo(function CalendarGrid({
 export default function HomePage() {
   const navigate = useNavigate();
   const { devPassword } = useDevAccess();
-  const [today] = useState(() => getSeoulToday());
+  const [today] = useState(() => getServiceToday());
   const [userId, setUserId] = useState(null);
   const [tutorialCompleted, setTutorialCompleted] = useState(null);
 
@@ -271,6 +256,7 @@ export default function HomePage() {
         if (!alive) return;
         setUserId(response.data.result?.id ?? null);
         setTutorialCompleted(response.data.result?.tutorialCompleted ?? null);
+        saveDayStartTime(response.data.result?.dayStartTime);
       })
       .catch((error) => {
         console.error(
@@ -971,7 +957,7 @@ export default function HomePage() {
             : undefined
         }
       >
-        <div className="flex w-full flex-col items-start gap-[8px]">
+        <div className="flex w-full flex-col items-start gap-[16px]">
           <div className="flex w-full items-center justify-between">
             <div className="flex items-end gap-[4px]">
               <LogoSymbol

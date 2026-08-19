@@ -1,8 +1,8 @@
 ﻿export default function ExitConfirmModal({ onContinue, onExit }) {
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-grey-90/25 backdrop-blur-[1px]">
-      <div className="w-[calc(100%-40px)] max-w-[350px] bg-[#F6F8FA] rounded-[12px] px-[16px] py-[20px] flex flex-col gap-[16px]">
-        <div className="flex flex-col gap-[7px]">
+      <div className="flex min-h-[var(--diary-modal-min-h)] w-[calc(100%-32px)] max-w-[358px] flex-col items-start justify-center gap-[16px] rounded-[12px] bg-[#F6F8FA] px-[16px] py-[20px]">
+        <div className="flex w-full flex-col items-start gap-[7px]">
           <p className="text-grey-90 text-[20px] font-semibold tracking-[-0.4px]">
             작성을 중단하시겠어요?
           </p>
@@ -23,7 +23,7 @@
             onClick={onExit}
             className="flex-1 h-[48px] bg-grey-70 rounded-[12px] px-[26px] text-[18px] font-semibold tracking-[-0.18px] text-grey-0"
           >
-            작성 중단
+            작성 중단하기
           </button>
         </div>
       </div>

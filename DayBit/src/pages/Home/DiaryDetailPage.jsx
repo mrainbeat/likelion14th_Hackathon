@@ -129,7 +129,7 @@ export default function DiaryDetailPage() {
   const [, month, day] = diary?.recordedDate?.split("-").map(Number) ?? [];
 
   return (
-    <div className="relative flex h-full w-full select-none flex-col gap-[12px] overflow-y-auto bg-[#f6f8fa] px-[16px] py-[16px] scrollbar-hide">
+    <div className="relative flex h-full w-full select-none flex-col gap-[16px] overflow-y-auto bg-[#f6f8fa] px-[16px] py-[16px] scrollbar-hide">
       <div className="flex w-full items-center justify-between">
         <button
           type="button"
