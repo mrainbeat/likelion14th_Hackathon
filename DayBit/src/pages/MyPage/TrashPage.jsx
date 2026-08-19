@@ -2,25 +2,30 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/apiClient";
 import PermanentDeleteConfirmModal from "./components/PermanentDeleteConfirmModal";
+import RestoreConfirmModal from "./components/RestoreConfirmModal";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import trashRestoreIcon from "../../assets/icons/trash-restore.svg";
 import trashClearIcon from "../../assets/icons/trash-clear.svg";
 
+const ROW_DIVIDER_GRADIENT =
+  "linear-gradient(90deg, rgba(205, 209, 218, 0.00) 0%, #CDD1DA 15%, #CDD1DA 84.62%, rgba(205, 209, 218, 0.00) 100%)";
+
+const TIME_PATTERN = /^(AM|PM)\s*\d{1,2}:\d{2}$/i;
+
+function firstBlock(content) {
+  if (!content) return { time: "", text: "" };
+  const [firstLine, ...rest] = content.split("\n");
+  const head = firstLine?.trim() ?? "";
+  if (TIME_PATTERN.test(head)) {
+    return { time: head, text: rest.join(" ").trim() };
+  }
+  return { time: "", text: content.split("\n").join(" ").trim() };
+}
+
 function formatDateLabel(recordedDate) {
   const [, month, day] = recordedDate.split("-").map(Number);
   return `${month}월 ${day}일`;
-}
-
-function formatTimeLabel(createdAt) {
-  const timePart = createdAt.split("T")[1] ?? "00:00:00";
-  const [hourStr, minuteStr] = timePart.split(":");
-  let hour = Number(hourStr);
-  const minute = (minuteStr ?? "00").padStart(2, "0");
-  const period = hour >= 12 ? "PM" : "AM";
-  hour = hour % 12;
-  if (hour === 0) hour = 12;
-  return `${period} ${hour}:${minute}`;
 }
 
 const RETENTION_DAYS = 30;
@@ -47,6 +52,7 @@ export default function TrashPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [restoringId, setRestoringId] = useState(null);
+  const [restoreTarget, setRestoreTarget] = useState(null);
   const [permanentDeleteTarget, setPermanentDeleteTarget] = useState(null);
 
   const fetchTrash = useCallback(async () => {
@@ -72,8 +78,10 @@ export default function TrashPage() {
     fetchTrash();
   }, [fetchTrash]);
 
-  const handleRestore = async (diaryId) => {
-    if (restoringId) return;
+  const handleRestoreConfirmed = async () => {
+    if (!restoreTarget || restoringId) return;
+    const { diaryId } = restoreTarget;
+    setRestoreTarget(null);
     setRestoringId(diaryId);
     try {
       await apiClient.patch(`/api/v1/diaries/trash/${diaryId}/restore`);
@@ -128,7 +136,7 @@ export default function TrashPage() {
       </div>
 
       <div className="flex w-full flex-col items-start gap-[18px]">
-        <div className="flex w-full flex-col items-start gap-[8px]">
+        <div className="flex w-full flex-col items-start gap-[2px]">
           <p className="whitespace-nowrap text-[22px] font-semibold leading-[normal] tracking-[-0.66px] text-[#2D3038]">
             휴지통
           </p>
@@ -156,70 +164,92 @@ export default function TrashPage() {
         )}
 
         {!isLoading && !errorMessage && entries.length > 0 && (
-          <div className="flex w-full flex-col items-start gap-[20px]">
-            {entries.map((entry) => (
-              <div
-                key={entry.diaryId}
-                className="flex w-full flex-col items-start gap-[8px]"
-              >
-                <div className="flex w-full items-center justify-between">
-                  <p className="whitespace-nowrap text-[18px] font-semibold leading-[normal] tracking-[-0.36px] text-[#2D3038]">
-                    {formatDateLabel(entry.recordedDate)}{" "}
-                    <span className="text-[14px] font-medium tracking-[-0.28px] text-[#787E8C]">
-                      • {daysRemaining(entry.deletedAt, todayMs)}일남음
-                    </span>{" "}
-                  </p>
-                  <div className="flex shrink-0 items-center gap-[16px]">
-                    <button
-                      type="button"
-                      onClick={() => handleRestore(entry.diaryId)}
-                      disabled={restoringId === entry.diaryId}
-                      aria-label="복원하기"
-                      className="flex h-[20px] w-[21px] shrink-0 cursor-pointer items-center justify-center bg-transparent p-0 disabled:opacity-40"
-                    >
-                      <img
-                        src={trashRestoreIcon}
-                        alt="복원하기"
-                        className="h-full w-full"
-                      />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setPermanentDeleteTarget({
-                          diaryId: entry.diaryId,
-                          recordedDate: entry.recordedDate,
-                        })
-                      }
-                      aria-label="완전히 삭제하기"
-                      className="flex h-[20px] w-[21px] shrink-0 cursor-pointer items-center justify-center bg-transparent p-0"
-                    >
-                      <img
-                        src={trashClearIcon}
-                        alt="완전히 삭제하기"
-                        className="h-full w-full"
-                      />
-                    </button>
-                  </div>
-                </div>
-                <div className="flex w-full items-center gap-[5px] whitespace-nowrap text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-[#5F6473]">
-                  <p className="shrink-0">
-                    {entry.createdAt ? formatTimeLabel(entry.createdAt) : ""}
-                  </p>
-                  <p className="truncate">{entry.content}</p>
-                </div>
+          <div className="flex w-full flex-col items-start gap-[16px]">
+            {entries.map((entry) => {
+              const { time, text } = firstBlock(entry.content);
+              return (
                 <div
-                  className="h-[1px] w-full"
-                  style={{
-                    background:
-                      "linear-gradient(90deg, rgba(205, 209, 218, 0.00) 0%, #CDD1DA 15%, #CDD1DA 84.62%, rgba(205, 209, 218, 0.00) 100%)",
-                  }}
-                />{" "}
-              </div>
-            ))}
+                  key={entry.diaryId}
+                  className="flex w-full flex-col items-start gap-[16px]"
+                >
+                  <div className="flex w-full flex-col items-start gap-[8px]">
+                    <div className="flex w-full items-center justify-between">
+                      <p className="whitespace-nowrap text-[18px] font-semibold leading-[normal] tracking-[-0.36px] text-[#2D3038]">
+                        {formatDateLabel(entry.recordedDate)}{" "}
+                        <span className="text-[14px] font-medium tracking-[-0.28px] text-[#787E8C]">
+                          • {daysRemaining(entry.deletedAt, todayMs)}일남음
+                        </span>
+                      </p>
+                      <div className="flex shrink-0 items-center gap-[16px]">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setRestoreTarget({
+                              diaryId: entry.diaryId,
+                              recordedDate: entry.recordedDate,
+                            })
+                          }
+                          disabled={restoringId === entry.diaryId}
+                          aria-label="복원하기"
+                          className="flex h-[20px] w-[21px] shrink-0 cursor-pointer items-center justify-center bg-transparent p-0 disabled:opacity-40"
+                        >
+                          <img
+                            src={trashRestoreIcon}
+                            alt="복원하기"
+                            className="h-full w-full"
+                          />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPermanentDeleteTarget({
+                              diaryId: entry.diaryId,
+                              recordedDate: entry.recordedDate,
+                            })
+                          }
+                          aria-label="완전히 삭제하기"
+                          className="flex h-[20px] w-[21px] shrink-0 cursor-pointer items-center justify-center bg-transparent p-0"
+                        >
+                          <img
+                            src={trashClearIcon}
+                            alt="완전히 삭제하기"
+                            className="h-full w-full"
+                          />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex w-full items-center gap-[5px] overflow-hidden">
+                      {time && (
+                        <p className="shrink-0 whitespace-nowrap text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-[#AFB6C4]">
+                          {time}
+                        </p>
+                      )}
+                      <p className="min-w-0 flex-1 truncate text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-[#AFB6C4]">
+                        {text}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div
+                    className="h-px w-full shrink-0"
+                    style={{ background: ROW_DIVIDER_GRADIENT }}
+                  />
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
+
+      {restoreTarget && (
+        <RestoreConfirmModal
+          month={Number(restoreTarget.recordedDate.split("-")[1])}
+          day={Number(restoreTarget.recordedDate.split("-")[2])}
+          onCancel={() => setRestoreTarget(null)}
+          onRestore={handleRestoreConfirmed}
+        />
+      )}
 
       {permanentDeleteTarget && (
         <PermanentDeleteConfirmModal
