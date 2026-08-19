@@ -30,10 +30,11 @@ function StepPanel({ stepIndex, onNext }) {
   return (
     <div className="flex w-full flex-1 flex-col items-start justify-between">
       <div className="flex w-full flex-col items-start gap-[6px]">
-        <p className="w-full text-[20px] font-semibold tracking-[-0.4px] text-grey-90">
+        <p className="w-full text-[22px] font-semibold tracking-[-0.4px] text-grey-90">
           {data.title}
         </p>
-        <div className="w-full text-[16px] font-medium leading-[normal] tracking-[-0.32px] text-grey-70">
+        <div className="w-full text-[16px] font-medium leading-[22px] tracking-[-0.32px] text-grey-70">
+          {" "}
           {data.desc.map((line, i) => (
             <p key={i}>{line}</p>
           ))}

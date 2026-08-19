@@ -509,8 +509,9 @@ export default function HomePage() {
   const experienceRef = useRef(null);
 
   const TUTORIAL_STEP_COUNT = 3;
-  const TUTORIAL_SHEET_HEIGHT = 312;
+  const TUTORIAL_SHEET_HEIGHT = 282;
   const tutorialJustFinished = useRef(false);
+  const hasPositionedOnceRef = useRef(false);
   const [tutorialStep, setTutorialStep] = useState(null);
   const [spot, setSpot] = useState(null);
 
@@ -534,17 +535,10 @@ export default function HomePage() {
           scroller.querySelectorAll("[data-reward-badge]"),
         );
         if (!badges.length) return null;
-        const rects = badges.map((b) => b.getBoundingClientRect());
         return {
-          rect: {
-            top: Math.min(...rects.map((r) => r.top)),
-            left: Math.min(...rects.map((r) => r.left)),
-            right: Math.max(...rects.map((r) => r.right)),
-            bottom: Math.max(...rects.map((r) => r.bottom)),
-          },
+          rect: badges[0].getBoundingClientRect(),
           radius: 4,
           pad: 4,
-          el: badges[0],
         };
       }
       const el = tutorialStep === 1 ? pencilRef.current : experienceRef.current;
@@ -553,37 +547,90 @@ export default function HomePage() {
         rect: el.getBoundingClientRect(),
         radius: tutorialStep === 1 ? 999 : 8,
         pad: 6,
-        el,
       };
     };
 
-    const initial = collect();
-    if (initial) {
-      const base = scroller.getBoundingClientRect();
-      const visibleHeight = scroller.clientHeight - TUTORIAL_SHEET_HEIGHT;
-      const targetHeight = initial.rect.bottom - initial.rect.top;
-      const topInContent = initial.rect.top - base.top + scroller.scrollTop;
-      const desiredTop = Math.max(16, (visibleHeight - targetHeight) / 2);
-      scroller.scrollTop = Math.max(0, topInContent - desiredTop);
-    }
-
-    const measure = () => {
-      const target = collect();
-      if (!target) return;
+    const computeSpot = (target) => {
       const base = scroller.getBoundingClientRect();
       const { rect, pad } = target;
-      setSpot({
+      return {
         top: rect.top - base.top - pad,
         left: rect.left - base.left - pad,
         width: rect.right - rect.left + pad * 2,
         height: rect.bottom - rect.top + pad * 2,
         radius: target.radius,
-      });
+      };
     };
 
-    measure();
-    const raf = requestAnimationFrame(measure);
-    return () => cancelAnimationFrame(raf);
+    const initial = collect();
+    if (!initial) return;
+
+    const base = scroller.getBoundingClientRect();
+    const maxScroll = Math.max(
+      0,
+      scroller.scrollHeight - scroller.clientHeight,
+    );
+    const visibleHeight = scroller.clientHeight - TUTORIAL_SHEET_HEIGHT;
+    const targetHeight = initial.rect.bottom - initial.rect.top;
+    const topInContent = initial.rect.top - base.top + scroller.scrollTop;
+    const desiredTop = Math.max(16, (visibleHeight - targetHeight) / 2);
+    const targetScrollTop = Math.min(
+      maxScroll,
+      Math.max(0, topInContent - desiredTop),
+    );
+
+    const fromScrollTop = scroller.scrollTop;
+    const initialSpot = computeSpot(initial);
+
+    let rafId = null;
+
+    if (!hasPositionedOnceRef.current) {
+      scroller.scrollTop = targetScrollTop;
+      hasPositionedOnceRef.current = true;
+      const settledNow = collect();
+      if (settledNow) setSpot(computeSpot(settledNow));
+
+      rafId = requestAnimationFrame(() => {
+        const settled = collect();
+        if (settled) setSpot(computeSpot(settled));
+      });
+    } else {
+      const delta = targetScrollTop - fromScrollTop;
+      const toSpot = { ...initialSpot, top: initialSpot.top - delta };
+      const fromSpot = spot ?? initialSpot;
+      const spotEl = document.querySelector("[data-tutorial-spot]");
+
+      const DURATION = 300;
+      const startTime = performance.now();
+
+      const tick = (now) => {
+        const t = Math.min(1, Math.max(0, (now - startTime) / DURATION));
+
+        scroller.scrollTop = fromScrollTop + delta * t;
+
+        if (spotEl) {
+          spotEl.style.top = `${fromSpot.top + (toSpot.top - fromSpot.top) * t}px`;
+          spotEl.style.left = `${fromSpot.left + (toSpot.left - fromSpot.left) * t}px`;
+          spotEl.style.width = `${fromSpot.width + (toSpot.width - fromSpot.width) * t}px`;
+          spotEl.style.height = `${fromSpot.height + (toSpot.height - fromSpot.height) * t}px`;
+          spotEl.style.borderRadius = `${fromSpot.radius + (toSpot.radius - fromSpot.radius) * t}px`;
+        }
+
+        if (t < 1) {
+          rafId = requestAnimationFrame(tick);
+        } else {
+          const settled = collect();
+          if (settled) setSpot(computeSpot(settled));
+        }
+      };
+
+      rafId = requestAnimationFrame(tick);
+    }
+
+    return () => {
+      if (rafId != null) cancelAnimationFrame(rafId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tutorialStep, monthLoaded]);
 
   useLayoutEffect(() => {
