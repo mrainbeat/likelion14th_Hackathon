@@ -23,13 +23,15 @@ import {
   getReceivedFragments,
   loadReceivedFragments,
   saveReceivedFragment,
+  getCachedMyFragments,
+  saveCachedMyFragments,
 } from "../../utils/experienceFragments";
 
 const NAVIGATE_THRESHOLD = 8;
 
 export default function ExperiencePage() {
   const navigate = useNavigate();
-  const [fragments, setFragments] = useState([]);
+  const [fragments, setFragments] = useState(() => getCachedMyFragments());
   const [receivedFragments, setReceivedFragments] = useState(() =>
     getReceivedFragments(),
   );
@@ -65,7 +67,9 @@ export default function ExperiencePage() {
     getMyExperienceFragments()
       .then((response) => {
         if (!alive) return;
-        setFragments(response.data.result ?? []);
+        const list = response.data.result ?? [];
+        setFragments(list);
+        saveCachedMyFragments(list);
       })
       .catch((error) => {
         console.error(

@@ -3,8 +3,12 @@ import { clearDraft, clearQuestions } from "../../utils/diaryDraft";
 import { clearDraftId } from "../../utils/diaryDraftApi";
 import { clearCachedMonthItems } from "../../utils/monthDiariesCache";
 import { clearCachedWeeklyRewards } from "../../utils/weeklyRewardsCache";
+import { clearCachedWeeklyRewardDetails } from "../../utils/weeklyRewards";
 import { clearCachedNotifications } from "../../utils/notificationsCache";
-import { clearReceivedFragments } from "../../utils/experienceFragments";
+import {
+  clearReceivedFragments,
+  clearCachedMyFragments,
+} from "../../utils/experienceFragments";
 
 export async function login(email, password) {
   clearLocalSession();
@@ -72,6 +76,8 @@ export function clearLocalSession() {
   clearDraftId();
   clearCachedMonthItems();
   clearCachedWeeklyRewards();
+  clearCachedWeeklyRewardDetails();
+  clearCachedMyFragments();
   clearCachedNotifications();
   clearReceivedFragments();
 }
