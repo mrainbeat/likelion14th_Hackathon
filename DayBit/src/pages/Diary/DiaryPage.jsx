@@ -62,10 +62,7 @@ export default function DiaryPage() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
 
-  const [tutorialStep, setTutorialStep] = useState(() => {
-    const seen = localStorage.getItem("diary_tutorial_seen");
-    return seen ? null : 0;
-  });
+  const [tutorialStep, setTutorialStep] = useState(null);
 
   const [showReflectionConsent, setShowReflectionConsent] = useState(false);
   const [showAnonymousShare, setShowAnonymousShare] = useState(false);
@@ -81,6 +78,28 @@ export default function DiaryPage() {
   const questionButtonRef = useRef(null);
   const completeButtonRef = useRef(null);
   const profileButtonRef = useRef(null);
+
+  useEffect(() => {
+    let alive = true;
+    apiClient
+      .get("/api/me")
+      .then((response) => {
+        if (!alive) return;
+        if (response.data.result?.tutorialCompleted === false) {
+          setTutorialStep(0);
+        }
+      })
+      .catch((error) => {
+        console.error(
+          "GET /api/me 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -442,7 +461,13 @@ export default function DiaryPage() {
 
   const handleTutorialNext = () => {
     if (tutorialStep === 3) {
-      localStorage.setItem("diary_tutorial_seen", "true");
+      apiClient.patch("/api/me/tutorial-completion").catch((error) => {
+        console.error(
+          "PATCH /api/me/tutorial-completion 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      });
       setTutorialStep(null);
       return;
     }
