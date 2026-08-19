@@ -200,6 +200,23 @@ export function formatAnonymizedContent(content) {
     );
 }
 
+const SINGLE_LABEL_LINE_PATTERN = new RegExp("^\\[([^\\]\\n]+)\\]$");
+
+export function parseAnonymizedBlocks(content) {
+  return formatAnonymizedContent(content)
+    .split(/\n{2,}/)
+    .map((block) => {
+      const [first, ...rest] = block.split("\n");
+      const head = (first ?? "").trim();
+      const match = head.match(SINGLE_LABEL_LINE_PATTERN);
+      if (match) {
+        return { time: head, text: rest.join("\n").trim() };
+      }
+      return { time: "", text: block.trim() };
+    })
+    .filter((block) => block.time || block.text);
+}
+
 export function fragmentTopic(fragment) {
   return fragment.generalTopic || fragment.keywords?.[0] || "";
 }

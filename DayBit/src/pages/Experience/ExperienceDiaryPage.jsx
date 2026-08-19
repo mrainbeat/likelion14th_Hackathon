@@ -14,8 +14,7 @@ import {
   rejectExperienceFragment,
   formatFragmentDate,
   fragmentTopic,
-  describeAutoApprove,
-  formatAnonymizedContent,
+  parseAnonymizedBlocks,
 } from "../../utils/experienceFragments";
 
 const TIME_PATTERN = /^\[?(AM|PM)\s*\d{1,2}:\d{2}\]?$/i;
@@ -206,13 +205,7 @@ export default function ExperienceDiaryPage() {
     review?.anonymizedContent ?? fragment?.anonymizedContent ?? "";
   const blocks = showOriginal
     ? parseDiaryBlocks(review?.originalContent ?? "")
-    : anonymizedContent
-      ? [{ time: "", text: formatAnonymizedContent(anonymizedContent) }]
-      : [];
-  const autoApproveText =
-    isPending && fragment?.status === "REVIEW_REQUIRED"
-      ? describeAutoApprove(review?.reviewAvailableAt ?? fragment?.createdAt)
-      : "";
+    : parseAnonymizedBlocks(anonymizedContent);
   const feedbackSubmitted = Boolean(fragment?.feedbackSubmitted);
 
   return (
@@ -299,13 +292,6 @@ export default function ExperienceDiaryPage() {
                 ))
               )}
             </div>
-
-            {autoApproveText && (
-              <p className="w-full text-[14px] font-medium tracking-[-0.28px] text-grey-60">
-                자동 전달까지 {autoApproveText}. 그전까지 전달을 취소할 수
-                있어요.
-              </p>
-            )}
 
             {mode === "incoming" && (
               <div className="flex w-full flex-col items-end gap-[12px]">
