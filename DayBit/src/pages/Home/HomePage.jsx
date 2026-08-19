@@ -480,10 +480,7 @@ export default function HomePage() {
   };
 
   const handleDiscardDraft = () => {
-    setHasTodayDraft(false);
-    clearDraft();
     setShowResumeDraft(false);
-    navigate("/diary");
   };
 
   const [notifyReward, setNotifyReward] = useState(null);
