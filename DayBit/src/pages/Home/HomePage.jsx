@@ -54,6 +54,10 @@ const WEEKDAYS = ["월", "화", "수", "목", "금", "토", "일"];
 
 const UNREAD_POLL_INTERVAL_MS = 60000;
 
+const MONTH_TRANSITION_MS = 420;
+const CALENDAR_ROW_HEIGHT = 38;
+const CALENDAR_ROW_GAP = 2;
+
 function maskedIcon(src, color) {
   return {
     backgroundColor: color,
@@ -72,6 +76,15 @@ const EDIT_ICON_MASK = maskedIcon(editIcon, "#5F6473");
 
 function pad2(n) {
   return String(n).padStart(2, "0");
+}
+
+function monthIndex(year, month) {
+  return year * 12 + month;
+}
+
+function gridHeightOf(rowCount) {
+  if (rowCount <= 0) return 0;
+  return rowCount * CALENDAR_ROW_HEIGHT + (rowCount - 1) * CALENDAR_ROW_GAP;
 }
 
 function getSeoulToday() {
@@ -200,6 +213,44 @@ const RewardBadge = memo(function RewardBadge({
   );
 });
 
+const CalendarGrid = memo(function CalendarGrid({
+  rows,
+  itemByDate,
+  onSelectDay,
+  onSelectReward,
+}) {
+  return (
+    <div className="flex flex-col gap-[2px]">
+      {rows.map(
+        ({ cells, weekStartDate, canEarnReward, rewardState }, weekIdx) => (
+          <div
+            key={weekIdx}
+            className="flex w-full items-center justify-between"
+          >
+            <div className="flex items-center gap-[2px]">
+              {cells.map((cell, i) => (
+                <DayCell
+                  key={i}
+                  cell={cell}
+                  item={cell.inMonth ? itemByDate.get(cell.dateStr) : undefined}
+                  onSelect={onSelectDay}
+                />
+              ))}
+            </div>
+            {canEarnReward && (
+              <RewardBadge
+                state={rewardState}
+                weekStartDate={weekStartDate}
+                onSelect={onSelectReward}
+              />
+            )}
+          </div>
+        ),
+      )}
+    </div>
+  );
+});
+
 export default function HomePage() {
   const navigate = useNavigate();
   const { devPassword } = useDevAccess();
@@ -240,8 +291,8 @@ export default function HomePage() {
   const [monthLoaded, setMonthLoaded] = useState(
     () => loadCachedMonthItems(viewYear, viewMonth) != null,
   );
-  const [weeklyRewardsByWeekStart, setWeeklyRewardsByWeekStart] = useState(
-    () => weeklyRewardsMapFromItems(loadCachedWeeklyRewards(viewYear, viewMonth)),
+  const [weeklyRewardsByWeekStart, setWeeklyRewardsByWeekStart] = useState(() =>
+    weeklyRewardsMapFromItems(loadCachedWeeklyRewards(viewYear, viewMonth)),
   );
   const [weeklyRewardsLoaded, setWeeklyRewardsLoaded] = useState(
     () => loadCachedWeeklyRewards(viewYear, viewMonth) != null,
@@ -497,51 +548,54 @@ export default function HomePage() {
   const [claimingWeek, setClaimingWeek] = useState(null);
   const [rewardClaimError, setRewardClaimError] = useState("");
 
-  const handleRewardBadgeClick = useCallback(async (weekStartDate) => {
-    const item = weeklyRewardsByWeekStart.get(weekStartDate);
+  const handleRewardBadgeClick = useCallback(
+    async (weekStartDate) => {
+      const item = weeklyRewardsByWeekStart.get(weekStartDate);
 
-    if (item?.weeklyRewardId) {
-      navigate(`/home/weekly-rewards/${item.weeklyRewardId}`, {
-        state: { fromMonth: { year: viewYear, month: viewMonth } },
-      });
-      return;
-    }
-
-    if (claimingWeek) return;
-    setClaimingWeek(weekStartDate);
-    setRewardClaimError("");
-    try {
-      const response = await generateWeeklyReward(weekStartDate, devPassword);
-      const result = response.data.result;
-      if (!result?.eligible || !result.weeklyRewardId) {
-        setRewardClaimError(
-          result?.message ?? "아직 이 주의 이미지를 만들 수 없어요.",
-        );
+      if (item?.weeklyRewardId) {
+        navigate(`/home/weekly-rewards/${item.weeklyRewardId}`, {
+          state: { fromMonth: { year: viewYear, month: viewMonth } },
+        });
         return;
       }
-      navigate(`/home/weekly-rewards/${result.weeklyRewardId}`, {
-        state: { fromMonth: { year: viewYear, month: viewMonth } },
-      });
-    } catch (error) {
-      console.error(
-        "POST /api/dev/me/weekly-rewards/generate 실패:",
-        error.response?.status,
-        error.response?.data,
-      );
-      setRewardClaimError(
-        "주간 이미지를 준비 중이에요. 잠시 후 다시 확인해주세요.",
-      );
-    } finally {
-      setClaimingWeek(null);
-    }
-  }, [
-    weeklyRewardsByWeekStart,
-    claimingWeek,
-    devPassword,
-    navigate,
-    viewYear,
-    viewMonth,
-  ]);
+
+      if (claimingWeek) return;
+      setClaimingWeek(weekStartDate);
+      setRewardClaimError("");
+      try {
+        const response = await generateWeeklyReward(weekStartDate, devPassword);
+        const result = response.data.result;
+        if (!result?.eligible || !result.weeklyRewardId) {
+          setRewardClaimError(
+            result?.message ?? "아직 이 주의 이미지를 만들 수 없어요.",
+          );
+          return;
+        }
+        navigate(`/home/weekly-rewards/${result.weeklyRewardId}`, {
+          state: { fromMonth: { year: viewYear, month: viewMonth } },
+        });
+      } catch (error) {
+        console.error(
+          "POST /api/dev/me/weekly-rewards/generate 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+        setRewardClaimError(
+          "주간 이미지를 준비 중이에요. 잠시 후 다시 확인해주세요.",
+        );
+      } finally {
+        setClaimingWeek(null);
+      }
+    },
+    [
+      weeklyRewardsByWeekStart,
+      claimingWeek,
+      devPassword,
+      navigate,
+      viewYear,
+      viewMonth,
+    ],
+  );
 
   const [inboxArrivals, setInboxArrivals] = useState([]);
 
@@ -585,15 +639,19 @@ export default function HomePage() {
   const experienceRef = useRef(null);
 
   const TUTORIAL_STEP_COUNT = 3;
-  const TUTORIAL_SHEET_HEIGHT = 312;
+  const TUTORIAL_SHEET_HEIGHT = 282;
   const tutorialJustFinished = useRef(false);
+  const hasPositionedOnceRef = useRef(false);
+  const tutorialStartedRef = useRef(false);
   const [tutorialStep, setTutorialStep] = useState(null);
   const [spot, setSpot] = useState(null);
 
   useEffect(() => {
+    if (tutorialStartedRef.current) return;
     if (userId == null || !weeklyRewardsLoaded) return;
     if (notifyReward) return;
     if (tutorialCompleted === false) {
+      tutorialStartedRef.current = true;
       setTutorialStep(0);
     }
   }, [userId, weeklyRewardsLoaded, notifyReward, tutorialCompleted]);
@@ -610,7 +668,7 @@ export default function HomePage() {
           `[data-reward-badge][data-week-start="${currentWeekStart}"]`,
         );
         if (!el) return null;
-        return { rect: el.getBoundingClientRect(), radius: 8, pad: 4, el };
+        return { rect: el.getBoundingClientRect(), radius: 8, pad: 4 };
       }
       const el = tutorialStep === 1 ? pencilRef.current : experienceRef.current;
       if (!el) return null;
@@ -618,54 +676,93 @@ export default function HomePage() {
         rect: el.getBoundingClientRect(),
         radius: 12,
         pad: tutorialStep === 1 ? 2 : 0,
-        el,
       };
     };
 
-    const measure = () => {
-      const target = collect();
-      if (!target) return;
+    const computeSpot = (target) => {
       const base = scroller.getBoundingClientRect();
       const { rect, pad } = target;
-      const next = {
+      return {
         top: rect.top - base.top - pad,
         left: rect.left - base.left - pad,
         width: rect.right - rect.left + pad * 2,
         height: rect.bottom - rect.top + pad * 2,
         radius: target.radius,
       };
-      setSpot((prev) =>
-        prev &&
-        prev.top === next.top &&
-        prev.left === next.left &&
-        prev.width === next.width &&
-        prev.height === next.height &&
-        prev.radius === next.radius
-          ? prev
-          : next,
-      );
     };
 
     const initial = collect();
-    if (initial) {
-      const base = scroller.getBoundingClientRect();
-      const visibleHeight = scroller.clientHeight - TUTORIAL_SHEET_HEIGHT;
-      const targetHeight = initial.rect.bottom - initial.rect.top;
-      const topInContent = initial.rect.top - base.top + scroller.scrollTop;
-      const desiredTop = Math.max(16, (visibleHeight - targetHeight) / 2);
-      scroller.scrollTo({
-        top: Math.max(0, topInContent - desiredTop),
-        behavior: "smooth",
+    if (!initial) return;
+
+    const base = scroller.getBoundingClientRect();
+    const maxScroll = Math.max(
+      0,
+      scroller.scrollHeight - scroller.clientHeight,
+    );
+    const visibleHeight = scroller.clientHeight - TUTORIAL_SHEET_HEIGHT;
+    const targetHeight = initial.rect.bottom - initial.rect.top;
+    const topInContent = initial.rect.top - base.top + scroller.scrollTop;
+    const desiredTop = Math.max(16, (visibleHeight - targetHeight) / 2);
+    const targetScrollTop = Math.min(
+      maxScroll,
+      Math.max(0, topInContent - desiredTop),
+    );
+
+    const fromScrollTop = scroller.scrollTop;
+    const initialSpot = computeSpot(initial);
+
+    let rafId = null;
+
+    if (!hasPositionedOnceRef.current) {
+      scroller.scrollTop = targetScrollTop;
+      hasPositionedOnceRef.current = true;
+      const settledNow = collect();
+      if (settledNow) setSpot(computeSpot(settledNow));
+
+      rafId = requestAnimationFrame(() => {
+        const settled = collect();
+        if (settled) setSpot(computeSpot(settled));
       });
+    } else {
+      const delta = targetScrollTop - fromScrollTop;
+      const toSpot = { ...initialSpot, top: initialSpot.top - delta };
+      const fromSpot = spot ?? initialSpot;
+      const spotEl = document.querySelector("[data-tutorial-spot]");
+
+      const DURATION = 300;
+      const startTime = performance.now();
+
+      const easeOut = (t) => 1 - (1 - t) ** 3;
+
+      const tick = (now) => {
+        const t = Math.min(1, Math.max(0, (now - startTime) / DURATION));
+        const e = easeOut(t);
+
+        scroller.scrollTop = fromScrollTop + delta * e;
+
+        if (spotEl) {
+          spotEl.style.top = `${fromSpot.top + (toSpot.top - fromSpot.top) * e}px`;
+          spotEl.style.left = `${fromSpot.left + (toSpot.left - fromSpot.left) * e}px`;
+          spotEl.style.width = `${fromSpot.width + (toSpot.width - fromSpot.width) * e}px`;
+          spotEl.style.height = `${fromSpot.height + (toSpot.height - fromSpot.height) * e}px`;
+          spotEl.style.borderRadius = `${fromSpot.radius + (toSpot.radius - fromSpot.radius) * e}px`;
+        }
+
+        if (t < 1) {
+          rafId = requestAnimationFrame(tick);
+        } else {
+          const settled = collect();
+          if (settled) setSpot(computeSpot(settled));
+        }
+      };
+
+      rafId = requestAnimationFrame(tick);
     }
 
-    measure();
-    scroller.addEventListener("scroll", measure, { passive: true });
-    const raf = requestAnimationFrame(measure);
     return () => {
-      scroller.removeEventListener("scroll", measure);
-      cancelAnimationFrame(raf);
+      if (rafId != null) cancelAnimationFrame(rafId);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tutorialStep, monthLoaded, currentWeekStart]);
 
   useLayoutEffect(() => {
@@ -730,7 +827,72 @@ export default function HomePage() {
     });
   }, [weeks, weeklyRewardsByWeekStart, itemByDate, today]);
 
+  const [monthTransition, setMonthTransition] = useState(null);
+  const monthTransitionTimer = useRef(null);
+  const outPanelRef = useRef(null);
+  const inPanelRef = useRef(null);
+  const monthAnimRef = useRef(null);
+
+  useEffect(
+    () => () => {
+      if (monthTransitionTimer.current)
+        clearTimeout(monthTransitionTimer.current);
+    },
+    [],
+  );
+
+  useLayoutEffect(() => {
+    if (!monthTransition) return;
+
+    const inEl = inPanelRef.current;
+    const outEl = outPanelRef.current;
+    if (!inEl) return;
+
+    const sign = monthTransition.direction === "next" ? 1 : -1;
+    const easeOut = (t) => 1 - (1 - t) ** 3;
+    const start = performance.now();
+
+    inEl.style.transform = `translateX(${sign * 100}%)`;
+    if (outEl) outEl.style.transform = "translateX(0%)";
+
+    const step = (now) => {
+      const t = Math.min(1, (now - start) / MONTH_TRANSITION_MS);
+      const e = easeOut(t);
+      inEl.style.transform = `translateX(${sign * 100 * (1 - e)}%)`;
+      if (outEl) outEl.style.transform = `translateX(${-sign * 100 * e}%)`;
+      if (t < 1) {
+        monthAnimRef.current = requestAnimationFrame(step);
+      } else {
+        inEl.style.transform = "translateX(0%)";
+      }
+    };
+
+    monthAnimRef.current = requestAnimationFrame(step);
+
+    return () => {
+      if (monthAnimRef.current) cancelAnimationFrame(monthAnimRef.current);
+    };
+  }, [monthTransition]);
+
+  const startMonthTransition = useCallback(
+    (direction) => {
+      setMonthTransition({
+        direction,
+        key: `${viewYear}-${viewMonth}`,
+        rows: calendarRows,
+        itemByDate,
+      });
+      if (monthTransitionTimer.current)
+        clearTimeout(monthTransitionTimer.current);
+      monthTransitionTimer.current = setTimeout(() => {
+        setMonthTransition(null);
+      }, MONTH_TRANSITION_MS);
+    },
+    [viewYear, viewMonth, calendarRows, itemByDate],
+  );
+
   const handlePrevMonth = () => {
+    startMonthTransition("prev");
     if (viewMonth === 1) {
       setViewYear((y) => y - 1);
       setViewMonth(12);
@@ -740,6 +902,7 @@ export default function HomePage() {
   };
 
   const handleNextMonth = () => {
+    startMonthTransition("next");
     if (viewMonth === 12) {
       setViewYear((y) => y + 1);
       setViewMonth(1);
@@ -749,6 +912,11 @@ export default function HomePage() {
   };
 
   const handleConfirmPicker = ({ year, month }) => {
+    const target = monthIndex(year, month);
+    const current = monthIndex(viewYear, viewMonth);
+    if (target !== current) {
+      startMonthTransition(target > current ? "next" : "prev");
+    }
     setViewYear(year);
     setViewMonth(month);
     setShowPicker(false);
@@ -890,40 +1058,39 @@ export default function HomePage() {
                     ))}
                   </div>
 
-                  <div className="flex flex-col gap-[2px]">
-                    {calendarRows.map(
-                      (
-                        { cells, weekStartDate, canEarnReward, rewardState },
-                        weekIdx,
-                      ) => (
-                        <div
-                          key={weekIdx}
-                          className="flex w-full items-center justify-between"
-                        >
-                          <div className="flex items-center gap-[2px]">
-                            {cells.map((cell, i) => (
-                              <DayCell
-                                key={i}
-                                cell={cell}
-                                item={
-                                  cell.inMonth
-                                    ? itemByDate.get(cell.dateStr)
-                                    : undefined
-                                }
-                                onSelect={handleSelectDay}
-                              />
-                            ))}
-                          </div>
-                          {canEarnReward && (
-                            <RewardBadge
-                              state={rewardState}
-                              weekStartDate={weekStartDate}
-                              onSelect={handleRewardBadgeClick}
-                            />
-                          )}
-                        </div>
-                      ),
+                  <div
+                    className="relative w-full overflow-hidden"
+                    style={{
+                      height: gridHeightOf(calendarRows.length),
+                      transition: `height ${MONTH_TRANSITION_MS}ms ease-out`,
+                    }}
+                  >
+                    {monthTransition && (
+                      <div
+                        ref={outPanelRef}
+                        key={`cal-out-${monthTransition.key}`}
+                        className="pointer-events-none absolute inset-x-0 top-0"
+                      >
+                        <CalendarGrid
+                          rows={monthTransition.rows}
+                          itemByDate={monthTransition.itemByDate}
+                          onSelectDay={handleSelectDay}
+                          onSelectReward={handleRewardBadgeClick}
+                        />
+                      </div>
                     )}
+                    <div
+                      ref={inPanelRef}
+                      key={`cal-in-${currentMonthKey}`}
+                      className="absolute inset-x-0 top-0"
+                    >
+                      <CalendarGrid
+                        rows={calendarRows}
+                        itemByDate={itemByDate}
+                        onSelectDay={handleSelectDay}
+                        onSelectReward={handleRewardBadgeClick}
+                      />
+                    </div>
                   </div>
                 </div>
 

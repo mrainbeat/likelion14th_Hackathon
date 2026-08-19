@@ -74,7 +74,6 @@ export default function HomeTutorial({ step, spot, onNext }) {
     }, 300);
 
     return () => clearTimeout(timeoutRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
   return (
