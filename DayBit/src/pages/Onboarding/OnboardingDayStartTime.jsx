@@ -60,6 +60,7 @@ export default function OnboardingDayStartTime() {
           {[PRESET_TIMES.slice(0, 3), PRESET_TIMES.slice(3, 6)].map(
             (row, rowIdx) => (
               <div key={rowIdx} className="flex w-full items-center gap-[8px]">
+                {" "}
                 {row.map((time) => (
                   <TimePill
                     key={time.value}

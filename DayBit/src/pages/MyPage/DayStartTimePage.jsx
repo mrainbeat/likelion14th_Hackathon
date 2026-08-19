@@ -140,12 +140,16 @@ export default function DayStartTimePage() {
         </div>
       </div>
 
-      <div className="flex w-full shrink-0 flex-col items-start px-[16px] py-[10px]">
+      <div className="flex w-full shrink-0 flex-col items-start px-[16px] pb-[30px] pt-[10px]">
         <button
           type="button"
           onClick={handleSubmit}
           disabled={isLoading || isSubmitting || !selectedTime}
-          className="flex w-full items-center justify-center rounded-[12px] bg-[#4F5563] px-[26px] py-[14px] text-[18px] font-semibold leading-[normal] tracking-[-0.36px] text-white text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)] disabled:opacity-50"
+          className={`flex h-[49px] w-full items-center justify-center rounded-[12px] text-[18px] font-semibold leading-none tracking-[-0.36px] text-white text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)] transition-all ${
+            isLoading || isSubmitting || !selectedTime
+              ? "cursor-not-allowed bg-grey-40"
+              : "cursor-pointer bg-grey-70 active:scale-[0.98]"
+          }`}
         >
           완료
         </button>
