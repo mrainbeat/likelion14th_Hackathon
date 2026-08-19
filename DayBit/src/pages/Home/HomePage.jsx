@@ -14,6 +14,7 @@ import ResumeDraftModal from "../Diary/components/ResumeDraftModal";
 import HomeTutorial from "./components/HomeTutorial";
 import ExperienceBlobs from "./components/ExperienceBlobs";
 import WeeklyImageNotificationModal from "./components/WeeklyImageNotificationModal";
+import AutoCompletionNoticeModal from "./components/AutoCompletionNoticeModal";
 import SpeechBubble from "../../components/SpeechBubble";
 import { getTodayColorPalette, hexToRgba } from "../../utils/rewardColor";
 import { getWeeklyRewards } from "../../utils/weeklyRewards";
@@ -38,6 +39,10 @@ import {
 } from "../../utils/experienceFragments";
 import { useDevAccess } from "../../contexts/devAccess";
 import { getServiceToday, saveDayStartTime } from "../../utils/serviceDate";
+import {
+  getPendingAutoCompletionNotices,
+  markAutoCompletionNoticeViewed,
+} from "../../utils/diaryDraftApi";
 import LogoSymbol from "../../assets/icons/LogoSymbol.jsx";
 import profileIcon from "../../assets/icons/profile.svg";
 import bellIcon from "../../assets/icons/notification-bell.svg";
@@ -52,6 +57,7 @@ import {
 } from "../../utils/diaryDraft";
 let resumeCheckedThisSession = false;
 let weeklyNotifyCheckedThisSession = false;
+let autoCompletionCheckedThisSession = false;
 
 const WEEKDAYS = ["월", "화", "수", "목", "금", "토", "일"];
 
@@ -540,6 +546,51 @@ export default function HomePage() {
     today,
     userId,
   ]);
+
+  const [autoCompletionNotice, setAutoCompletionNotice] = useState(null);
+
+  useEffect(() => {
+    if (userId == null || autoCompletionCheckedThisSession) return;
+    autoCompletionCheckedThisSession = true;
+
+    let alive = true;
+    getPendingAutoCompletionNotices()
+      .then((notices) => {
+        if (!alive || notices.length === 0) return;
+        setAutoCompletionNotice(notices[0]);
+      })
+      .catch((error) => {
+        console.error(
+          "GET /api/v1/diaries/auto-completion-notices/pending 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      });
+    return () => {
+      alive = false;
+    };
+  }, [userId]);
+
+  const dismissAutoCompletionNotice = () => {
+    const notice = autoCompletionNotice;
+    setAutoCompletionNotice(null);
+    const noticeId = notice?.noticeId ?? notice?.id;
+    if (noticeId == null) return notice;
+    markAutoCompletionNoticeViewed(noticeId).catch((error) => {
+      console.error(
+        "PATCH /api/v1/diaries/auto-completion-notices/{noticeId}/view 실패:",
+        error.response?.status,
+        error.response?.data,
+      );
+    });
+    return notice;
+  };
+
+  const handleAutoCompletionConfirm = () => {
+    const notice = dismissAutoCompletionNotice();
+    const diaryId = notice?.diaryId;
+    if (diaryId != null) navigate(`/home/diaries/${diaryId}`);
+  };
 
   const handleNotifyClose = () => {
     setNotifyReward(null);
@@ -1260,6 +1311,14 @@ export default function HomePage() {
             onLater={handleNotifyClose}
             onConfirm={handleNotifyConfirm}
             onClose={handleNotifyClose}
+          />
+        )}
+
+        {autoCompletionNotice && !notifyReward && (
+          <AutoCompletionNoticeModal
+            recordedDate={autoCompletionNotice.recordedDate}
+            onConfirm={handleAutoCompletionConfirm}
+            onClose={dismissAutoCompletionNotice}
           />
         )}
       </div>
