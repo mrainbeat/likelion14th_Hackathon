@@ -327,6 +327,7 @@ export default function ExperiencePage() {
           title="전달 대기중인 경험조각"
           subtitle={`5일동안 익명화된 내용을 확인하고 전달을 취소할 수 있어요.
 이후에는 다른 사람에게 전달될 수 있어요.`}
+          hideTag
           items={pendingAll.slice(0, 2)}
           moreItems={pendingAll.slice(2)}
           onItemClick={(item) =>

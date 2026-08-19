@@ -171,11 +171,33 @@ export function isArrivalStale(iso) {
   return Date.now() - at >= ONE_DAY_MS;
 }
 
-export function fragmentSnippet(content) {
+const ZERO_WIDTH_SPACE = String.fromCharCode(8203);
+const LEADING_LABEL_PATTERN = new RegExp("^\\s*\\[[^\\]\\n]*\\]\\s*\\n?");
+
+export function stripLeadingLabel(content) {
   return String(content ?? "")
-    .replace(/\u200B/g, "")
+    .split(ZERO_WIDTH_SPACE)
+    .join("")
+    .replace(LEADING_LABEL_PATTERN, "")
+    .trim();
+}
+
+export function fragmentSnippet(content) {
+  return stripLeadingLabel(content)
     .replace(/\s+/g, " ")
     .trim();
+}
+
+const LABEL_LINE_PATTERN = new RegExp("^\\[([^\\]\\n]+)\\]$", "gm");
+const LABEL_SUFFIX = "에 작성한 내용";
+
+export function formatAnonymizedContent(content) {
+  return String(content ?? "")
+    .split(ZERO_WIDTH_SPACE)
+    .join("")
+    .replace(LABEL_LINE_PATTERN, (full, label) =>
+      label.endsWith(LABEL_SUFFIX) ? full : `[${label}${LABEL_SUFFIX}]`,
+    );
 }
 
 export function fragmentTopic(fragment) {

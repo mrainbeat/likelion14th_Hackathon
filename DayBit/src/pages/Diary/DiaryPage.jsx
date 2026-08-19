@@ -109,11 +109,13 @@ export default function DiaryPage() {
         if (!alive) return;
         const result = response.data.result;
         const list = Array.isArray(result) ? result : (result?.questions ?? []);
-        const synced = list.map(({ questionId, questionText, contextType }) => ({
-          questionId,
-          questionText,
-          contextType,
-        }));
+        const synced = list.map(
+          ({ questionId, questionText, contextType }) => ({
+            questionId,
+            questionText,
+            contextType,
+          }),
+        );
         setQuestions(synced);
         saveQuestions(synced);
       })
