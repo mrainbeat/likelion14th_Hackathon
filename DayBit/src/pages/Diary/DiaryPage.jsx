@@ -79,8 +79,15 @@ export default function DiaryPage() {
       .get("/api/v1/ai/writing-help/status")
       .then((response) => {
         if (!alive) return;
-        const { available, remainingCount } = response.data.result;
+        const { available, remainingCount, usedCount } = response.data.result;
         setRemainingQuestions(available ? remainingCount : 0);
+        if (typeof usedCount !== "number") return;
+        setQuestions((prev) => {
+          if (prev.length <= usedCount) return prev;
+          const synced = prev.slice(0, usedCount);
+          saveQuestions(synced);
+          return synced;
+        });
       })
       .catch((error) => {
         console.error(
@@ -409,7 +416,7 @@ export default function DiaryPage() {
       <div className="absolute bottom-0 left-0 right-0 w-full h-[42px] bg-[#F6F8FA] z-30 pointer-events-none"></div>
 
       <div className="shrink-0 pt-[16px] px-[16px] relative z-20">
-        <header className="flex justify-between items-center mb-[12px] w-full">
+        <header className="flex justify-between items-center mb-[24px] w-full">
           <button
             type="button"
             onClick={handleBack}
@@ -495,12 +502,20 @@ export default function DiaryPage() {
                     alt="로고"
                     className="w-[16px] h-[20px] object-contain shrink-0"
                   />
-                  <span className="whitespace-nowrap">
-                    {isAskingQuestion
-                      ? "질문 받는 중..."
-                      : isAllQuestionsLoaded
-                        ? "질문 받기 완료"
-                        : "데이빗에게 질문 받기"}
+                  <span className="grid">
+                    <span
+                      aria-hidden
+                      className="invisible col-start-1 row-start-1 whitespace-nowrap"
+                    >
+                      데이빗에게 질문 받기
+                    </span>
+                    <span className="col-start-1 row-start-1 whitespace-nowrap">
+                      {isAskingQuestion
+                        ? "질문 받는 중..."
+                        : isAllQuestionsLoaded
+                          ? "질문 받기 완료"
+                          : "데이빗에게 질문 받기"}
+                    </span>
                   </span>
                 </button>
                 <button

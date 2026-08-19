@@ -8,17 +8,7 @@ import HideConfirmModal from "./components/HideConfirmModal";
 import arrowIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import kebabIcon from "../../assets/icons/menu.svg";
-
-function getSeoulToday() {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
-  const map = Object.fromEntries(parts.map((p) => [p.type, p.value]));
-  return { year: Number(map.year), month: Number(map.month) };
-}
+import { getServiceToday } from "../../utils/serviceDate";
 
 function firstBlock(content) {
   if (!content) return { time: "", text: "" };
@@ -28,7 +18,7 @@ function firstBlock(content) {
 
 export default function DiaryListPage() {
   const navigate = useNavigate();
-  const [today] = useState(() => getSeoulToday());
+  const [today] = useState(() => getServiceToday());
 
   const [viewYear, setViewYear] = useState(today.year);
   const [viewMonth, setViewMonth] = useState(today.month);
@@ -133,7 +123,7 @@ export default function DiaryListPage() {
   };
 
   return (
-    <div className="relative flex h-full w-full select-none flex-col gap-[12px] overflow-y-auto bg-[#f6f8fa] px-[16px] py-[16px] scrollbar-hide">
+    <div className="relative flex h-full w-full select-none flex-col gap-[16px] overflow-y-auto bg-[#f6f8fa] px-[16px] py-[16px] scrollbar-hide">
       <div className="flex w-full items-center justify-between">
         <button
           type="button"

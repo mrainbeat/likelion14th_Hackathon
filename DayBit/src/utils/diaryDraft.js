@@ -1,7 +1,7 @@
+import { getServiceTodayStr } from "./serviceDate";
+
 export function getTodaySeoulDate() {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(
-    new Date(),
-  );
+  return getServiceTodayStr();
 }
 
 const LAST_TIMESTAMP_KEY = "diary_last_timestamp_at";
@@ -21,13 +21,21 @@ export function clearDraft() {
 
 export function loadTodayQuestions() {
   try {
-    if (localStorage.getItem(QUESTIONS_DATE_KEY) !== getTodaySeoulDate()) {
+    const raw = localStorage.getItem(QUESTIONS_KEY);
+    if (!raw) return [];
+
+    const savedDate = localStorage.getItem(QUESTIONS_DATE_KEY);
+    if (savedDate && savedDate !== getTodaySeoulDate()) {
       clearQuestions();
       return [];
     }
-    const raw = localStorage.getItem(QUESTIONS_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
+
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    if (!savedDate) {
+      localStorage.setItem(QUESTIONS_DATE_KEY, getTodaySeoulDate());
+    }
+    return parsed;
   } catch {
     return [];
   }

@@ -102,7 +102,7 @@ export default function NotificationsPage() {
   );
 
   return (
-    <div className="flex h-full w-full select-none flex-col gap-[24px] overflow-y-auto bg-[#F6F8FA] p-[16px] scrollbar-hide">
+    <div className="flex h-full w-full select-none flex-col gap-[16px] overflow-y-auto bg-[#F6F8FA] p-[16px] scrollbar-hide">
       <div className="flex w-full shrink-0 items-center justify-between">
         <button
           type="button"

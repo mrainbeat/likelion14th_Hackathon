@@ -190,46 +190,48 @@ export default function ExperiencePage() {
   return (
     <div className="relative flex h-full w-full select-none flex-col overflow-y-auto bg-[#f6f8fa] px-[16px] pb-[36px] pt-[16px] scrollbar-hide [overflow-anchor:none]">
       <div className="flex w-full flex-col items-start gap-[24px]">
-        <div className="flex w-full items-center justify-between">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="size-[32px] shrink-0 cursor-pointer"
-          >
-            <img
-              src={backIcon}
-              alt="뒤로가기"
-              className="h-full w-full object-contain"
-            />
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate("/mypage")}
-            className="size-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0 transition-opacity active:opacity-60"
-          >
-            <img
-              src={profileIcon}
-              alt="프로필"
-              className="h-full w-full object-contain [filter:drop-shadow(0_0_9.938px_rgba(65,68,80,0.16))]"
-            />
-          </button>
-        </div>
+        <div className="flex w-full flex-col items-start gap-[16px]">
+          <div className="flex w-full items-center justify-between">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="size-[32px] shrink-0 cursor-pointer"
+            >
+              <img
+                src={backIcon}
+                alt="뒤로가기"
+                className="h-full w-full object-contain"
+              />
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/mypage")}
+              className="size-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0 transition-opacity active:opacity-60"
+            >
+              <img
+                src={profileIcon}
+                alt="프로필"
+                className="h-full w-full object-contain [filter:drop-shadow(0_0_9.938px_rgba(65,68,80,0.16))]"
+              />
+            </button>
+          </div>
 
-        <div className="flex w-full flex-col items-start gap-[4px]">
-          <div className="flex items-center justify-center gap-[10px]">
-            <img
-              src={logoImage}
-              alt=""
-              className="h-[28px] w-[22px] object-cover"
-            />
-            <p className="break-words text-[24px] font-bold text-black">
-              경험조각 주고받기
+          <div className="flex w-full flex-col items-start gap-[4px]">
+            <div className="flex items-center justify-center gap-[10px]">
+              <img
+                src={logoImage}
+                alt=""
+                className="h-[28px] w-[22px] object-cover"
+              />
+              <p className="break-words text-[24px] font-bold text-black">
+                경험조각 주고받기
+              </p>
+            </div>
+            <p className="w-full break-words text-[14px] font-medium text-[#787E8C]">
+              비슷한 경험을 한 사람의 익명 일기를 받고, <br />
+              나의 익명 일기도 나눌 수 있어요.
             </p>
           </div>
-          <p className="w-full break-words text-[14px] font-medium text-[#787E8C]">
-            비슷한 경험을 한 사람의 익명 일기를 받고, <br />
-            나의 익명 일기도 나눌 수 있어요.
-          </p>
         </div>
 
         <div className="relative w-full shrink-0 overflow-hidden rounded-[12px] bg-grey-0 p-[16px] shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">

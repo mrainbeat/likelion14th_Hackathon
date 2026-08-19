@@ -1,7 +1,7 @@
 export default function LogoutConfirmModal({ onCancel, onConfirm }) {
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-[rgba(45,48,56,0.25)] backdrop-blur-[1px]">
-      <div className="flex w-[350px] flex-col items-start gap-[16px] rounded-[12px] bg-[#F6F8FA] px-[16px] py-[20px]">
+      <div className="flex w-[calc(100%-32px)] max-w-[358px] flex-col items-start gap-[16px] rounded-[12px] bg-[#F6F8FA] px-[16px] py-[20px]">
         <p className="w-full text-[20px] font-semibold leading-[normal] tracking-[-0.4px] text-grey-90">
           로그아웃 하시겠어요?
         </p>

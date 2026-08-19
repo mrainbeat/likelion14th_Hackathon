@@ -69,7 +69,7 @@ export default function HiddenDiaryPage() {
   };
 
   return (
-    <div className="relative flex h-full w-full select-none flex-col overflow-y-auto bg-[#F6F8FA] px-[16px] py-[16px] scrollbar-hide">
+    <div className="relative flex h-full w-full select-none flex-col gap-[16px] overflow-y-auto bg-[#F6F8FA] px-[16px] py-[16px] scrollbar-hide">
       <div className="flex w-full items-center justify-between">
         <button
           type="button"
@@ -95,7 +95,7 @@ export default function HiddenDiaryPage() {
         </button>
       </div>
 
-      <div className="flex w-full flex-col items-start gap-[18px] pt-[24px]">
+      <div className="flex w-full flex-col items-start gap-[18px]">
         <p className="w-full text-[22px] font-semibold leading-[normal] tracking-[-0.66px] text-[#2D3038]">
           숨긴일기
         </p>

@@ -10,7 +10,7 @@ export default function WeeklyImageNotificationModal({
       onClick={onClose}
     >
       <div
-        className="flex w-[calc(100%-40px)] max-w-[350px] flex-col items-start justify-center gap-[16px] rounded-[12px] bg-[#F6F8FA] px-[16px] py-[20px]"
+        className="flex w-[calc(100%-32px)] max-w-[358px] flex-col items-start justify-center gap-[16px] rounded-[12px] bg-[#F6F8FA] px-[16px] py-[20px]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex w-full flex-col items-center gap-[16px]">
