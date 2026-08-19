@@ -212,7 +212,16 @@ export default function DiaryPage() {
       alive = false;
     };
   }, []);
-
+  const hasUserWritten =
+    hadPriorContent ||
+    (currentText !== initialText && currentText.trim().length > 0);
+  useEffect(() => {
+    if (!hasUserWritten) return;
+    const timer = setTimeout(() => {
+      saveDraft(content);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [content, hasUserWritten]);
   const handleInput = (e) => {
     setContent(e.currentTarget.innerHTML);
     setCurrentText(e.currentTarget.textContent || "");
@@ -274,10 +283,6 @@ export default function DiaryPage() {
       setIsAskingQuestion(false);
     }
   };
-
-  const hasUserWritten =
-    hadPriorContent ||
-    (currentText !== initialText && currentText.trim().length > 0);
 
   useEffect(() => {
     if (!hasUserWritten) return;

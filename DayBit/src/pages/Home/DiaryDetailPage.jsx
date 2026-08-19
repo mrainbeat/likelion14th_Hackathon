@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
 import apiClient from "../../api/apiClient";
 import DiaryOptionsMenu from "./components/DiaryOptionsMenu";
 import DeleteConfirmModal from "./components/DeleteConfirmModal";
@@ -35,6 +35,23 @@ function parseDiaryBlocks(content) {
     })
     .filter((block) => block.time || block.text);
 }
+function formatCommentDate(iso) {
+  if (!iso) return "";
+  const [datePart] = iso.split("T");
+  const [y, m, d] = datePart.split("-").map(Number);
+  return `${String(y).slice(2)}년 ${m}월 ${d}일`;
+}
+
+function todayLabel() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const map = Object.fromEntries(parts.map((p) => [p.type, p.value]));
+  return `${map.year.slice(2)}년 ${Number(map.month)}월 ${Number(map.day)}일`;
+}
 
 export default function DiaryDetailPage() {
   const navigate = useNavigate();
@@ -48,6 +65,11 @@ export default function DiaryDetailPage() {
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showHideConfirm, setShowHideConfirm] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [commentError, setCommentError] = useState("");
+  const commentInputRef = useRef(null);
   useEffect(() => {
     let alive = true;
     apiClient
@@ -72,6 +94,65 @@ export default function DiaryDetailPage() {
       alive = false;
     };
   }, [diaryId]);
+
+  const fetchComments = useCallback(async () => {
+    try {
+      const response = await apiClient.get(
+        `/api/v1/diaries/${diaryId}/comments`,
+      );
+      setComments(response.data.result ?? []);
+    } catch (error) {
+      console.error(
+        "GET /api/v1/diaries/{diaryId}/comments 실패:",
+        error.response?.status,
+        error.response?.data,
+      );
+    }
+  }, [diaryId]);
+
+  useEffect(() => {
+    fetchComments();
+  }, [fetchComments]);
+
+  const handleCommentChange = (e) => {
+    setCommentText(e.target.value);
+    const el = e.target;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  };
+
+  const submitComment = async () => {
+    const trimmed = commentText.trim();
+    if (!trimmed || isSubmittingComment) return;
+
+    setIsSubmittingComment(true);
+    setCommentError("");
+    try {
+      await apiClient.post(`/api/v1/diaries/${diaryId}/comments`, {
+        content: trimmed,
+      });
+      setCommentText("");
+      if (commentInputRef.current)
+        commentInputRef.current.style.height = "auto";
+      await fetchComments();
+    } catch (error) {
+      setCommentError("추가 기록을 남기지 못했어요. 다시 시도해주세요.");
+      console.error(
+        "POST /api/v1/diaries/{diaryId}/comments 실패:",
+        error.response?.status,
+        error.response?.data,
+      );
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
+  const handleCommentKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+      e.preventDefault();
+      submitComment();
+    }
+  };
 
   const handleDelete = async () => {
     setShowDeleteConfirm(false);
@@ -129,7 +210,8 @@ export default function DiaryDetailPage() {
   const [, month, day] = diary?.recordedDate?.split("-").map(Number) ?? [];
 
   return (
-    <div className="relative flex h-full w-full select-none flex-col gap-[16px] overflow-y-auto bg-[#f6f8fa] px-[16px] py-[16px] scrollbar-hide">
+    <div className="relative flex h-full w-full select-none flex-col gap-[16px] overflow-y-auto bg-[#f6f8fa] px-[20px] py-[16px] scrollbar-hide">
+      {" "}
       <div className="flex w-full items-center justify-between">
         <button
           type="button"
@@ -161,7 +243,6 @@ export default function DiaryDetailPage() {
           />
         </button>
       </div>
-
       {loading ? (
         <p className="text-center text-[16px] font-medium text-grey-60">
           불러오는 중...
@@ -172,7 +253,7 @@ export default function DiaryDetailPage() {
         </p>
       ) : (
         <>
-          <div className="flex w-full items-center justify-between">
+          <div className="mt-[8px] flex w-full items-center justify-between">
             <p
               className="text-heading-28 whitespace-nowrap drop-shadow-[0px_0px_1px_rgba(0,0,0,0.05)]"
               style={{ color }}
@@ -203,7 +284,7 @@ export default function DiaryDetailPage() {
             </div>
           </div>
 
-          <div className="flex w-full flex-col items-start gap-[16px] pb-[250px]">
+          <div className="flex w-full flex-col items-start gap-[24px] pb-[250px]">
             <div
               className="flex w-full flex-col gap-[26px] rounded-[12px] bg-grey-0 px-[16px] py-[20px]"
               style={{
@@ -228,7 +309,54 @@ export default function DiaryDetailPage() {
                 </div>
               ))}
             </div>
+            <div className="flex w-full flex-col items-start gap-[8px]">
+              <p className="whitespace-nowrap text-[20px] font-semibold tracking-[-0.4px] text-grey-90">
+                나의 반응
+              </p>
 
+              <div className="flex w-full flex-col items-start gap-[4px]">
+                <div className="flex w-full flex-col items-start gap-[4px]">
+                  <div className="flex w-full items-center rounded-bl-[12px] rounded-br-[12px] rounded-tl-[12px] border border-solid border-[#DFE2EA] bg-[#EFF1F6] px-[16px] py-[10px]">
+                    <textarea
+                      ref={commentInputRef}
+                      value={commentText}
+                      onChange={handleCommentChange}
+                      onKeyDown={handleCommentKeyDown}
+                      placeholder="반응 추가하기"
+                      rows={1}
+                      maxLength={2000}
+                      disabled={isSubmittingComment}
+                      className="min-w-0 flex-1 resize-none overflow-hidden bg-transparent text-[16px] font-normal leading-[26px] tracking-[-0.32px] text-grey-90 placeholder:text-grey-60 focus:outline-none"
+                    />
+                  </div>
+                  <p className="whitespace-nowrap text-[12px] font-normal tracking-[-0.12px] text-grey-60">
+                    {todayLabel()}
+                  </p>
+                </div>
+
+                {[...comments].reverse().map((comment) => (
+                  <div
+                    key={comment.commentId}
+                    className="flex w-full flex-col items-start gap-[4px]"
+                  >
+                    <div className="flex w-full items-center rounded-bl-[12px] rounded-br-[12px] rounded-tl-[12px] border border-solid border-[#DFE2EA] bg-[#EFF1F6] px-[16px] py-[10px]">
+                      <p className="min-w-0 flex-1 whitespace-pre-wrap break-words text-[16px] font-normal leading-[26px] tracking-[-0.32px] text-grey-90">
+                        {comment.content}
+                      </p>
+                    </div>
+                    <p className="whitespace-nowrap text-[12px] font-normal tracking-[-0.12px] text-grey-60">
+                      {formatCommentDate(comment.createdAt)}
+                    </p>
+                  </div>
+                ))}
+
+                {commentError && (
+                  <p className="text-[13px] font-medium text-red-500">
+                    {commentError}
+                  </p>
+                )}
+              </div>
+            </div>
             {reflectionQuestion && (
               <div className="flex w-full flex-col items-start gap-[16px]">
                 <div className="flex items-end gap-[6px]">
@@ -241,25 +369,26 @@ export default function DiaryDetailPage() {
                   </p>
                 </div>
 
-                <div className="flex w-full items-center rounded-bl-[12px] rounded-br-[12px] rounded-tr-[12px] bg-grey-60 px-[16px] py-[10px]">
-                  <p className="min-w-0 flex-1 whitespace-pre-wrap break-words text-[16px] font-medium leading-[normal] tracking-[-0.32px] text-grey-0">
-                    {reflectionQuestion}
-                  </p>
-                </div>
-
-                {reflectionAnswer && (
-                  <div className="flex w-full items-center rounded-bl-[12px] rounded-br-[12px] rounded-tl-[12px] border border-solid border-grey-30 bg-[#EFF1F6] px-[16px] py-[10px]">
-                    <p className="text-16 min-w-0 flex-1 whitespace-pre-wrap break-words text-grey-90">
-                      {reflectionAnswer}
+                <div className="flex w-full flex-col items-start gap-[12px]">
+                  <div className="flex w-full items-center rounded-bl-[12px] rounded-br-[12px] rounded-tr-[12px] bg-grey-60 px-[16px] py-[10px]">
+                    <p className="min-w-0 flex-1 whitespace-pre-wrap break-words text-[16px] font-medium leading-[normal] tracking-[-0.32px] text-grey-0">
+                      {reflectionQuestion}
                     </p>
                   </div>
-                )}
+
+                  {reflectionAnswer && (
+                    <div className="flex w-full items-center rounded-bl-[12px] rounded-br-[12px] rounded-tl-[12px] border border-solid border-grey-30 bg-[#EFF1F6] px-[16px] py-[10px]">
+                      <p className="text-16 min-w-0 flex-1 whitespace-pre-wrap break-words text-grey-90">
+                        {reflectionAnswer}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
         </>
       )}
-
       {showDeleteConfirm && (
         <DeleteConfirmModal
           month={month}
@@ -268,7 +397,6 @@ export default function DiaryDetailPage() {
           onDelete={handleDelete}
         />
       )}
-
       {showHideConfirm && (
         <HideConfirmModal
           month={month}
