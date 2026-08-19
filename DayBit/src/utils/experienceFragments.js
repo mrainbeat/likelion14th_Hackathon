@@ -101,6 +101,33 @@ export function clearReceivedFragments() {
   }
 }
 
+const MINE_KEY = "my_experience_fragments";
+
+export function getCachedMyFragments() {
+  try {
+    const raw = localStorage.getItem(MINE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveCachedMyFragments(list) {
+  try {
+    localStorage.setItem(MINE_KEY, JSON.stringify(list));
+  } catch {
+    return;
+  }
+}
+
+export function clearCachedMyFragments() {
+  try {
+    localStorage.removeItem(MINE_KEY);
+  } catch {
+    return;
+  }
+}
+
 export function markReceivedFragmentFeedbackSubmitted(deliveryId) {
   const list = getReceivedFragments().map((fragment) =>
     fragment.deliveryId === deliveryId

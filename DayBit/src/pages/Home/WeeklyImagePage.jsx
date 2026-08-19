@@ -4,6 +4,8 @@ import apiClient from "../../api/apiClient";
 import {
   getWeeklyRewardDetail,
   markWeeklyRewardViewed,
+  getCachedWeeklyRewardDetail,
+  saveCachedWeeklyRewardDetail,
 } from "../../utils/weeklyRewards";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
@@ -57,7 +59,9 @@ export default function WeeklyImagePage() {
   const location = useLocation();
   const { weeklyRewardId } = useParams();
   const fromMonth = location.state?.fromMonth ?? null;
-  const [reward, setReward] = useState(null);
+  const [reward, setReward] = useState(() =>
+    getCachedWeeklyRewardDetail(weeklyRewardId),
+  );
   const [errorText, setErrorText] = useState("");
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
@@ -73,6 +77,7 @@ export default function WeeklyImagePage() {
         if (!alive) return;
         const result = response.data.result;
         setReward(result);
+        saveCachedWeeklyRewardDetail(weeklyRewardId, result);
 
         if (result.status === "PENDING" || result.status === "GENERATING") {
           pollRef.current = setTimeout(fetchDetail, POLL_INTERVAL_MS);
