@@ -182,7 +182,7 @@ const DayCell = memo(function DayCell({ cell, item, onSelect }) {
 const REWARD_BADGE_STYLE = {
   available: "bg-[#5F6473] text-grey-0",
   viewed: "border-[1.5px] border-[#787E8C] bg-transparent text-grey-70",
-  unavailable: "bg-grey-30 text-grey-0",
+  unavailable: "bg-[#EFF1F6] text-grey-0",
 };
 
 const RewardBadge = memo(function RewardBadge({

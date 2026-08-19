@@ -19,7 +19,7 @@ function SlideUpPanel({ children }) {
   return (
     <div
       ref={ref}
-      className="absolute inset-x-0 top-[115px] bottom-0 z-10 flex flex-col overflow-hidden rounded-[12px] bg-grey-0 shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]"
+      className="absolute inset-x-0 top-[127px] bottom-0 z-10 flex flex-col overflow-hidden rounded-[12px] bg-grey-0 shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]"
     >
       {children}
     </div>
@@ -212,17 +212,17 @@ export default function ReflectionPage() {
   return (
     <div className="relative h-full w-full select-none overflow-hidden bg-[#F6F8FA]">
       <AnimatedBlobs />
-      <div className="absolute left-0 top-0 z-10 flex w-full flex-col gap-[24px] px-[16px] py-[16px]">
+      <div className="absolute left-0 top-0 z-10 flex w-full flex-col gap-[24px] p-[16px]">
         <div className="flex w-full items-center justify-end">
           <button
             type="button"
             onClick={() => navigate("/mypage")}
-            className="w-[38px] h-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0 transition-opacity active:opacity-60"
+            className="h-[38px] w-[38px] shrink-0 cursor-pointer border-none bg-transparent p-0 transition-opacity active:opacity-60"
           >
             <img
               src={profileIcon}
               alt="프로필"
-              className="w-full h-full object-contain [filter:drop-shadow(0_0_9.938px_rgba(65,68,80,0.16))]"
+              className="h-full w-full object-contain [filter:drop-shadow(0_0_9.938px_rgba(65,68,80,0.16))]"
             />
           </button>
         </div>
@@ -264,7 +264,7 @@ export default function ReflectionPage() {
               }`}
               style={{
                 background:
-                  "linear-gradient(180deg, #F6F8FA 0%, rgba(246, 248, 250, 0) 100%)",
+                  "linear-gradient(180deg, #FFF 0%, rgba(255, 255, 255, 0) 100%)",
               }}
             ></div>
 
@@ -272,7 +272,7 @@ export default function ReflectionPage() {
               className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-[92px]"
               style={{
                 background:
-                  "linear-gradient(0deg, #F6F8FA 0%, rgba(246, 248, 250, 0) 100%)",
+                  "linear-gradient(0deg, #FFF 0%, rgba(255, 255, 255, 0) 100%)",
               }}
             ></div>
 
@@ -293,35 +293,37 @@ export default function ReflectionPage() {
                       성찰질문
                     </p>
                   </div>
-                  <p className="w-full text-[14px] font-medium tracking-[-0.28px] text-grey-50">
+                  <p className="w-full text-[14px] font-medium tracking-[-0.28px] text-[#AFB6C4]">
                     작성하지 않고 넘어가도 괜찮아요.
                   </p>
                 </div>
 
-                <SpeechBubble
-                  color="#787E8C"
-                  direction="left"
-                  className="flex w-full items-center px-[16px] py-[10px]"
-                >
-                  <p className="flex-1 text-[16px] font-medium leading-[normal] tracking-[-0.32px] text-grey-0">
-                    {question}
-                  </p>
-                </SpeechBubble>
+                <div className="flex w-full flex-col items-start gap-[12px]">
+                  <SpeechBubble
+                    color="#787E8C"
+                    direction="left"
+                    className="flex w-full items-center px-[16px] py-[10px]"
+                  >
+                    <p className="flex-1 text-[16px] font-medium leading-[normal] tracking-[-0.32px] text-grey-0">
+                      {question}
+                    </p>
+                  </SpeechBubble>
 
-                <SpeechBubble
-                  color="#EFF1F6"
-                  direction="right"
-                  bordered
-                  className="w-full"
-                >
-                  <textarea
-                    value={answer}
-                    onChange={handleAnswerChange}
-                    placeholder="내용을 입력해주세요."
-                    rows={1}
-                    className="w-full resize-none overflow-hidden bg-transparent px-[16px] py-[10px] text-[16px] font-medium leading-[normal] tracking-[-0.32px] text-grey-80 placeholder:text-grey-40 focus:outline-none"
-                  />
-                </SpeechBubble>
+                  <SpeechBubble
+                    color="#EFF1F6"
+                    direction="right"
+                    bordered
+                    className="w-full"
+                  >
+                    <textarea
+                      value={answer}
+                      onChange={handleAnswerChange}
+                      placeholder="내용을 입력해주세요."
+                      rows={1}
+                      className="w-full resize-none overflow-hidden bg-transparent px-[16px] py-[10px] text-[16px] font-medium leading-[normal] tracking-[-0.32px] text-grey-80 placeholder:text-grey-40 focus:outline-none"
+                    />
+                  </SpeechBubble>
+                </div>
 
                 {answerError && (
                   <p className="text-[13px] font-medium text-red-500">
@@ -332,12 +334,12 @@ export default function ReflectionPage() {
             </div>
           </div>
 
-          <div className="flex shrink-0 justify-center bg-grey-0 px-[16px] pb-[30px] pt-[16px]">
+          <div className="flex shrink-0 justify-center bg-grey-0 px-[20px] pb-[30px]">
             <button
               type="button"
               onClick={handleFinish}
               disabled={isSubmitting}
-              className="flex w-full max-w-[350px] cursor-pointer items-center justify-center whitespace-nowrap rounded-[12px] bg-grey-80 px-[26px] py-[14px] text-[18px] font-semibold leading-[normal] tracking-[-0.36px] text-grey-0 text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)] disabled:opacity-50"
+              className="flex w-full cursor-pointer items-center justify-center whitespace-nowrap rounded-[12px] bg-grey-70 px-[26px] py-[14px] text-[18px] font-semibold leading-[normal] tracking-[-0.36px] text-grey-0 text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)] disabled:opacity-50"
             >
               {isSubmitting ? "제출 중..." : "완료"}
             </button>
