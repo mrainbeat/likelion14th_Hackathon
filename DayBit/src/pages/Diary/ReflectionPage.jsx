@@ -8,44 +8,86 @@ import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
 import SpeechBubble from "../../components/SpeechBubble";
 
+const BLOB_CYCLE_MS = 16000;
+const BLOB_EASE = "cubic-bezier(0.68, -0.55, 0.265, 1.55)"; // Ease in and out back
 const BLOBS = [
   {
-    cx: 131.5,
-    cy: 596,
+    name: "loading-blob-7",
+    color: "#FFF0C7",
+    blur: 92.3,
+    left: 57,
+    top: 505,
     w: 149,
     h: 182,
-    rotate: 0,
-    blur: 92.3,
-    color: "#FFF0C7",
+    steps: [
+      { t: [0, 0], r: 0, s: [1, 1], o: 1 },
+      { t: [86.914, 70.433], r: -75.89, s: [1, 1], o: 1 },
+      { t: [160.914, -194.567], r: -75.89, s: [1, 1], o: 1 },
+      { t: [-84.086, -190.567], r: -75.89, s: [1, 1], o: 1 },
+    ],
   },
   {
-    cx: 279.5,
-    cy: 812.5,
+    name: "loading-blob-8",
+    color: "#C7FFF6",
+    blur: 92.3,
+    left: 195,
+    top: 710,
     w: 169,
     h: 205,
-    rotate: -90,
-    blur: 92.3,
-    color: "#C7FFF6",
+    steps: [
+      { t: [0, 0], r: -90, s: [1, 1], o: 1 },
+      { t: [-298, -452], r: -90, s: [1, 1], o: 0 },
+      { t: [-298, -452], r: -90, s: [1, 1], o: 1 },
+      { t: [-74, -117], r: -90, s: [1, 1], o: 1 },
+    ],
   },
   {
-    cx: 412.44,
-    cy: 475.25,
-    w: 142.78,
-    h: 173.19,
-    rotate: -168.32,
+    name: "loading-blob-9",
+    color: "#EDDCF9",
     blur: 81,
-    color: "#DCCDE6",
+    left: 336.82,
+    top: 388.22,
+    w: 147.055,
+    h: 173.193,
+    steps: [
+      { t: [0, 0], r: -168.32, s: [1, 1], o: 1 },
+      { t: [-316.315, -208.867], r: -244.22, s: [0.9709, 1], o: 1 },
+      { t: [-283.315, 342.133], r: -244.22, s: [0.9709, 1], o: 1 },
+      { t: [0, 0], r: -168.32, s: [1, 1], o: 0 },
+    ],
   },
   {
-    cx: -23.45,
-    cy: 410.94,
+    name: "loading-blob-6",
+    color: "#FFCFCF",
+    blur: 65.5,
+    left: -106.98,
+    top: 302.44,
     w: 167,
     h: 217,
-    rotate: 27.85,
-    blur: 65.5,
-    color: "#FFCFCF",
+    steps: [
+      { t: [0, 0], r: 27.85, s: [1, 1], o: 1 },
+      { t: [-51.008, 308.695], r: -48.04, s: [1, 1], o: 1 },
+      { t: [463.573, 280.249], r: -162.36, s: [0.8624, 0.6432], o: 1 },
+      { t: [440.665, -109.355], r: -123.1, s: [0.8704, 0.8704], o: 1 },
+    ],
   },
 ];
+
+function blobTransform(step) {
+  return `translate(${step.t[0]}px, ${step.t[1]}px) rotate(${step.r}deg) scale(${step.s[0]}, ${step.s[1]})`;
+}
+
+function buildBlobKeyframes(blob) {
+  const frames = blob.steps.map(
+    (step, i) =>
+      `${i * 25}% { transform: ${blobTransform(step)}; opacity: ${step.o}; animation-timing-function: ${BLOB_EASE}; }`,
+  );
+  const first = blob.steps[0];
+  frames.push(
+    `100% { transform: ${blobTransform(first)}; opacity: ${first.o}; }`,
+  );
+  return `@keyframes ${blob.name} { ${frames.join(" ")} }`;
+}
 
 const POLL_INTERVAL_MS = 800;
 const MAX_POLL_ATTEMPTS = 38; // 약 30초
@@ -135,8 +177,6 @@ export default function ReflectionPage() {
     setIsScrolled(e.target.scrollTop > 10);
   };
 
-  // 색 생성이 비동기라 성찰질문 화면에 진입하자마자(사용자가 답변을 읽고 쓰는 동안)
-  // 백그라운드로 미리 폴링해둔다 — 제출 시점엔 이미 완료돼 있는 경우가 많아진다
   useEffect(() => {
     if (!diaryId) return;
 
@@ -191,10 +231,10 @@ export default function ReflectionPage() {
 
     const trimmed = answer.trim();
 
-    // 답변 없이 넘어가면 추가 API를 호출하지 않음
     if (!trimmed || !diaryId) {
       setIsSubmitting(true);
-      const finalReward = await (rewardReadyRef.current ?? Promise.resolve(reward));
+      const finalReward = await (rewardReadyRef.current ??
+        Promise.resolve(reward));
       navigate("/diary/today-color", {
         replace: true,
         state: { reward: finalReward, diaryId },
@@ -207,14 +247,16 @@ export default function ReflectionPage() {
       await apiClient.post(`/api/v1/diaries/${diaryId}/reflection-answer`, {
         answerText: trimmed,
       });
-      const finalReward = await (rewardReadyRef.current ?? Promise.resolve(reward));
+      const finalReward = await (rewardReadyRef.current ??
+        Promise.resolve(reward));
       navigate("/diary/today-color", {
         replace: true,
         state: { reward: finalReward, diaryId },
       });
     } catch (error) {
       if (error.response?.data?.code === "QUESTION409_1") {
-        const finalReward = await (rewardReadyRef.current ?? Promise.resolve(reward));
+        const finalReward = await (rewardReadyRef.current ??
+          Promise.resolve(reward));
         navigate("/diary/today-color", {
           replace: true,
           state: { reward: finalReward, diaryId },
@@ -234,21 +276,23 @@ export default function ReflectionPage() {
   return (
     <div className="relative h-full w-full select-none overflow-hidden bg-[#F6F8FA]">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        {BLOBS.map(({ cx, cy, w, h, rotate, blur, color }, i) => (
+        {BLOBS.map((blob) => (
           <div
-            key={i}
+            key={blob.name}
             className="absolute rounded-[50%]"
             style={{
-              left: cx - w / 2,
-              top: cy - h / 2,
-              width: w,
-              height: h,
-              backgroundColor: color,
-              transform: `rotate(${rotate}deg)`,
-              filter: `blur(${blur}px)`,
+              left: blob.left,
+              top: blob.top,
+              width: blob.w,
+              height: blob.h,
+              backgroundColor: blob.color,
+              filter: `blur(${blob.blur}px)`,
+              willChange: "transform, opacity",
+              animation: `${blob.name} ${BLOB_CYCLE_MS}ms infinite`,
             }}
           />
         ))}
+        <style>{BLOBS.map(buildBlobKeyframes).join("\n")}</style>
       </div>
 
       <div className="absolute left-0 top-0 z-10 flex w-full flex-col gap-[24px] px-[16px] py-[16px]">
