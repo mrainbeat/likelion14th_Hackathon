@@ -85,7 +85,7 @@ export default function OnboardingConsent() {
         lines={["더 나다운 질문을 위해", "데이빗은 허락한 정보만 기억해요."]}
         caption="설정에서 언제든지 변경 가능해요."
       />
-      <div className="absolute inset-x-0 bottom-[115px] top-[302px] overflow-y-auto overscroll-contain pl-[9.23%] pr-[9.23%] [&::-webkit-scrollbar]:hidden">
+      <div className="absolute inset-x-0 bottom-[115px] top-[306px] overflow-y-auto overscroll-contain pl-[8.205%] pr-[9.23%] [&::-webkit-scrollbar]:hidden">
         {" "}
         <div className="flex w-full flex-col gap-[16px] pb-[8px]">
           {SECTIONS.map(({ title, lines }) => (

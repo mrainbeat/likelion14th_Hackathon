@@ -12,6 +12,7 @@ import apiClient from "../../api/apiClient";
 import MonthYearPickerModal from "./components/MonthYearPickerModal";
 import ResumeDraftModal from "../Diary/components/ResumeDraftModal";
 import HomeTutorial from "./components/HomeTutorial";
+import ExperienceBlobs from "./components/ExperienceBlobs";
 import WeeklyImageNotificationModal from "./components/WeeklyImageNotificationModal";
 import SpeechBubble from "../../components/SpeechBubble";
 import { getTodayColorPalette, hexToRgba } from "../../utils/rewardColor";
@@ -1173,41 +1174,59 @@ export default function HomePage() {
             ref={experienceRef}
             type="button"
             onClick={() => navigate("/experience")}
-            className="flex w-full cursor-pointer flex-col items-start gap-[16px] rounded-[12px] bg-grey-0 px-[16px] py-[20px] text-left transition-opacity active:opacity-80"
+            className="relative flex w-full cursor-pointer flex-col items-start gap-[16px] overflow-hidden rounded-[12px] bg-grey-0 px-[16px] pb-[32px] pt-[20px] text-left transition-opacity active:opacity-80"
             style={{ boxShadow: cardShadow }}
           >
-            <div className="flex items-center gap-[10px]">
-              <LogoSymbol
-                dotColor={accentColor ?? "#414450"}
-                className="h-[28px] w-[22px] shrink-0"
-              />
-              <p className="whitespace-nowrap text-[20px] font-semibold tracking-[-0.4px] text-grey-90">
-                경험조각 주고받기
-              </p>
-            </div>
-            {inboxArrivals.length > 0 ? (
-              inboxArrivals.slice(0, 2).map((arrival) => (
-                <SpeechBubble
-                  key={arrival.arrivalId}
-                  color="#EFF1F6"
-                  direction="left"
-                  bordered
-                  className="flex w-full items-center gap-[10px] px-[16px] py-[10px]"
-                >
-                  <p className="flex-1 text-[16px] font-medium tracking-[-0.32px] text-grey-80">
-                    {fragmentTopic(arrival) || "새로운 경험"}과 관련된
-                    경험조각이 도착했어요.
+            <ExperienceBlobs />
+
+            <div className="relative flex w-full flex-col gap-[32px]">
+              <div className="flex w-full flex-col items-start gap-[4px]">
+                <div className="flex items-center gap-[10px]">
+                  <LogoSymbol
+                    dotColor={accentColor ?? "#414450"}
+                    className="h-[27.872px] w-[22px] shrink-0"
+                  />
+                  <p className="whitespace-nowrap text-[20px] font-semibold tracking-[-0.4px] text-grey-90">
+                    경험조각 주고받기
                   </p>
-                  <span className="shrink-0 whitespace-nowrap text-[12px] font-normal text-grey-60">
-                    {formatArrivalTime(arrival.arrivedAt)}
-                  </span>
-                </SpeechBubble>
-              ))
-            ) : (
-              <p className="w-full text-[14px] font-medium tracking-[-0.28px] text-grey-60">
-                아직 나와 비슷한 경험조각이 도착하지 않았어요.
-              </p>
-            )}
+                </div>
+                {inboxArrivals.length === 0 && (
+                  <p className="whitespace-nowrap text-[14px] font-medium tracking-[-0.28px] text-grey-60">
+                    아직 나와 비슷한 경험이 도착하지 않았어요.
+                  </p>
+                )}
+              </div>
+
+              {inboxArrivals.length > 0 ? (
+                <div className="flex w-full flex-col gap-[16px]">
+                  {inboxArrivals.slice(0, 2).map((arrival) => (
+                    <SpeechBubble
+                      key={arrival.arrivalId}
+                      color="#EFF1F6"
+                      direction="left"
+                      bordered
+                      className="flex w-full items-center gap-[10px] px-[16px] py-[10px]"
+                    >
+                      <p className="flex-1 text-[16px] font-medium tracking-[-0.32px] text-grey-80">
+                        {fragmentTopic(arrival) || "새로운 경험"}과 관련된
+                        경험조각이 도착했어요.
+                      </p>
+                      <span className="shrink-0 whitespace-nowrap text-[12px] font-normal text-grey-60">
+                        {formatArrivalTime(arrival.arrivedAt)}
+                      </span>
+                    </SpeechBubble>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex w-full flex-col items-center justify-center">
+                  <div className="flex items-center justify-center rounded-[32px] bg-[#F8F9FC] p-[10px]">
+                    <p className="whitespace-nowrap text-[14px] font-medium tracking-[-0.28px] text-grey-80">
+                      경험조각을 찾는중..
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           </button>
         </div>
 
