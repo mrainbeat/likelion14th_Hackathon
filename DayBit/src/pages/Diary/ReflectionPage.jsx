@@ -19,7 +19,7 @@ function SlideUpPanel({ children }) {
   return (
     <div
       ref={ref}
-      className="absolute inset-x-0 top-[127px] bottom-0 z-10 flex flex-col overflow-hidden rounded-[12px] bg-grey-0 shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]"
+      className="absolute inset-x-0 top-[143px] bottom-0 z-10 flex flex-col overflow-hidden rounded-t-[12px] bg-grey-0 shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]"
     >
       {children}
     </div>

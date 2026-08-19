@@ -11,11 +11,10 @@ export default function ResumeDraftModal({ onDiscard, onResume, onClose }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex w-full flex-col items-start gap-[6px]">
-          <p className="w-full text-[20px] font-semibold tracking-[-0.4px] text-grey-90">
+          <p className="w-full text-[20px] font-semibold leading-[normal] tracking-[-0.4px] text-[#2D3038]">
             작성하던 일기가 있어요.
           </p>
-
-          <p className="w-full text-[16px] font-medium tracking-[-0.32px] text-grey-70">
+          <p className="w-full text-[16px] font-medium leading-[normal] tracking-[-0.32px] text-[#5F6473]">
             작성하던 일기를 계속 작성하시겠어요?
           </p>
         </div>
@@ -25,7 +24,7 @@ export default function ResumeDraftModal({ onDiscard, onResume, onClose }) {
             type="button"
             onClick={onDiscard}
             style={BUTTON_TEXT_SHADOW}
-            className="flex min-w-0 flex-1 items-center justify-center rounded-[12px] border-[1.5px] border-grey-60 bg-grey-0 px-[26px] py-[14px] text-[18px] font-semibold tracking-[-0.36px] whitespace-nowrap text-grey-80"
+            className="flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-[12px] border-[1.5px] border-[#787E8C] bg-white px-[26px] py-[14px] text-[18px] font-semibold leading-[normal] tracking-[-0.36px] text-[#4F5563]"
           >
             나중에 작성하기
           </button>
@@ -34,7 +33,7 @@ export default function ResumeDraftModal({ onDiscard, onResume, onClose }) {
             type="button"
             onClick={onResume}
             style={BUTTON_TEXT_SHADOW}
-            className="flex min-w-0 flex-1 items-center justify-center rounded-[12px] bg-grey-70 px-[26px] py-[14px] text-[18px] font-semibold tracking-[-0.36px] whitespace-nowrap text-grey-0"
+            className="flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-[12px] bg-[#5F6473] px-[26px] py-[14px] text-[18px] font-semibold leading-[normal] tracking-[-0.36px] text-white"
           >
             이어 작성하기
           </button>

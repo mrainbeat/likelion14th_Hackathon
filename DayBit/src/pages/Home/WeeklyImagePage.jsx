@@ -206,6 +206,7 @@ export default function WeeklyImagePage() {
         </div>
       ) : (
         <div className="absolute inset-x-0 bottom-0 top-[65px] z-10 flex flex-col overflow-hidden rounded-t-[12px] bg-grey-0 shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">
+          {" "}
           <div className="relative z-10 flex w-full shrink-0 items-start gap-[6px] px-[16px] pb-[32px] pt-[32px]">
             <LogoSymbol
               dotColor={ACCENT_COLOR}
@@ -215,7 +216,6 @@ export default function WeeklyImagePage() {
               주간 이미지
             </p>
           </div>
-
           <div className="relative z-10 min-h-0 flex-1">
             <div
               className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-[56px]"
@@ -306,7 +306,6 @@ export default function WeeklyImagePage() {
               )}
             </div>
           </div>
-
           <div className="relative z-20 flex w-full shrink-0 justify-center bg-grey-0 px-[16px] pb-[30px] pt-[16px]">
             <button
               type="button"
