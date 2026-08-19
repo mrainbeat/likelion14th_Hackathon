@@ -9,6 +9,7 @@ import {
   receiveInboxArrival,
   loadExperienceInbox,
   formatArrivalTime,
+  isArrivalStale,
   fragmentTopic,
   saveReceivedFragment,
 } from "../../utils/experienceFragments";
@@ -30,13 +31,17 @@ export default function ExperienceIncomingListPage() {
     };
   }, []);
 
-  const notificationItems = matches.map((m) => ({
-    id: m.arrivalId,
-    arrivalId: m.arrivalId,
-    keyword: fragmentTopic(m) || "새로운 경험",
-    message: `${fragmentTopic(m) || "새로운 경험"}과 관련된 경험조각이 도착했어요.`,
-    relativeTime: formatArrivalTime(m.arrivedAt),
-  }));
+  const notificationItems = matches.map((m) => {
+    const keyword = fragmentTopic(m) || "새로운 경험";
+    return {
+      id: m.arrivalId,
+      arrivalId: m.arrivalId,
+      keyword,
+      message: `${keyword}과 관련된 경험조각이 도착했어요.`,
+      relativeTime: formatArrivalTime(m.arrivedAt),
+      stale: isArrivalStale(m.arrivedAt),
+    };
+  });
 
   const handleConfirmView = async () => {
     if (!confirmTarget) return;

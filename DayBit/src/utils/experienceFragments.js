@@ -162,6 +162,15 @@ export function formatArrivalTime(iso) {
   return `${Math.floor(hours / 24)}일 전`;
 }
 
+const ONE_DAY_MS = 86400000;
+
+export function isArrivalStale(iso) {
+  if (!iso) return false;
+  const at = new Date(iso).getTime();
+  if (Number.isNaN(at)) return false;
+  return Date.now() - at >= ONE_DAY_MS;
+}
+
 export function fragmentTopic(fragment) {
   return fragment.generalTopic || fragment.keywords?.[0] || "";
 }
