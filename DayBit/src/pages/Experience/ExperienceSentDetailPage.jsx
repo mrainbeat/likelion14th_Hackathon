@@ -105,7 +105,7 @@ export default function ExperienceSentDetailPage() {
                 ))}
               </div>
             )}
-            <p className="text-16 w-full text-grey-90">
+            <p className="text-16 w-full whitespace-pre-wrap break-words text-grey-90">
               {fragment.anonymizedContent}
             </p>
           </div>

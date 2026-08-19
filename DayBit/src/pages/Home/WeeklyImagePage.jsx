@@ -138,6 +138,9 @@ export default function WeeklyImagePage() {
   const handleFinish = goHome;
 
   const isReady = reward?.status === "COMPLETED" && reward?.available;
+  const extraKeywords = (reward?.keywords ?? []).filter(
+    (keyword) => keyword !== reward?.categoryKeyword,
+  );
   const isPending =
     reward?.status === "PENDING" || reward?.status === "GENERATING";
 
@@ -248,7 +251,7 @@ export default function WeeklyImagePage() {
                   )}
 
                   {(reward.categoryKeyword ||
-                    reward.keywords?.length > 0 ||
+                    extraKeywords.length > 0 ||
                     reward.summary) && (
                     <div className="flex w-full flex-col items-start justify-center gap-[12px] rounded-[4px] border border-solid border-[#E8EBF0] bg-[#F8F9FC] px-[16px] py-[20px]">
                       {reward.categoryKeyword && (
@@ -258,9 +261,9 @@ export default function WeeklyImagePage() {
                           </p>
                         </div>
                       )}
-                      {reward.keywords?.length > 0 && (
+                      {extraKeywords.length > 0 && (
                         <div className="flex flex-wrap items-center gap-[4px]">
-                          {reward.keywords.map((keyword) => (
+                          {extraKeywords.map((keyword) => (
                             <div
                               key={keyword}
                               className="flex items-center justify-center rounded-[100px] border border-solid border-[#AFB6C4] px-[8px] py-[4px]"

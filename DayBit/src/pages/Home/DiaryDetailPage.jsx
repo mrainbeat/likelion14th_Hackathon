@@ -19,7 +19,7 @@ function hexToRgba(hex, alpha) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-const TIME_PATTERN = /^(AM|PM)\s*\d{1,2}:\d{2}$/i;
+const TIME_PATTERN = /^\[?(AM|PM)\s*\d{1,2}:\d{2}\]?$/i;
 
 function parseDiaryBlocks(content) {
   if (!content) return [];

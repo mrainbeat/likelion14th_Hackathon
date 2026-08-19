@@ -85,6 +85,34 @@ export default function DiaryPage() {
   useEffect(() => {
     let alive = true;
     apiClient
+      .get("/api/v1/ai/writing-help/questions")
+      .then((response) => {
+        if (!alive) return;
+        const result = response.data.result;
+        const list = Array.isArray(result) ? result : (result?.questions ?? []);
+        const synced = list.map(({ questionId, questionText, contextType }) => ({
+          questionId,
+          questionText,
+          contextType,
+        }));
+        setQuestions(synced);
+        saveQuestions(synced);
+      })
+      .catch((error) => {
+        console.error(
+          "GET /api/v1/ai/writing-help/questions 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    apiClient
       .get("/api/v1/ai/writing-help/status")
       .then((response) => {
         if (!alive) return;
@@ -120,7 +148,7 @@ export default function DiaryPage() {
     const minutes = String(now.getMinutes()).padStart(2, "0");
     const ampm = hours >= 12 ? "PM" : "AM";
     hours = hours % 12 || 12;
-    return `${ampm} ${hours}:${minutes}`;
+    return `[${ampm} ${hours}:${minutes}]`;
   };
 
   useEffect(() => {

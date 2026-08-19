@@ -6,8 +6,11 @@ import { clearCachedWeeklyRewards } from "../../utils/weeklyRewardsCache";
 import { clearCachedNotifications } from "../../utils/notificationsCache";
 import { clearReceivedFragments } from "../../utils/experienceFragments";
 
-export function login(email, password) {
-  return apiClient.post("/api/auth/login", { email, password });
+export async function login(email, password) {
+  clearLocalSession();
+  const response = await apiClient.post("/api/auth/login", { email, password });
+  clearLocalSession();
+  return response;
 }
 
 export function signup(email, password) {

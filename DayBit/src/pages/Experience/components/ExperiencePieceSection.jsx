@@ -171,11 +171,6 @@ function PieceRow({ item, hideTag, onItemClick }) {
         )}
       </div>
       <div className="flex w-full items-center gap-[5px] overflow-hidden">
-        {item.time && (
-          <p className="shrink-0 whitespace-nowrap text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-grey-70">
-            {item.time}
-          </p>
-        )}
         <p className="min-w-0 flex-1 truncate text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-grey-70">
           {item.snippet}
         </p>

@@ -17,7 +17,7 @@ import {
   describeAutoApprove,
 } from "../../utils/experienceFragments";
 
-const TIME_PATTERN = /^(AM|PM)\s*\d{1,2}:\d{2}$/i;
+const TIME_PATTERN = /^\[?(AM|PM)\s*\d{1,2}:\d{2}\]?$/i;
 
 function parseDiaryBlocks(content) {
   if (!content) return [];
