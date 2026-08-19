@@ -6,6 +6,7 @@ import { getTodayColorPalette, hexToRgba } from "../../utils/rewardColor";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import LogoSymbol from "../../assets/icons/LogoSymbol.jsx";
+import { useSlideUp } from "../../hooks/useSlideUp";
 
 const BLOBS = [
   {
@@ -57,7 +58,7 @@ export default function TodayColorPage() {
   const diaryId = location.state?.diaryId ?? null;
   const fromMonth = location.state?.fromMonth ?? null;
   const [reward, setReward] = useState(location.state?.reward ?? null);
-
+  const slideUpRef = useSlideUp(!isReview);
   const isPending = reward?.status === "PENDING";
   const isReady = reward?.status === "COMPLETED" && reward?.colorHex;
 
@@ -149,10 +150,18 @@ export default function TodayColorPage() {
       </div>
 
       <div className="absolute left-0 top-0 z-10 flex w-full flex-col gap-[24px] px-[16px] py-[16px]">
-        <div className="flex w-full items-center justify-between">
-          <button type="button" onClick={handleBack} className="cursor-pointer">
-            <img src={backIcon} alt="뒤로가기" className="size-[32px]" />
-          </button>
+        <div
+          className={`flex w-full items-center ${isReview ? "justify-between" : "justify-end"}`}
+        >
+          {isReview && (
+            <button
+              type="button"
+              onClick={handleBack}
+              className="cursor-pointer"
+            >
+              <img src={backIcon} alt="뒤로가기" className="size-[32px]" />
+            </button>
+          )}
           <button
             type="button"
             onClick={() => navigate("/mypage")}
@@ -176,7 +185,10 @@ export default function TodayColorPage() {
         </p>
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 top-[143px] z-10">
+      <div
+        ref={slideUpRef}
+        className="absolute inset-x-0 bottom-0 top-[143px] z-10"
+      >
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 rounded-[12px]"
@@ -185,7 +197,6 @@ export default function TodayColorPage() {
             filter: "blur(15px)",
           }}
         />
-
         <div className="relative flex h-full flex-col overflow-hidden rounded-t-[12px] bg-grey-0">
           <div
             className="pointer-events-none absolute rounded-[50%]"

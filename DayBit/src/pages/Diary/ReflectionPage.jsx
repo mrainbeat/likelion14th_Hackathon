@@ -3,15 +3,27 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
 import apiClient from "../../api/apiClient";
 import { createExperienceFragment } from "../../utils/experienceFragments";
-import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
 import SpeechBubble from "../../components/SpeechBubble";
 import { clearDraft, clearQuestions } from "../../utils/diaryDraft";
 import AnimatedBlobs from "../../components/AnimatedBlobs";
+import { useSlideUp } from "../../hooks/useSlideUp";
 
 const POLL_INTERVAL_MS = 800;
 const MAX_POLL_ATTEMPTS = 38;
+
+function SlideUpPanel({ children }) {
+  const ref = useSlideUp();
+  return (
+    <div
+      ref={ref}
+      className="absolute inset-x-0 top-[115px] bottom-0 z-10 flex flex-col overflow-hidden rounded-[12px] bg-grey-0 shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]"
+    >
+      {children}
+    </div>
+  );
+}
 
 export default function ReflectionPage() {
   const navigate = useNavigate();
@@ -196,10 +208,7 @@ export default function ReflectionPage() {
     <div className="relative h-full w-full select-none overflow-hidden bg-[#F6F8FA]">
       <AnimatedBlobs />
       <div className="absolute left-0 top-0 z-10 flex w-full flex-col gap-[24px] px-[16px] py-[16px]">
-        <div className="flex w-full items-center justify-between">
-          <button type="button" onClick={handleBack} className="cursor-pointer">
-            <img src={backIcon} alt="뒤로가기" className="size-[32px]" />
-          </button>
+        <div className="flex w-full items-center justify-end">
           <button
             type="button"
             onClick={() => navigate("/mypage")}
@@ -242,7 +251,7 @@ export default function ReflectionPage() {
           </button>
         </div>
       ) : (
-        <div className="absolute inset-x-0 top-[115px] bottom-0 z-10 flex flex-col overflow-hidden rounded-[12px] bg-grey-0 shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">
+        <SlideUpPanel>
           <div className="relative min-h-0 flex-1 overflow-hidden">
             <div
               className={`pointer-events-none absolute left-0 right-0 top-0 z-10 h-[92px] rounded-t-[12px] transition-opacity duration-200 ${
@@ -328,7 +337,7 @@ export default function ReflectionPage() {
               {isSubmitting ? "제출 중..." : "완료"}
             </button>
           </div>
-        </div>
+        </SlideUpPanel>
       )}
     </div>
   );
