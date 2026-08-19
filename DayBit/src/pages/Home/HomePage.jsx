@@ -40,7 +40,7 @@ import {
 import { useDevAccess } from "../../contexts/devAccess";
 import { getServiceToday, saveDayStartTime } from "../../utils/serviceDate";
 import {
-  getPendingAutoCompletionNotices,
+  getPendingAutoCompletionNotice,
   markAutoCompletionNoticeViewed,
 } from "../../utils/diaryDraftApi";
 import LogoSymbol from "../../assets/icons/LogoSymbol.jsx";
@@ -554,10 +554,10 @@ export default function HomePage() {
     autoCompletionCheckedThisSession = true;
 
     let alive = true;
-    getPendingAutoCompletionNotices()
-      .then((notices) => {
-        if (!alive || notices.length === 0) return;
-        setAutoCompletionNotice(notices[0]);
+    getPendingAutoCompletionNotice()
+      .then((notice) => {
+        if (!alive || !notice || notice.viewed) return;
+        setAutoCompletionNotice(notice);
       })
       .catch((error) => {
         console.error(

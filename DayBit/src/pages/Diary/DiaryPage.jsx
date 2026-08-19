@@ -20,7 +20,15 @@ import {
   loadTodayQuestions,
   saveQuestions,
 } from "../../utils/diaryDraft";
-import { getServerDraft, putServerDraft } from "../../utils/diaryDraftApi";
+import {
+  getServerDraft,
+  putServerDraft,
+  sendDraftHeartbeat,
+  stopDraftEditing,
+  getStoredDraftId,
+} from "../../utils/diaryDraftApi";
+
+const HEARTBEAT_INTERVAL_MS = 30000;
 
 function htmlToPlainText(html) {
   if (!html) return "";
@@ -66,6 +74,7 @@ export default function DiaryPage() {
 
   const isTimeAppended = useRef(false);
   const hadLocalDraftRef = useRef(false);
+  const draftIdRef = useRef(getStoredDraftId());
   const editorRef = useRef(null);
   const scrollContainerRef = useRef(null);
   const pageRef = useRef(null);
@@ -175,6 +184,7 @@ export default function DiaryPage() {
     getServerDraft()
       .then((draft) => {
         if (!alive) return;
+        if (draft?.draftId != null) draftIdRef.current = draft.draftId;
         const text = draft?.content?.trim();
         if (!text || hadLocalDraftRef.current) return;
 
@@ -280,13 +290,21 @@ export default function DiaryPage() {
   useEffect(() => {
     if (!hasUserWritten) return;
     const timer = setTimeout(() => {
-      putServerDraft(htmlToPlainText(content), pendingUseDiaryContent).catch((error) => {
-        console.error(
-          "PUT /api/v1/diaries/draft 실패:",
-          error.response?.status,
-          error.response?.data,
-        );
-      });
+      putServerDraft(
+        htmlToPlainText(content),
+        pendingUseDiaryContent,
+        draftIdRef.current,
+      )
+        .then((result) => {
+          if (result?.draftId != null) draftIdRef.current = result.draftId;
+        })
+        .catch((error) => {
+          console.error(
+            "PUT /api/v1/diaries/draft 실패:",
+            error.response?.status,
+            error.response?.data,
+          );
+        });
     }, 1000);
     return () => clearTimeout(timer);
   }, [content, hasUserWritten, pendingUseDiaryContent]);
@@ -321,17 +339,52 @@ export default function DiaryPage() {
     setShowReflectionConsent(true);
   };
 
+  useEffect(() => {
+    const beat = () => {
+      if (document.visibilityState !== "visible") return;
+      const draftId = draftIdRef.current;
+      if (draftId == null) return;
+      sendDraftHeartbeat(draftId).catch((error) => {
+        console.error(
+          "PATCH /api/v1/diaries/draft/{draftId}/editing/heartbeat 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      });
+    };
+
+    beat();
+    const timer = setInterval(beat, HEARTBEAT_INTERVAL_MS);
+    document.addEventListener("visibilitychange", beat);
+
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", beat);
+      const draftId = draftIdRef.current;
+      if (draftId == null) return;
+      stopDraftEditing(draftId).catch(() => {});
+    };
+  }, []);
+
   const handleReflectionChoice = (useDiaryContent) => {
     setShowReflectionConsent(false);
     setPendingUseDiaryContent(useDiaryContent);
     setShowAnonymousShare(true);
-    putServerDraft(htmlToPlainText(content), useDiaryContent).catch((error) => {
-      console.error(
-        "PUT /api/v1/diaries/draft 실패:",
-        error.response?.status,
-        error.response?.data,
-      );
-    });
+    putServerDraft(
+      htmlToPlainText(content),
+      useDiaryContent,
+      draftIdRef.current,
+    )
+      .then((result) => {
+        if (result?.draftId != null) draftIdRef.current = result.draftId;
+      })
+      .catch((error) => {
+        console.error(
+          "PUT /api/v1/diaries/draft 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      });
   };
 
   const handleAnonymousShareChoice = (shareAnonymously) => {
@@ -345,7 +398,12 @@ export default function DiaryPage() {
 
     saveDraft(content);
     navigate("/diary/reflection", {
-      state: { content: plainText, useDiaryContent, shareAnonymously },
+      state: {
+        content: plainText,
+        useDiaryContent,
+        shareAnonymously,
+        draftId: draftIdRef.current,
+      },
     });
   };
 

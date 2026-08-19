@@ -7,6 +7,7 @@ import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
 import SpeechBubble from "../../components/SpeechBubble";
 import { clearDraft, clearQuestions } from "../../utils/diaryDraft";
+import { clearDraftId, getStoredDraftId } from "../../utils/diaryDraftApi";
 import AnimatedBlobs from "../../components/AnimatedBlobs";
 import { useSlideUp } from "../../hooks/useSlideUp";
 
@@ -58,9 +59,11 @@ export default function ReflectionPage() {
 
     const saveDiary = async () => {
       try {
+        const draftId = location.state?.draftId ?? getStoredDraftId();
         const response = await apiClient.post("/api/v1/diaries", {
           content: diaryContent,
           personalizationUsesDiaryContent: useDiaryContent,
+          ...(draftId != null ? { draftId } : {}),
         });
         const result = response.data.result;
 
@@ -80,11 +83,13 @@ export default function ReflectionPage() {
 
         clearDraft();
         clearQuestions();
+        clearDraftId();
       } catch (error) {
         const code = error.response?.data?.code;
         if (code === "DIARY409_1") {
           clearDraft();
           clearQuestions();
+          clearDraftId();
           setSaveError("오늘의 일기는 이미 작성했어요.");
         } else {
           setSaveError("일기 저장에 실패했어요. 다시 시도해주세요.");

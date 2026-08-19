@@ -1,5 +1,6 @@
 import apiClient, { refreshCsrfToken } from "../../api/apiClient";
 import { clearDraft, clearQuestions } from "../../utils/diaryDraft";
+import { clearDraftId } from "../../utils/diaryDraftApi";
 import { clearCachedMonthItems } from "../../utils/monthDiariesCache";
 import { clearCachedWeeklyRewards } from "../../utils/weeklyRewardsCache";
 import { clearCachedNotifications } from "../../utils/notificationsCache";
@@ -65,6 +66,7 @@ export function clearLocalSession() {
   }
   clearDraft();
   clearQuestions();
+  clearDraftId();
   clearCachedMonthItems();
   clearCachedWeeklyRewards();
   clearCachedNotifications();
