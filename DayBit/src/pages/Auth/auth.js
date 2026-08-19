@@ -1,5 +1,5 @@
 import apiClient, { refreshCsrfToken } from "../../api/apiClient";
-import { clearDraft } from "../../utils/diaryDraft";
+import { clearDraft, clearQuestions } from "../../utils/diaryDraft";
 import { clearCachedMonthItems } from "../../utils/monthDiariesCache";
 import { clearCachedWeeklyRewards } from "../../utils/weeklyRewardsCache";
 import { clearCachedNotifications } from "../../utils/notificationsCache";
@@ -64,6 +64,7 @@ export function clearLocalSession() {
     console.error("sessionStorage 정리 실패:", error);
   }
   clearDraft();
+  clearQuestions();
   clearCachedMonthItems();
   clearCachedWeeklyRewards();
   clearCachedNotifications();

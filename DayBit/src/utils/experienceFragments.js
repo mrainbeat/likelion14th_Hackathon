@@ -162,6 +162,32 @@ export function formatArrivalTime(iso) {
   return `${Math.floor(hours / 24)}일 전`;
 }
 
+const ONE_DAY_MS = 86400000;
+
+export function isArrivalStale(iso) {
+  if (!iso) return false;
+  const at = new Date(iso).getTime();
+  if (Number.isNaN(at)) return false;
+  return Date.now() - at >= ONE_DAY_MS;
+}
+
+const LEADING_TIMESTAMP_PATTERN =
+  /^[\s\u200B]*((?:AM|PM)\s*\d{1,2}:\d{2})[\s\u200B]*/i;
+
+export function splitLeadingTimestamp(content) {
+  const text = String(content ?? "")
+    .replace(/\u200B/g, "")
+    .trim();
+  const match = text.match(LEADING_TIMESTAMP_PATTERN);
+  if (!match) {
+    return { time: "", body: text.replace(/\s+/g, " ").trim() };
+  }
+  return {
+    time: match[1].toUpperCase().replace(/\s+/g, " "),
+    body: text.slice(match[0].length).replace(/\s+/g, " ").trim(),
+  };
+}
+
 export function fragmentTopic(fragment) {
   return fragment.generalTopic || fragment.keywords?.[0] || "";
 }
@@ -190,6 +216,8 @@ export function fragmentToPieceItem(fragment, kind) {
       : `${formatFragmentDate(dateSource)}에 익명화 됨`;
   }
 
+  const { time, body } = splitLeadingTimestamp(fragment.anonymizedContent);
+
   return {
     id: fragment.shareId,
     shareId: fragment.shareId,
@@ -197,8 +225,8 @@ export function fragmentToPieceItem(fragment, kind) {
     status: fragment.status,
     dateLabel,
     tag: fragmentTopic(fragment),
-    time: formatFragmentTime(dateSource),
-    snippet: fragment.anonymizedContent || "",
+    time,
+    snippet: body,
     fragment,
   };
 }

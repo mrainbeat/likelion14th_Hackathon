@@ -79,6 +79,8 @@ export default function ExperienceSentListPage() {
 
         <ExperiencePieceSection
           title="전달한 나의 경험조각"
+          emptyText="나의 경험조각을 전달할 사람을 찾고있어요:)"
+          hideTag
           items={items}
           onItemClick={(item) =>
             navigate(`/experience/sent/${item.id}`, {

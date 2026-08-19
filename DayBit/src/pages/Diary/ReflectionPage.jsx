@@ -7,6 +7,7 @@ import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
 import SpeechBubble from "../../components/SpeechBubble";
+import { clearDraft, clearQuestions } from "../../utils/diaryDraft";
 
 const BLOB_CYCLE_MS = 16000;
 const BLOB_EASE = "cubic-bezier(0.68, -0.55, 0.265, 1.55)"; // Ease in and out back
@@ -145,15 +146,13 @@ export default function ReflectionPage() {
           });
         }
 
-        localStorage.removeItem("diary_content");
-        localStorage.removeItem("diary_content_date");
-        localStorage.removeItem("diary_questions");
+        clearDraft();
+        clearQuestions();
       } catch (error) {
         const code = error.response?.data?.code;
         if (code === "DIARY409_1") {
-          localStorage.removeItem("diary_content");
-          localStorage.removeItem("diary_content_date");
-          localStorage.removeItem("diary_questions");
+          clearDraft();
+          clearQuestions();
           setSaveError("오늘의 일기는 이미 작성했어요.");
         } else {
           setSaveError("일기 저장에 실패했어요. 다시 시도해주세요.");

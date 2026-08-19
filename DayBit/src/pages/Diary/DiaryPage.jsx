@@ -17,6 +17,8 @@ import {
   loadTodayDraft,
   getLastTimestampAt,
   markTimestampAppended,
+  loadTodayQuestions,
+  saveQuestions,
 } from "../../utils/diaryDraft";
 
 function htmlToPlainText(html) {
@@ -39,14 +41,7 @@ export default function DiaryPage() {
   const [currentText, setCurrentText] = useState("");
   const [initialText, setInitialText] = useState("");
   const [hadPriorContent, setHadPriorContent] = useState(false);
-  const [questions, setQuestions] = useState(() => {
-    try {
-      const savedQuestions = localStorage.getItem("diary_questions");
-      return savedQuestions ? JSON.parse(savedQuestions) : [];
-    } catch (error) {
-      return [];
-    }
-  });
+  const [questions, setQuestions] = useState(loadTodayQuestions);
   const [remainingQuestions, setRemainingQuestions] = useState(null);
   const [isAskingQuestion, setIsAskingQuestion] = useState(false);
   const [questionError, setQuestionError] = useState("");
@@ -188,7 +183,7 @@ export default function DiaryPage() {
       setRemainingQuestions(remainingCount);
       setQuestions((prev) => {
         const updated = [...prev, { questionId, questionText, contextType }];
-        localStorage.setItem("diary_questions", JSON.stringify(updated));
+        saveQuestions(updated);
         return updated;
       });
 
@@ -238,7 +233,7 @@ export default function DiaryPage() {
     } else {
       clearDraft();
     }
-    localStorage.setItem("diary_questions", JSON.stringify(questions));
+    saveQuestions(questions);
     navigate("/home", { replace: true });
   };
 
