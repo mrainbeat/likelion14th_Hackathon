@@ -324,7 +324,7 @@ export default function ReflectionPage() {
                       onChange={handleAnswerChange}
                       placeholder="내용을 입력해주세요."
                       rows={1}
-                      className="w-full resize-none overflow-hidden bg-transparent px-[16px] py-[10px] text-[16px] font-medium leading-[normal] tracking-[-0.32px] text-grey-80 placeholder:text-grey-40 focus:outline-none"
+                      className="block w-full resize-none overflow-hidden bg-transparent px-[16px] py-[10px] text-[16px] font-medium leading-[normal] tracking-[-0.32px] text-grey-80 placeholder:text-grey-40 focus:outline-none"
                     />
                   </SpeechBubble>
                 </div>
