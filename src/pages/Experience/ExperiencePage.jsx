@@ -277,7 +277,7 @@ export default function ExperiencePage() {
                   ))}
                   {notificationItems.length > 2 && (
                     <Collapsible open={notificationsExpanded}>
-                      <div className="flex w-full flex-col items-start gap-[16px] pt-[16px]">
+                      <div className="flex w-full flex-col items-start gap-[16px]">
                         {notificationItems.slice(2).map((n) => (
                           <ExperienceNotificationBubble
                             key={n.id}
