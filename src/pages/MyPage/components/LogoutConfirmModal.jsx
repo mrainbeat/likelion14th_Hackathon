@@ -5,7 +5,7 @@ export default function LogoutConfirmModal({ onCancel, onConfirm }) {
 
   return (
     <div
-      className="absolute inset-0 z-50 flex items-center justify-center bg-[rgba(45,48,56,0.25)] backdrop-blur-[1px]"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(45,48,56,0.25)] backdrop-blur-[1px]"
       onClick={onCancel}
     >
       <div

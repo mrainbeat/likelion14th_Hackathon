@@ -7,7 +7,7 @@ export default function ResumeDraftModal({ onDiscard, onResume, onClose }) {
 
   return (
     <div
-      className="absolute inset-0 z-50 bg-grey-90/25 backdrop-blur-[1px]"
+      className="fixed inset-0 z-50 bg-grey-90/25 backdrop-blur-[1px]"
       onClick={onClose}
     >
       <div
