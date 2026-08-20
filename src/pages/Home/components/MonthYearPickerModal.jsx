@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ModalButton } from "../../Onboarding/components/OnboardingUi";
+import { useScrollLock } from "../../../hooks/useScrollLock";
 
 const ITEM_H = 46;
 const YEARS = Array.from({ length: 21 }, (_, i) => 2020 + i);
@@ -107,6 +108,8 @@ export default function MonthYearPickerModal({
   onConfirm,
   onClose,
 }) {
+  useScrollLock(open);
+
   const [mounted, setMounted] = useState(false);
   const [shown, setShown] = useState(false);
   const [year, setYear] = useState(initial.year);

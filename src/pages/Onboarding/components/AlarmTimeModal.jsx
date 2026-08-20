@@ -1,5 +1,6 @@
 ﻿import { useEffect, useRef, useState } from "react";
 import { ModalButton } from "./OnboardingUi";
+import { useScrollLock } from "../../../hooks/useScrollLock";
 
 const ITEM_H = 46;
 const PERIODS = ["오전", "오후"];
@@ -108,6 +109,8 @@ export default function AlarmTimeModal({
   onConfirm,
   onClose,
 }) {
+  useScrollLock();
+
   const [mounted, setMounted] = useState(false);
   const [shown, setShown] = useState(false);
   const [period, setPeriod] = useState(initial.period);
