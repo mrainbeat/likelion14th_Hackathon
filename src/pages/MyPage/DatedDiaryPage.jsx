@@ -9,8 +9,10 @@ import {
   getMondayOf,
   getSeoulTodayStr,
   addDays,
+  resetTodayDiary,
 } from "../../utils/devDiary";
 import { useDevAccess } from "../../contexts/devAccess";
+import { clearDraft } from "../../utils/diaryDraft";
 import {
   createExperienceFragment,
   getMyExperienceFragments,
@@ -131,6 +133,48 @@ export default function DatedDiaryPage() {
 
   const [shareInstantly, setShareInstantly] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
+
+  const [isResetting, setIsResetting] = useState(false);
+
+  const handleResetTodayDiary = async () => {
+    if (isResetting) return;
+    if (
+      !window.confirm(
+        "오늘 작성한 일기와 연결된 색상·성찰 질문·기억 후보를 초기화합니다. 계속할까요?",
+      )
+    )
+      return;
+
+    setIsResetting(true);
+    try {
+      const response = await resetTodayDiary();
+      const result = response.data.result;
+      alert(
+        result.deleted
+          ? "초기화가 완료되었습니다. 오늘 일기를 다시 작성할 수 있습니다."
+          : "오늘 작성된 일기가 없어 초기화할 데이터가 없습니다.",
+      );
+      clearDraft();
+    } catch (error) {
+      const code = error.response?.data?.code;
+      if (code === "DEV409_1") {
+        alert("공유 이력이 있는 일기는 초기화할 수 없습니다.");
+      } else if (error.response?.status === 401) {
+        alert("로그인이 필요합니다.");
+      } else if (error.response?.status === 404) {
+        alert("현재 서버에서는 개발용 초기화 기능이 활성화되어 있지않습니다.");
+      } else {
+        alert("오늘 일기를 초기화하지 못했습니다.");
+      }
+      console.error(
+        "DELETE /api/dev/me/diaries/today 실패:",
+        error.response?.status,
+        error.response?.data,
+      );
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   const pollRef = useRef(null);
   const aliveRef = useRef(true);
@@ -554,6 +598,22 @@ export default function DatedDiaryPage() {
             className="flex w-full items-center justify-center rounded-[12px] border-[1.5px] border-solid border-grey-60 bg-grey-0 px-[10px] py-[14px] text-[16px] font-semibold text-grey-80"
           >
             경험조각 화면 열기
+          </button>
+        </div>
+
+        <div className={CARD}>
+          <p className={SECTION_TITLE}>5. 오늘 일기 초기화</p>
+          <p className={CAPTION}>
+            오늘 작성한 일기와 연결된 색상 · 성찰 질문 · 기억 후보를 지워요.
+            공유 이력이 있는 일기는 초기화할 수 없어요.
+          </p>
+          <button
+            type="button"
+            disabled={isResetting}
+            onClick={handleResetTodayDiary}
+            className="flex w-full items-center justify-center rounded-[12px] border-[1.5px] border-solid border-grey-60 bg-grey-0 px-[10px] py-[14px] text-[16px] font-semibold text-grey-80 disabled:opacity-50"
+          >
+            {isResetting ? "초기화 중..." : "오늘 일기 초기화"}
           </button>
         </div>
       </div>
