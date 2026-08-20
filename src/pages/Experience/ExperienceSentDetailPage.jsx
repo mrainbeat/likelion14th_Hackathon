@@ -113,7 +113,7 @@ export default function ExperienceSentDetailPage() {
                   key={feedback.deliveryId}
                   className="w-full rounded-[12px] bg-grey-20 px-[16px] py-[10px]"
                 >
-                  <p className="text-[16px] font-medium tracking-[-0.32px] text-grey-70">
+                  <p className="min-w-0 whitespace-pre-wrap break-words text-[16px] font-medium tracking-[-0.32px] text-grey-70">
                     {feedback.content}
                   </p>
                 </div>

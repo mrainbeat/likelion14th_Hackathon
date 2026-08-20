@@ -160,6 +160,13 @@ export default function ExperienceDiaryPage() {
     }
   };
 
+  const handleFeedbackChange = (e) => {
+    setFeedbackText(e.target.value);
+    const el = e.target;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  };
+
   const handleFeedbackComplete = async () => {
     const content = feedbackText.trim();
     if (!content) return;
@@ -299,7 +306,7 @@ export default function ExperienceDiaryPage() {
 
             {mode === "incoming" && (
               <div className="flex w-full flex-col items-end gap-[12px]">
-                <div className="flex w-full items-center rounded-bl-[12px] rounded-br-[12px] rounded-tl-[12px] border border-solid border-grey-30 bg-[#EFF1F6] px-[16px] py-[10px]">
+                <div className="flex w-full items-start rounded-bl-[12px] rounded-br-[12px] rounded-tl-[12px] border border-solid border-grey-30 bg-[#EFF1F6] px-[16px] py-[10px]">
                   {feedbackSubmitted ? (
                     <p className="min-w-0 flex-1 text-[16px] font-medium tracking-[-0.32px] text-grey-60">
                       이미 반응을 보낸 조각이에요.
@@ -307,10 +314,10 @@ export default function ExperienceDiaryPage() {
                   ) : (
                     <textarea
                       value={feedbackText}
-                      onChange={(e) => setFeedbackText(e.target.value)}
+                      onChange={handleFeedbackChange}
                       placeholder="반응을 남겨주세요"
                       rows={1}
-                      className="min-w-0 flex-1 resize-none bg-transparent text-[16px] font-medium tracking-[-0.32px] text-grey-90 placeholder:text-grey-50 focus:outline-none"
+                      className="block min-w-0 flex-1 resize-none overflow-hidden bg-transparent text-[16px] font-medium leading-[normal] tracking-[-0.32px] text-grey-90 placeholder:text-grey-50 focus:outline-none"
                     />
                   )}
                 </div>
