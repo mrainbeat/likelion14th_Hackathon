@@ -254,44 +254,46 @@ export default function WeeklyImagePage() {
                     )}
                   </div>
 
-                  {reward.title && (
-                    <p className="text-[20px] font-bold leading-[normal] tracking-[-0.4px] text-grey-90">
-                      {reward.title}
-                    </p>
-                  )}
+                  <div className="flex w-full flex-col items-start gap-[6px]">
+                    {reward.title && (
+                      <p className="text-[20px] font-bold leading-[normal] tracking-[-0.4px] text-grey-90">
+                        {reward.title}
+                      </p>
+                    )}
 
-                  {(reward.categoryKeyword ||
-                    extraKeywords.length > 0 ||
-                    reward.summary) && (
-                    <div className="flex w-full flex-col items-start justify-center gap-[12px] rounded-[4px] border border-solid border-[#E8EBF0] bg-[#F8F9FC] px-[16px] py-[20px]">
-                      {reward.categoryKeyword && (
-                        <div className="flex items-center justify-center rounded-[100px] border border-solid border-[#AFB6C4] px-[8px] py-[4px]">
-                          <p className="whitespace-nowrap text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-grey-80">
-                            {reward.categoryKeyword}
+                    {(reward.categoryKeyword ||
+                      extraKeywords.length > 0 ||
+                      reward.summary) && (
+                      <div className="flex w-full flex-col items-start justify-center gap-[12px] rounded-[4px] border border-solid border-[#E8EBF0] bg-[#F8F9FC] px-[16px] py-[20px]">
+                        {reward.categoryKeyword && (
+                          <div className="flex items-center justify-center rounded-[100px] border border-solid border-[#AFB6C4] px-[8px] py-[4px]">
+                            <p className="whitespace-nowrap text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-grey-80">
+                              {reward.categoryKeyword}
+                            </p>
+                          </div>
+                        )}
+                        {extraKeywords.length > 0 && (
+                          <div className="flex flex-wrap items-center gap-[4px]">
+                            {extraKeywords.map((keyword) => (
+                              <div
+                                key={keyword}
+                                className="flex items-center justify-center rounded-[100px] border border-solid border-[#AFB6C4] px-[8px] py-[4px]"
+                              >
+                                <p className="whitespace-nowrap text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-grey-80">
+                                  {keyword}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {reward.summary && (
+                          <p className="w-full text-[14px] font-normal leading-[1.45] tracking-[-0.35px] text-grey-80">
+                            {reward.summary}
                           </p>
-                        </div>
-                      )}
-                      {extraKeywords.length > 0 && (
-                        <div className="flex flex-wrap items-center gap-[4px]">
-                          {extraKeywords.map((keyword) => (
-                            <div
-                              key={keyword}
-                              className="flex items-center justify-center rounded-[100px] border border-solid border-[#AFB6C4] px-[8px] py-[4px]"
-                            >
-                              <p className="whitespace-nowrap text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-grey-80">
-                                {keyword}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {reward.summary && (
-                        <p className="w-full text-[14px] font-normal leading-[1.45] tracking-[-0.35px] text-grey-80">
-                          {reward.summary}
-                        </p>
-                      )}
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div className="flex w-full flex-col items-center justify-center gap-[17px] py-[80px]">
