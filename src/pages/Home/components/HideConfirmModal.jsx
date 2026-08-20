@@ -1,7 +1,11 @@
+import { useScrollLock } from "../../../hooks/useScrollLock";
+
 const BUTTON_BASE =
   "flex h-[49px] min-w-px flex-1 items-center justify-center whitespace-nowrap rounded-[12px] border-[1.5px] px-[26px] text-[18px] font-semibold leading-[normal] tracking-[-0.36px] text-shadow-[0px_0px_2px_rgba(0,0,0,0.05)]";
 
 export default function HideConfirmModal({ month, day, onCancel, onConfirm }) {
+  useScrollLock();
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-grey-90/25 backdrop-blur-[1px]"

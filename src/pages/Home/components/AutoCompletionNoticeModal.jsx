@@ -1,8 +1,12 @@
+import { useScrollLock } from "../../../hooks/useScrollLock";
+
 export default function AutoCompletionNoticeModal({
   recordedDate,
   onConfirm,
   onClose,
 }) {
+  useScrollLock();
+
   const dateLabel = recordedDate
     ? `${Number(recordedDate.slice(5, 7))}월 ${Number(recordedDate.slice(8, 10))}일 `
     : "";

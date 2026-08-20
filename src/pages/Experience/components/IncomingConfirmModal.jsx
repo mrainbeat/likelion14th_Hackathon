@@ -1,8 +1,12 @@
+import { useScrollLock } from "../../../hooks/useScrollLock";
+
 export default function IncomingConfirmModal({
   keyword,
   onDecline,
   onConfirm,
 }) {
+  useScrollLock();
+
   return (
     <div
       className="absolute inset-0 z-50 flex items-center justify-center bg-grey-90/25 backdrop-blur-[1px]"

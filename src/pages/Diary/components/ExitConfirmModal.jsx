@@ -1,6 +1,10 @@
-﻿const BUTTON_TEXT_SHADOW = { textShadow: "0px 0px 2px rgba(0, 0, 0, 0.05)" };
+﻿import { useScrollLock } from "../../../hooks/useScrollLock";
+
+const BUTTON_TEXT_SHADOW = { textShadow: "0px 0px 2px rgba(0, 0, 0, 0.05)" };
 
 export default function ExitConfirmModal({ onContinue, onExit }) {
+  useScrollLock();
+
   return (
     <div
       className="absolute inset-0 z-50 bg-grey-90/25 backdrop-blur-[1px]"

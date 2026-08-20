@@ -29,6 +29,7 @@ import { fetchMe } from "../../utils/me";
 import { useNickname } from "../MyPage/useNickname";
 
 const NAVIGATE_THRESHOLD = 8;
+const TOAST_DURATION_MS = 2500;
 
 export default function ExperiencePage() {
   const navigate = useNavigate();
@@ -43,6 +44,12 @@ export default function ExperiencePage() {
   const [receiveError, setReceiveError] = useState("");
   const [matchError, setMatchError] = useState("");
   const [credits, setCredits] = useState(null);
+
+  useEffect(() => {
+    if (!receiveError) return;
+    const timer = setTimeout(() => setReceiveError(""), TOAST_DURATION_MS);
+    return () => clearTimeout(timer);
+  }, [receiveError]);
 
   useEffect(() => {
     let alive = true;
@@ -144,7 +151,7 @@ export default function ExperiencePage() {
       );
       setReceiveError(
         error.response?.data?.code === "CREDIT409_1"
-          ? "지금은 경험조각을 받을 수 없어요. 나의 경험조각을 전달하면 다시 받아볼 수 있어요."
+          ? "나의 경험조각을 전달하면 받아볼 수 있어요!"
           : "경험조각을 받아오지 못했어요. 잠시 후 다시 시도해주세요.",
       );
       setConfirmTarget(null);
@@ -386,8 +393,10 @@ export default function ExperiencePage() {
       )}
 
       {receiveError && !confirmTarget && (
-        <div className="absolute inset-x-[16px] bottom-[16px] z-50 rounded-[12px] bg-grey-90/90 px-[16px] py-[12px] text-center text-[14px] font-medium text-grey-0">
-          {receiveError}
+        <div className="pointer-events-none fixed inset-x-0 top-[24px] z-50 flex justify-center px-[16px]">
+          <p className="animate-fade-in max-w-full rounded-[100px] bg-grey-90/90 px-[20px] py-[10px] text-center text-[14px] font-medium tracking-[-0.28px] text-grey-0 shadow-[0_4px_16px_0_rgba(65,68,80,0.16)]">
+            {receiveError}
+          </p>
         </div>
       )}
 
