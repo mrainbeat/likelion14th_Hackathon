@@ -31,10 +31,7 @@ export default function EmailLoginPage() {
         err.response?.status,
         err.response?.data,
       );
-      setError(
-        err.response?.data?.message ??
-          "이메일 또는 비밀번호를 다시 확인해주세요.",
-      );
+      setError("이메일 또는 비밀번호를 다시 확인해주세요.");
     } finally {
       setIsSubmitting(false);
     }

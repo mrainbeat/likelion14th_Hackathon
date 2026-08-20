@@ -4,6 +4,7 @@ import OnboardingHeader from "./components/OnboardingHeader";
 import AlarmTimeModal, { formatAlarmLabel } from "./components/AlarmTimeModal";
 import { requestNotificationPermission } from "../../utils/notification";
 import { Chip, BottomButton } from "./components/OnboardingUi";
+import { loadCachedNickname } from "../../utils/nickname";
 const PRESET_TIMES = ["오후8시", "오후9시", "오후10시", "오후11시"];
 const CUSTOM = "직접입력";
 export default function OnboardingAlarm() {
@@ -13,7 +14,7 @@ export default function OnboardingAlarm() {
   const [customTime, setCustomTime] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   useEffect(() => {
-    const savedNickname = localStorage.getItem("nickname");
+    const savedNickname = loadCachedNickname();
     if (savedNickname) setNickname(savedNickname);
     const savedTime = localStorage.getItem("alarmTime");
     if (savedTime) {

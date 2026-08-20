@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/apiClient";
+import { fetchMe } from "../../utils/me";
 import backIcon from "../../assets/icons/back.svg";
 import logoSymbol from "../../assets/logos/logo-symbol.svg";
 import { TimePill } from "../Onboarding/components/OnboardingUi";
@@ -28,8 +29,7 @@ export default function DayStartTimePage() {
 
   useEffect(() => {
     let alive = true;
-    apiClient
-      .get("/api/me")
+    fetchMe()
       .then((response) => {
         if (!alive) return;
         const result = response.data.result;
@@ -57,7 +57,6 @@ export default function DayStartTimePage() {
     try {
       await apiClient.patch("/api/me", {
         nickname: profile.nickname,
-        job: profile.job,
         reminderTime: profile.reminderTime,
         dayStartTime: selectedTime,
         aiMemoryConsent: profile.aiMemoryConsent,

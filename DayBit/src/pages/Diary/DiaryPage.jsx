@@ -7,6 +7,8 @@ import DiaryTutorial from "./components/DiaryTutorial";
 import ReflectionConsentModal from "./components/ReflectionConsentModal";
 import AnonymousShareModal from "./components/AnonymousShareModal";
 import apiClient from "../../api/apiClient";
+import { fetchMe } from "../../utils/me";
+import { fetchWrittenToday } from "../../utils/todayDiary";
 import backIcon from "../../assets/icons/back.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
 import logoImageDisabled from "../../assets/logos/logo-symbol-disabled.svg";
@@ -82,8 +84,19 @@ export default function DiaryPage() {
 
   useEffect(() => {
     let alive = true;
-    apiClient
-      .get("/api/me")
+    fetchWrittenToday()
+      .then((written) => {
+        if (alive && written) navigate("/home", { replace: true });
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [navigate]);
+
+  useEffect(() => {
+    let alive = true;
+    fetchMe()
       .then((response) => {
         if (!alive) return;
         const result = response.data.result;
@@ -325,8 +338,7 @@ export default function DiaryPage() {
         setRemainingQuestions(0);
       } else {
         setQuestionError(
-          error.response?.data?.message ??
-            "질문을 받아오지 못했어요. 잠시 후 다시 시도해주세요.",
+          "질문을 받아오지 못했어요. 잠시 후 다시 시도해주세요.",
         );
       }
       console.error(

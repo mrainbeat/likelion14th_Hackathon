@@ -65,7 +65,7 @@ function MenuRow({ icon, label, onClick, disabled }) {
       }`}
     >
       <div className="flex items-center gap-[17px]">
-        {icon}
+        <span className={disabled ? "flex opacity-40" : "flex"}>{icon}</span>
         <p
           className={`whitespace-nowrap text-[16px] font-medium leading-[normal] tracking-[-0.32px] ${
             disabled ? "text-grey-40" : "text-grey-70"
@@ -77,7 +77,9 @@ function MenuRow({ icon, label, onClick, disabled }) {
       <img
         src={chevronIcon}
         alt=""
-        className="block h-[15px] w-[9px] shrink-0"
+        className={`block h-[15px] w-[9px] shrink-0 ${
+          disabled ? "opacity-40" : ""
+        }`}
       />
     </button>
   );

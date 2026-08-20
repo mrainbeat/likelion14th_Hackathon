@@ -11,7 +11,7 @@ import trashClearIcon from "../../assets/icons/trash-clear.svg";
 const ROW_DIVIDER_GRADIENT =
   "linear-gradient(90deg, rgba(205, 209, 218, 0.00) 0%, #CDD1DA 15%, #CDD1DA 84.62%, rgba(205, 209, 218, 0.00) 100%)";
 
-const TIME_PATTERN = /^(AM|PM)\s*\d{1,2}:\d{2}$/i;
+const TIME_PATTERN = /^\[?(AM|PM)\s*\d{1,2}:\d{2}\]?$/i;
 
 function firstBlock(content) {
   if (!content) return { time: "", text: "" };

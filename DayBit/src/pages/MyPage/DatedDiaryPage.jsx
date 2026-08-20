@@ -43,7 +43,7 @@ function describeError(error, fallback) {
   if (code === "DIARY409_1") {
     return "그 날짜에는 이미 일기가 있어요. 다른 날짜를 골라주세요.";
   }
-  return error.response?.data?.message ?? fallback;
+  return fallback;
 }
 
 function DevPasswordGate({ onBack, nickname, onVerify }) {
@@ -66,7 +66,9 @@ function DevPasswordGate({ onBack, nickname, onVerify }) {
         err.response?.status,
         err.response?.data,
       );
-      setError(describeError(err, "확인하지 못했어요. 잠시 후 다시 시도해주세요."));
+      setError(
+        describeError(err, "확인하지 못했어요. 잠시 후 다시 시도해주세요."),
+      );
     } finally {
       setIsChecking(false);
     }
@@ -199,9 +201,7 @@ export default function DatedDiaryPage() {
       let found;
       try {
         const response = await getMyExperienceFragments();
-        found = (response.data.result ?? []).find(
-          (f) => f.diaryId === diaryId,
-        );
+        found = (response.data.result ?? []).find((f) => f.diaryId === diaryId);
       } catch (error) {
         console.error(
           "GET /api/v1/experience-fragments/mine 실패:",
@@ -240,7 +240,9 @@ export default function DatedDiaryPage() {
     }
 
     if (aliveRef.current) {
-      setShareStatus("익명화가 아직 안 끝났어요. 경험조각 화면에서 확인해주세요.");
+      setShareStatus(
+        "익명화가 아직 안 끝났어요. 경험조각 화면에서 확인해주세요.",
+      );
     }
   };
 

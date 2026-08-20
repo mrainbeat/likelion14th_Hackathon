@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/apiClient";
 import MonthYearPickerModal from "./components/MonthYearPickerModal";
@@ -12,7 +12,7 @@ import { getServiceToday } from "../../utils/serviceDate";
 
 const ROW_DIVIDER_GRADIENT =
   "linear-gradient(90deg, rgba(205, 209, 218, 0.00) 0%, #CDD1DA 15%, #CDD1DA 84.62%, rgba(205, 209, 218, 0.00) 100%)";
-const TIME_PATTERN = /^(AM|PM)\s*\d{1,2}:\d{2}$/i;
+const TIME_PATTERN = /^\[?(AM|PM)\s*\d{1,2}:\d{2}\]?$/i;
 
 function firstBlock(content) {
   if (!content) return { time: "", text: "" };
@@ -21,7 +21,7 @@ function firstBlock(content) {
   if (TIME_PATTERN.test(head)) {
     return { time: head, text: rest.join(" ").trim() };
   }
-  return { time: "", text: content.split("\n").join(" ").trim() };
+  return { time: "", text: [firstLine, ...rest].join(" ").trim() };
 }
 
 export default function DiaryListPage() {
@@ -35,6 +35,16 @@ export default function DiaryListPage() {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [hideTarget, setHideTarget] = useState(null);
+
+  const rows = useMemo(
+    () =>
+      items.map((item) => {
+        const { time, text } = firstBlock(item.content);
+        const [, month, day] = item.recordedDate.split("-").map(Number);
+        return { item, time, text, month, day };
+      }),
+    [items],
+  );
 
   useEffect(() => {
     let alive = true;
@@ -191,9 +201,7 @@ export default function DiaryListPage() {
         </div>
 
         <div className="flex flex-col gap-[20px]">
-          {items.map((item) => {
-            const { time, text } = firstBlock(item.content);
-            const [, month, day] = item.recordedDate.split("-").map(Number);
+          {rows.map(({ item, time, text, month, day }) => {
             return (
               <div key={item.diaryId} className="flex flex-col gap-[20px]">
                 <div className="flex flex-col items-start gap-[8px]">

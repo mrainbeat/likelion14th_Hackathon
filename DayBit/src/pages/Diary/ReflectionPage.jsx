@@ -8,6 +8,8 @@ import logoImage from "../../assets/logos/logo-symbol.svg";
 import SpeechBubble from "../../components/SpeechBubble";
 import { clearDraft, clearQuestions } from "../../utils/diaryDraft";
 import { clearDraftId, getStoredDraftId } from "../../utils/diaryDraftApi";
+import { getDiaryReward } from "../../utils/devDiary";
+import { markWrittenToday } from "../../utils/todayDiary";
 import AnimatedBlobs from "../../components/AnimatedBlobs";
 import { useSlideUp } from "../../hooks/useSlideUp";
 
@@ -81,12 +83,14 @@ export default function ReflectionPage() {
           });
         }
 
+        markWrittenToday();
         clearDraft();
         clearQuestions();
         clearDraftId();
       } catch (error) {
         const code = error.response?.data?.code;
         if (code === "DIARY409_1") {
+          markWrittenToday();
           clearDraft();
           clearQuestions();
           clearDraftId();
@@ -126,15 +130,15 @@ export default function ReflectionPage() {
     rewardReadyRef.current = (async () => {
       for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt += 1) {
         try {
-          const response = await apiClient.get(`/api/v1/diaries/${diaryId}`);
-          const nextReward = response.data.result?.reward;
+          const response = await getDiaryReward(diaryId);
+          const nextReward = response.data.result;
           if (nextReward && nextReward.status !== "PENDING") {
             if (!cancelled) setReward(nextReward);
             return nextReward;
           }
         } catch (error) {
           console.error(
-            "GET /api/v1/diaries/{diaryId} 실패:",
+            "GET /api/v1/diaries/{diaryId}/reward 실패:",
             error.response?.status,
             error.response?.data,
           );

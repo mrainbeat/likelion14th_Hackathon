@@ -1,30 +1,26 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import OnboardingHeader from "./components/OnboardingHeader";
 import ClearIcon1 from "../../assets/icons/clear1.svg";
 import ClearIcon2 from "../../assets/icons/clear2.svg";
 import { BottomButton } from "./components/OnboardingUi";
+import { clearCachedNickname, saveCachedNickname } from "../../utils/nickname";
 
 export default function OnboardingName() {
   const navigate = useNavigate();
   const [nickname, setNickname] = useState("");
 
-  useEffect(() => {
-    const saved = localStorage.getItem("nickname");
-    if (saved) saved;
-  }, []);
-
   const handleChange = (e) => {
     const value = e.target.value;
     if (value.length <= 8) {
       setNickname(value);
-      localStorage.setItem("nickname", value);
+      saveCachedNickname(value);
     }
   };
 
   const handleClear = () => {
     setNickname("");
-    localStorage.removeItem("nickname");
+    clearCachedNickname();
   };
 
   const isValid = nickname.length >= 2 && nickname.length <= 8;

@@ -31,9 +31,11 @@ export default function SignupPage() {
         err.response?.status,
         err.response?.data,
       );
+      const status = err.response?.status;
       setError(
-        err.response?.data?.message ??
-          "회원가입에 실패했어요. 잠시 후 다시 시도해주세요.",
+        status === 400 || status === 409
+          ? "이미 가입된 이메일이거나 형식이 올바르지 않아요. 다시 확인해주세요."
+          : "회원가입에 실패했어요. 잠시 후 다시 시도해주세요.",
       );
     } finally {
       setIsSubmitting(false);

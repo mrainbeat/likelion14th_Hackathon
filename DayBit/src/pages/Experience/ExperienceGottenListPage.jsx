@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ExperiencePieceSection from "./components/ExperiencePieceSection";
 import backIcon from "../../assets/icons/back.svg";
@@ -26,10 +26,10 @@ export default function ExperienceGottenListPage() {
     };
   }, []);
 
-  const items = fragmentsToPieceItems(
-    receivedFragments,
-    "received",
-    (f) => f.receivedAt,
+  const items = useMemo(
+    () =>
+      fragmentsToPieceItems(receivedFragments, "received", (f) => f.receivedAt),
+    [receivedFragments],
   );
 
   return (

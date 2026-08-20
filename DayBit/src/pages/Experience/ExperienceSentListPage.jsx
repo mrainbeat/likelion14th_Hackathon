@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ExperiencePieceSection from "./components/ExperiencePieceSection";
 import backIcon from "../../assets/icons/back.svg";
@@ -7,18 +7,22 @@ import logoImage from "../../assets/logos/logo-symbol.svg";
 import {
   getMyExperienceFragments,
   fragmentsToPieceItems,
+  getCachedMyFragments,
+  saveCachedMyFragments,
 } from "../../utils/experienceFragments";
 
 export default function ExperienceSentListPage() {
   const navigate = useNavigate();
-  const [fragments, setFragments] = useState([]);
+  const [fragments, setFragments] = useState(() => getCachedMyFragments());
 
   useEffect(() => {
     let alive = true;
     getMyExperienceFragments()
       .then((response) => {
         if (!alive) return;
-        setFragments(response.data.result ?? []);
+        const list = response.data.result ?? [];
+        setFragments(list);
+        saveCachedMyFragments(list);
       })
       .catch((error) => {
         console.error(
@@ -32,10 +36,14 @@ export default function ExperienceSentListPage() {
     };
   }, []);
 
-  const items = fragmentsToPieceItems(
-    fragments.filter((f) => f.status === "APPROVED"),
-    "sent",
-    (f) => f.approvedAt ?? f.createdAt,
+  const items = useMemo(
+    () =>
+      fragmentsToPieceItems(
+        fragments.filter((f) => f.status === "APPROVED"),
+        "sent",
+        (f) => f.approvedAt ?? f.createdAt,
+      ),
+    [fragments],
   );
 
   return (

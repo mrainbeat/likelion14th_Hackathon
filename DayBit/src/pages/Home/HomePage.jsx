@@ -56,6 +56,12 @@ import {
   clearQuestions,
 } from "../../utils/diaryDraft";
 import { homeSessionFlags } from "../../utils/homeSessionFlags";
+import { fetchMe } from "../../utils/me";
+import {
+  fetchWrittenTodayInArchive,
+  isWrittenTodayCached,
+  markWrittenToday,
+} from "../../utils/todayDiary";
 
 const WEEKDAYS = ["월", "화", "수", "목", "금", "토", "일"];
 
@@ -254,8 +260,7 @@ export default function HomePage() {
 
   useEffect(() => {
     let alive = true;
-    apiClient
-      .get("/api/me")
+    fetchMe()
       .then((response) => {
         if (!alive) return;
         setUserId(response.data.result?.id ?? null);
@@ -391,7 +396,8 @@ export default function HomePage() {
     ? (itemByDate.get(today.dateStr) ?? null)
     : awayTodayItem;
   const todayLoaded = isCurrentMonth ? monthLoaded : awayLoaded;
-  const isTodayWritten = Boolean(todayItem);
+  const [writtenToday, setWrittenToday] = useState(isWrittenTodayCached);
+  const isTodayWritten = Boolean(todayItem) || writtenToday;
 
   const calendarMent = useMemo(() => {
     if (isCurrentMonth && !isTodayWritten) {
@@ -471,6 +477,28 @@ export default function HomePage() {
       setShowResumeDraft(true);
     }
   }, [todayLoaded, isTodayWritten]);
+
+  useEffect(() => {
+    if (!todayLoaded) return;
+
+    if (todayItem) {
+      markWrittenToday();
+      return;
+    }
+
+    if (writtenToday || homeSessionFlags.writtenTodayChecked) return;
+    homeSessionFlags.writtenTodayChecked = true;
+
+    let alive = true;
+    fetchWrittenTodayInArchive()
+      .then((written) => {
+        if (alive && written) setWrittenToday(true);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [todayLoaded, todayItem, writtenToday]);
 
   const handleResumeDraft = () => {
     setShowResumeDraft(false);

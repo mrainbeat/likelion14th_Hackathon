@@ -36,7 +36,9 @@ function SettingsRow({ label, to, onClick, disabled }) {
       <img
         src={chevronIcon}
         alt=""
-        className="block h-[15px] w-[9px] shrink-0"
+        className={`block h-[15px] w-[9px] shrink-0 ${
+          disabled ? "opacity-40" : ""
+        }`}
       />
     </button>
   );

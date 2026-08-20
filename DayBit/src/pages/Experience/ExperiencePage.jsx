@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import apiClient from "../../api/apiClient";
 import ExperienceNotificationBubble from "./components/ExperienceNotificationBubble";
 import ExperiencePieceSection, {
   Collapsible,
@@ -26,6 +25,8 @@ import {
   getCachedMyFragments,
   saveCachedMyFragments,
 } from "../../utils/experienceFragments";
+import { fetchMe } from "../../utils/me";
+import { useNickname } from "../MyPage/useNickname";
 
 const NAVIGATE_THRESHOLD = 8;
 
@@ -45,8 +46,7 @@ export default function ExperiencePage() {
 
   useEffect(() => {
     let alive = true;
-    apiClient
-      .get("/api/me")
+    fetchMe()
       .then((response) => {
         if (alive) setCredits(response.data.result?.credit ?? null);
       })
@@ -89,7 +89,9 @@ export default function ExperiencePage() {
       if (!alive) return;
       setMatches(arrivals);
       setMatchError(
-        failed ? "경험조각을 불러오지 못했어요. 잠시 후 다시 시도해주세요." : "",
+        failed
+          ? "경험조각을 불러오지 못했어요. 잠시 후 다시 시도해주세요."
+          : "",
       );
     });
     return () => {
@@ -142,7 +144,7 @@ export default function ExperiencePage() {
       );
       setReceiveError(
         error.response?.data?.code === "CREDIT409_1"
-          ? "크레딧이 부족해요. 경험조각을 더 전달하면 다시 받아볼 수 있어요."
+          ? "지금은 경험조각을 받을 수 없어요. 나의 경험조각을 전달하면 다시 받아볼 수 있어요."
           : "경험조각을 받아오지 못했어요. 잠시 후 다시 시도해주세요.",
       );
       setConfirmTarget(null);
@@ -151,17 +153,21 @@ export default function ExperiencePage() {
     }
   };
 
-  const notificationItems = matches.map((m) => {
-    const keyword = fragmentTopic(m) || "새로운 경험";
-    return {
-      id: m.arrivalId,
-      arrivalId: m.arrivalId,
-      keyword,
-      message: `${keyword}과 관련된 경험조각이 도착했어요.`,
-      relativeTime: formatArrivalTime(m.arrivedAt),
-      stale: isArrivalStale(m.arrivedAt),
-    };
-  });
+  const notificationItems = useMemo(
+    () =>
+      matches.map((m) => {
+        const keyword = fragmentTopic(m) || "새로운 경험";
+        return {
+          id: m.arrivalId,
+          arrivalId: m.arrivalId,
+          keyword,
+          message: `${keyword}과 관련된 경험조각이 도착했어요.`,
+          relativeTime: formatArrivalTime(m.arrivedAt),
+          stale: isArrivalStale(m.arrivedAt),
+        };
+      }),
+    [matches],
+  );
 
   const notificationsTotal = notificationItems.length;
   const useNavigateNotifications = notificationsTotal >= NAVIGATE_THRESHOLD;
@@ -169,27 +175,36 @@ export default function ExperiencePage() {
   const handleNotificationsMoreClick = () =>
     setNotificationsExpanded((prev) => !prev);
 
-  const nickname = localStorage.getItem("nickname") || "";
+  const nickname = useNickname();
 
-  const receivedAll = fragmentsToPieceItems(
-    receivedFragments,
-    "received",
-    (f) => f.receivedAt,
+  const receivedAll = useMemo(
+    () =>
+      fragmentsToPieceItems(receivedFragments, "received", (f) => f.receivedAt),
+    [receivedFragments],
   );
 
-  const pendingAll = fragmentsToPieceItems(
-    fragments.filter(
-      (f) => f.status === "REQUESTED" || f.status === "REVIEW_REQUIRED",
-    ),
-    "pending",
-    (f) => f.createdAt,
-  );
-
-  const sentAll = fragmentsToPieceItems(
-    fragments.filter((f) => f.status === "APPROVED"),
-    "sent",
-    (f) => f.approvedAt ?? f.createdAt,
-  );
+  const { pendingAll, sentAll } = useMemo(() => {
+    const pending = [];
+    const sent = [];
+    fragments.forEach((fragment) => {
+      if (
+        fragment.status === "REQUESTED" ||
+        fragment.status === "REVIEW_REQUIRED"
+      ) {
+        pending.push(fragment);
+      } else if (fragment.status === "APPROVED") {
+        sent.push(fragment);
+      }
+    });
+    return {
+      pendingAll: fragmentsToPieceItems(pending, "pending", (f) => f.createdAt),
+      sentAll: fragmentsToPieceItems(
+        sent,
+        "sent",
+        (f) => f.approvedAt ?? f.createdAt,
+      ),
+    };
+  }, [fragments]);
 
   return (
     <div className="relative flex h-full w-full select-none flex-col overflow-y-auto bg-[#f6f8fa] px-[16px] pb-[36px] pt-[16px] scrollbar-hide [overflow-anchor:none]">
@@ -246,8 +261,8 @@ export default function ExperiencePage() {
                   경험조각 받아보기
                 </p>
                 <p className="w-full text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-[#787E8C]">
-                  {nickname ? `${nickname}님은 ` : ""}"{credits ?? 0}번" 경험조각을
-                  받을 수 있어요
+                  {nickname ? `${nickname}님은 ` : ""}"{credits ?? 0}번"
+                  경험조각을 받을 수 있어요
                 </p>
               </div>
 
@@ -309,7 +324,10 @@ export default function ExperiencePage() {
             <div
               aria-hidden
               className="pointer-events-none absolute inset-x-0 bottom-0"
-              style={{ height: LIST_FADE_HEIGHT, background: LIST_FADE_GRADIENT }}
+              style={{
+                height: LIST_FADE_HEIGHT,
+                background: LIST_FADE_GRADIENT,
+              }}
             />
           )}
         </div>

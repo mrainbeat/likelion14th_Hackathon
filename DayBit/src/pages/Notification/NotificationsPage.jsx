@@ -15,13 +15,12 @@ import {
   loadCachedNotifications,
   saveCachedNotifications,
 } from "../../utils/notificationsCache";
+import { fetchWrittenToday } from "../../utils/todayDiary";
 
 export default function NotificationsPage() {
   const navigate = useNavigate();
   const [items, setItems] = useState(() => loadCachedNotifications() ?? []);
-  const [loaded, setLoaded] = useState(
-    () => loadCachedNotifications() != null,
-  );
+  const [loaded, setLoaded] = useState(() => loadCachedNotifications() != null);
   const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
@@ -50,7 +49,7 @@ export default function NotificationsPage() {
     });
   };
 
-  const handleCardClick = (item) => {
+  const handleCardClick = async (item) => {
     if (!item.read) {
       applyItems((prev) =>
         prev.map((n) => (n.id === item.id ? { ...n, read: true } : n)),
@@ -65,7 +64,14 @@ export default function NotificationsPage() {
     }
 
     const route = notificationRoute(item);
-    if (route) navigate(route);
+    if (!route) return;
+
+    if (item.type === "DIARY_REMINDER") {
+      const written = await fetchWrittenToday().catch(() => false);
+      if (written) return;
+    }
+
+    navigate(route);
   };
 
   const handleReadAll = () => {

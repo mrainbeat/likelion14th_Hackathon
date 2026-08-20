@@ -1,8 +1,8 @@
 ﻿import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
-import apiClient from "../../api/apiClient";
 import { getTodayColorPalette, hexToRgba } from "../../utils/rewardColor";
+import { getDiaryReward } from "../../utils/devDiary";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import LogoSymbol from "../../assets/icons/LogoSymbol.jsx";
@@ -83,16 +83,15 @@ export default function TodayColorPage() {
     if (!isReview || !diaryId || colorComment) return;
 
     let alive = true;
-    apiClient
-      .get(`/api/v1/diaries/${diaryId}`)
+    getDiaryReward(diaryId)
       .then((response) => {
         if (!alive) return;
-        const detail = response.data.result?.reward;
+        const detail = response.data.result;
         if (detail) setReward((prev) => ({ ...prev, ...detail }));
       })
       .catch((error) => {
         console.error(
-          "GET /api/v1/diaries/{diaryId} 실패:",
+          "GET /api/v1/diaries/{diaryId}/reward 실패:",
           error.response?.status,
           error.response?.data,
         );

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import OnboardingHeader from "./components/OnboardingHeader";
 import apiClient from "../../api/apiClient";
 import { BottomButton } from "./components/OnboardingUi";
+import { loadCachedNickname } from "../../utils/nickname";
 const SECTIONS = [
   {
     title: "기본 정보 활용",
@@ -50,8 +51,7 @@ export default function OnboardingConsent() {
   const [errorMessage, setErrorMessage] = useState("");
   const handleAgree = async () => {
     if (isSubmitting) return;
-    const nickname = localStorage.getItem("nickname") || "";
-    const job = "미입력";
+    const nickname = loadCachedNickname();
     const alarmLabel = localStorage.getItem("alarmTime") || "";
     const reminderTime = toServerTime(alarmLabel);
     const dayStartTime = localStorage.getItem("dayStartTime") || null;
@@ -60,7 +60,6 @@ export default function OnboardingConsent() {
     try {
       await apiClient.patch("/api/me", {
         nickname,
-        job,
         reminderTime,
         dayStartTime,
         aiMemoryConsent: true,

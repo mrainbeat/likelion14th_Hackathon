@@ -10,6 +10,8 @@ import {
   clearCachedMyFragments,
 } from "../../utils/experienceFragments";
 import { resetHomeSessionFlags } from "../../utils/homeSessionFlags";
+import { clearCachedNickname } from "../../utils/nickname";
+import { clearWrittenToday } from "../../utils/todayDiary";
 
 export async function login(email, password) {
   clearLocalSession();
@@ -20,34 +22,6 @@ export async function login(email, password) {
 
 export function signup(email, password) {
   return apiClient.post("/api/auth/signup", { email, password });
-}
-
-const REVIEW_PASSWORD = "12341234";
-const REVIEW_SEQ_KEY = "review_account_seq";
-const REVIEW_SEQ_START = 6;
-const REVIEW_MAX_TRIES = 50;
-
-export async function signupNextReviewAccount() {
-  const saved = Number(localStorage.getItem(REVIEW_SEQ_KEY));
-  let seq =
-    Number.isFinite(saved) && saved >= REVIEW_SEQ_START
-      ? saved
-      : REVIEW_SEQ_START;
-
-  for (let attempt = 0; attempt < REVIEW_MAX_TRIES; attempt += 1, seq += 1) {
-    const email = `test${seq}@gmail.com`;
-    try {
-      await signup(email, REVIEW_PASSWORD);
-      localStorage.setItem(REVIEW_SEQ_KEY, String(seq + 1));
-      return email;
-    } catch (error) {
-      const status = error.response?.status;
-      if (status === 400 || status === 409) continue;
-      throw error;
-    }
-  }
-
-  throw new Error("사용 가능한 심사용 계정 번호를 찾지 못했어요.");
 }
 
 export async function resolveDestinationAfterAuth(authUser) {
@@ -80,6 +54,8 @@ export function clearLocalSession() {
   clearCachedWeeklyRewardDetails();
   clearCachedMyFragments();
   clearCachedNotifications();
+  clearCachedNickname();
+  clearWrittenToday();
   resetHomeSessionFlags();
   clearReceivedFragments();
 }
