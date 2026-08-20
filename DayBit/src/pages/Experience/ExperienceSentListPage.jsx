@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ExperiencePieceSection from "./components/ExperiencePieceSection";
 import backIcon from "../../assets/icons/back.svg";
@@ -6,19 +6,23 @@ import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
 import {
   getMyExperienceFragments,
-  fragmentToPieceItem,
+  fragmentsToPieceItems,
+  getCachedMyFragments,
+  saveCachedMyFragments,
 } from "../../utils/experienceFragments";
 
 export default function ExperienceSentListPage() {
   const navigate = useNavigate();
-  const [fragments, setFragments] = useState([]);
+  const [fragments, setFragments] = useState(() => getCachedMyFragments());
 
   useEffect(() => {
     let alive = true;
     getMyExperienceFragments()
       .then((response) => {
         if (!alive) return;
-        setFragments(response.data.result ?? []);
+        const list = response.data.result ?? [];
+        setFragments(list);
+        saveCachedMyFragments(list);
       })
       .catch((error) => {
         console.error(
@@ -32,14 +36,15 @@ export default function ExperienceSentListPage() {
     };
   }, []);
 
-  const items = fragments
-    .filter((f) => f.status === "APPROVED")
-    .sort(
-      (a, b) =>
-        new Date(b.approvedAt ?? b.createdAt) -
-        new Date(a.approvedAt ?? a.createdAt),
-    )
-    .map((f) => fragmentToPieceItem(f, "sent"));
+  const items = useMemo(
+    () =>
+      fragmentsToPieceItems(
+        fragments.filter((f) => f.status === "APPROVED"),
+        "sent",
+        (f) => f.approvedAt ?? f.createdAt,
+      ),
+    [fragments],
+  );
 
   return (
     <div className="relative flex h-full w-full select-none flex-col overflow-y-auto bg-[#f6f8fa] px-[16px] py-[16px] scrollbar-hide">
@@ -56,7 +61,11 @@ export default function ExperienceSentListPage() {
               className="h-full w-full object-contain"
             />
           </button>
-          <button className="size-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0">
+          <button
+            type="button"
+            onClick={() => navigate("/mypage")}
+            className="size-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0 transition-opacity active:opacity-60"
+          >
             <img
               src={profileIcon}
               alt="프로필"
@@ -77,10 +86,11 @@ export default function ExperienceSentListPage() {
         </div>
 
         <ExperiencePieceSection
-          title="전달된 나의 경험조각"
+          title="전달한 나의 경험조각"
+          emptyText="나의 경험조각을 전달할 사람을 찾고있어요:)"
+          hideTag
           items={items}
-          kebabMode="link"
-          onItemKebabClick={(item) =>
+          onItemClick={(item) =>
             navigate(`/experience/sent/${item.id}`, {
               state: { fragment: item.fragment },
             })

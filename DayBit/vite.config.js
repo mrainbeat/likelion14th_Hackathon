@@ -9,12 +9,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: [
-        "favicon.png",
-        "apple-touch-icon.png",
-        "icon.svg",
-        "icon-512-maskable.png",
-      ],
+      includeAssets: ["favicon.png", "apple-touch-icon.png", "icon.svg"],
       manifest: {
         name: "DAYBIT",
         short_name: "DAYBIT",
@@ -22,7 +17,6 @@ export default defineConfig({
         lang: "ko",
         start_url: "/",
         scope: "/",
-
         display: "standalone",
         orientation: "portrait",
         background_color: "#F6F8FA",
@@ -30,17 +24,14 @@ export default defineConfig({
         icons: [
           { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
           { src: "/icon-512.png", sizes: "512x512", type: "image/png" },
-          {
-            src: "/icon-512-maskable.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "maskable",
-          },
         ],
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,svg,png}"],
         navigateFallbackDenylist: [/^\/api/],
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
           {
             urlPattern: /\.(?:woff2?|ttf|otf)$/,

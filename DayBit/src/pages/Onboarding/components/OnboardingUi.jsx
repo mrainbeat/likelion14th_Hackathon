@@ -28,6 +28,33 @@ export function Chip({ label, selected = false, onClick }) {
   );
 }
 
+export function TimePill({ label, widthLabel = label, selected = false, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={selected}
+      className={`grid shrink-0 cursor-pointer place-items-center rounded-[38px] border border-solid px-[12px] py-[8px] text-[16px] leading-[normal] transition-colors ${
+        selected ? "border-grey-80 text-grey-90" : "border-grey-30 text-grey-50"
+      }`}
+    >
+      <span
+        aria-hidden
+        className="invisible col-start-1 row-start-1 whitespace-nowrap font-semibold"
+      >
+        {widthLabel}
+      </span>
+      <span
+        className={`col-start-1 row-start-1 whitespace-nowrap ${
+          selected ? "font-semibold" : "font-medium tracking-[-0.32px]"
+        }`}
+      >
+        {label}
+      </span>
+    </button>
+  );
+}
+
 export function BottomButton({ children = "다음", disabled = false, onClick }) {
   return (
     <button

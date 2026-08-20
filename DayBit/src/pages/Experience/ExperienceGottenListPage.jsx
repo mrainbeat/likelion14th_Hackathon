@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ExperiencePieceSection from "./components/ExperiencePieceSection";
 import backIcon from "../../assets/icons/back.svg";
@@ -6,8 +6,8 @@ import profileIcon from "../../assets/icons/profile.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
 import {
   getReceivedFragments,
-  removeReceivedFragment,
-  fragmentToPieceItem,
+  loadReceivedFragments,
+  fragmentsToPieceItems,
 } from "../../utils/experienceFragments";
 
 export default function ExperienceGottenListPage() {
@@ -16,15 +16,21 @@ export default function ExperienceGottenListPage() {
     getReceivedFragments(),
   );
 
-  const items = receivedFragments
-    .slice()
-    .sort((a, b) => new Date(b.receivedAt) - new Date(a.receivedAt))
-    .map((f) => fragmentToPieceItem(f, "received"));
+  useEffect(() => {
+    let alive = true;
+    loadReceivedFragments().then(({ fragments }) => {
+      if (alive) setReceivedFragments(fragments);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
-  const handleRemove = (item) => {
-    removeReceivedFragment(item.id);
-    setReceivedFragments(getReceivedFragments());
-  };
+  const items = useMemo(
+    () =>
+      fragmentsToPieceItems(receivedFragments, "received", (f) => f.receivedAt),
+    [receivedFragments],
+  );
 
   return (
     <div className="relative flex h-full w-full select-none flex-col overflow-y-auto bg-[#f6f8fa] px-[16px] py-[16px] scrollbar-hide">
@@ -41,7 +47,11 @@ export default function ExperienceGottenListPage() {
               className="h-full w-full object-contain"
             />
           </button>
-          <button className="size-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0">
+          <button
+            type="button"
+            onClick={() => navigate("/mypage")}
+            className="size-[38px] shrink-0 cursor-pointer bg-transparent border-none p-0 transition-opacity active:opacity-60"
+          >
             <img
               src={profileIcon}
               alt="프로필"
@@ -64,14 +74,11 @@ export default function ExperienceGottenListPage() {
         <ExperiencePieceSection
           title="받은 경험조각"
           items={items}
-          kebabMode="options"
           onItemClick={(item) =>
             navigate(`/experience/diary/${item.id}`, {
               state: { mode: "incoming", fragment: item.fragment },
             })
           }
-          onHideItem={handleRemove}
-          onDeleteItem={handleRemove}
         />
       </div>
     </div>

@@ -1,11 +1,12 @@
 ﻿import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
-import apiClient from "../../api/apiClient";
 import { getTodayColorPalette, hexToRgba } from "../../utils/rewardColor";
+import { getDiaryReward } from "../../utils/devDiary";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import LogoSymbol from "../../assets/icons/LogoSymbol.jsx";
+import { useSlideUp } from "../../hooks/useSlideUp";
 
 const BLOBS = [
   {
@@ -55,8 +56,9 @@ export default function TodayColorPage() {
 
   const isReview = location.state?.mode === "review";
   const diaryId = location.state?.diaryId ?? null;
+  const fromMonth = location.state?.fromMonth ?? null;
   const [reward, setReward] = useState(location.state?.reward ?? null);
-
+  const slideUpRef = useSlideUp(!isReview);
   const isPending = reward?.status === "PENDING";
   const isReady = reward?.status === "COMPLETED" && reward?.colorHex;
 
@@ -81,16 +83,15 @@ export default function TodayColorPage() {
     if (!isReview || !diaryId || colorComment) return;
 
     let alive = true;
-    apiClient
-      .get(`/api/v1/diaries/${diaryId}`)
+    getDiaryReward(diaryId)
       .then((response) => {
         if (!alive) return;
-        const detail = response.data.result?.reward;
+        const detail = response.data.result;
         if (detail) setReward((prev) => ({ ...prev, ...detail }));
       })
       .catch((error) => {
         console.error(
-          "GET /api/v1/diaries/{diaryId} 실패:",
+          "GET /api/v1/diaries/{diaryId}/reward 실패:",
           error.response?.status,
           error.response?.data,
         );
@@ -102,10 +103,13 @@ export default function TodayColorPage() {
   }, [isReview, diaryId, colorComment]);
 
   const handleBack = () =>
-    navigate(isReview ? "/home" : "/diary", { replace: true });
+    navigate(isReview ? "/home" : "/diary", {
+      replace: true,
+      state: isReview && fromMonth ? { viewMonth: fromMonth } : undefined,
+    });
   const handleFinish = () => {
     if (isReview && diaryId) {
-      navigate(`/home/diaries/${diaryId}`);
+      navigate(`/home/diaries/${diaryId}`, { state: { fromMonth } });
       return;
     }
     navigate("/home", { replace: true });
@@ -145,10 +149,18 @@ export default function TodayColorPage() {
       </div>
 
       <div className="absolute left-0 top-0 z-10 flex w-full flex-col gap-[24px] px-[16px] py-[16px]">
-        <div className="flex w-full items-center justify-between">
-          <button type="button" onClick={handleBack} className="cursor-pointer">
-            <img src={backIcon} alt="뒤로가기" className="size-[32px]" />
-          </button>
+        <div
+          className={`flex w-full items-center ${isReview ? "justify-between" : "justify-end"}`}
+        >
+          {isReview && (
+            <button
+              type="button"
+              onClick={handleBack}
+              className="cursor-pointer"
+            >
+              <img src={backIcon} alt="뒤로가기" className="size-[32px]" />
+            </button>
+          )}
           <button
             type="button"
             onClick={() => navigate("/mypage")}
@@ -172,7 +184,10 @@ export default function TodayColorPage() {
         </p>
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 top-[143px] z-10">
+      <div
+        ref={slideUpRef}
+        className="absolute inset-x-0 bottom-0 top-[143px] z-10"
+      >
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 rounded-[12px]"
@@ -181,7 +196,6 @@ export default function TodayColorPage() {
             filter: "blur(15px)",
           }}
         />
-
         <div className="relative flex h-full flex-col overflow-hidden rounded-t-[12px] bg-grey-0">
           <div
             className="pointer-events-none absolute rounded-[50%]"
@@ -214,7 +228,7 @@ export default function TodayColorPage() {
               }}
             />
 
-            <div className="h-full overflow-y-auto scrollbar-hide px-[36px] pb-[56px] pt-[32px]">
+            <div className="h-full overflow-y-auto scrollbar-hide px-[36px] pb-[80px]">
               {isReady ? (
                 <div className="flex w-full flex-col items-start gap-[20px]">
                   <div className="flex w-full flex-col items-start gap-[4px]">

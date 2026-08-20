@@ -4,6 +4,7 @@ import OnboardingHeader from "./components/OnboardingHeader";
 import AlarmTimeModal, { formatAlarmLabel } from "./components/AlarmTimeModal";
 import { requestNotificationPermission } from "../../utils/notification";
 import { Chip, BottomButton } from "./components/OnboardingUi";
+import { loadCachedNickname } from "../../utils/nickname";
 const PRESET_TIMES = ["오후8시", "오후9시", "오후10시", "오후11시"];
 const CUSTOM = "직접입력";
 export default function OnboardingAlarm() {
@@ -13,7 +14,7 @@ export default function OnboardingAlarm() {
   const [customTime, setCustomTime] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   useEffect(() => {
-    const savedNickname = localStorage.getItem("nickname");
+    const savedNickname = loadCachedNickname();
     if (savedNickname) setNickname(savedNickname);
     const savedTime = localStorage.getItem("alarmTime");
     if (savedTime) {
@@ -52,14 +53,14 @@ export default function OnboardingAlarm() {
     <div className="relative h-full w-full select-none overflow-hidden bg-background">
       <OnboardingHeader
         step={2}
-        onBack={() => navigate("/onboarding/job")}
+        onBack={() => navigate("/onboarding/day-start-time")}
         lines={[
           `좋아요 ${nickname || "회원"}님!`,
           "일기작성을 돕기 위한 질문을 몇개 할게요!",
         ]}
         caption="설정에서 언제든지 변경 가능해요."
       />
-      <div className="absolute left-[9.23%] right-[9.23%] top-[389px] flex flex-col gap-[16px]">
+      <div className="absolute left-[9.23%] right-[9.23%] top-[332px] flex flex-col gap-[16px]">
         {" "}
         <div className="flex flex-col items-start gap-[6px]">
           <p className="whitespace-nowrap text-[20px] font-semibold leading-[1.19] tracking-[-0.4px] text-grey-90">

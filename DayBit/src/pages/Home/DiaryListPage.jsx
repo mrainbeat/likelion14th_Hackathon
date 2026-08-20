@@ -1,33 +1,32 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/apiClient";
 import MonthYearPickerModal from "./components/MonthYearPickerModal";
 import DiaryOptionsMenu from "./components/DiaryOptionsMenu";
 import DeleteConfirmModal from "./components/DeleteConfirmModal";
+import HideConfirmModal from "./components/HideConfirmModal";
 import arrowIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import kebabIcon from "../../assets/icons/menu.svg";
+import { getServiceToday } from "../../utils/serviceDate";
 
-function getSeoulToday() {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
-  const map = Object.fromEntries(parts.map((p) => [p.type, p.value]));
-  return { year: Number(map.year), month: Number(map.month) };
-}
+const ROW_DIVIDER_GRADIENT =
+  "linear-gradient(90deg, rgba(205, 209, 218, 0.00) 0%, #CDD1DA 15%, #CDD1DA 84.62%, rgba(205, 209, 218, 0.00) 100%)";
+const TIME_PATTERN = /^\[?(AM|PM)\s*\d{1,2}:\d{2}\]?$/i;
 
 function firstBlock(content) {
   if (!content) return { time: "", text: "" };
   const [firstLine, ...rest] = content.split("\n");
-  return { time: firstLine?.trim() ?? "", text: rest.join(" ").trim() };
+  const head = firstLine?.trim() ?? "";
+  if (TIME_PATTERN.test(head)) {
+    return { time: head, text: rest.join(" ").trim() };
+  }
+  return { time: "", text: [firstLine, ...rest].join(" ").trim() };
 }
 
 export default function DiaryListPage() {
   const navigate = useNavigate();
-  const [today] = useState(() => getSeoulToday());
+  const [today] = useState(() => getServiceToday());
 
   const [viewYear, setViewYear] = useState(today.year);
   const [viewMonth, setViewMonth] = useState(today.month);
@@ -35,6 +34,17 @@ export default function DiaryListPage() {
   const [showPicker, setShowPicker] = useState(false);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [hideTarget, setHideTarget] = useState(null);
+
+  const rows = useMemo(
+    () =>
+      items.map((item) => {
+        const { time, text } = firstBlock(item.content);
+        const [, month, day] = item.recordedDate.split("-").map(Number);
+        return { item, time, text, month, day };
+      }),
+    [items],
+  );
 
   useEffect(() => {
     let alive = true;
@@ -89,6 +99,29 @@ export default function DiaryListPage() {
     setDeleteTarget(item);
   };
 
+  const handleRequestHide = (item) => {
+    setOpenMenuId(null);
+    setHideTarget(item);
+  };
+
+  const handleConfirmHide = async () => {
+    if (!hideTarget) return;
+    const diaryId = hideTarget.diaryId;
+    setHideTarget(null);
+
+    try {
+      await apiClient.patch(`/api/v1/diaries/${diaryId}/hide`);
+      setItems((prev) => prev.filter((item) => item.diaryId !== diaryId));
+    } catch (error) {
+      alert("일기를 숨기지 못했어요. 다시 시도해주세요.");
+      console.error(
+        "PATCH /api/v1/diaries/{diaryId}/hide 실패:",
+        error.response?.status,
+        error.response?.data,
+      );
+    }
+  };
+
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
     const diaryId = deleteTarget.diaryId;
@@ -108,7 +141,7 @@ export default function DiaryListPage() {
   };
 
   return (
-    <div className="relative flex h-full w-full select-none flex-col gap-[12px] overflow-y-auto bg-[#f6f8fa] px-[16px] py-[16px] scrollbar-hide">
+    <div className="relative flex h-full w-full select-none flex-col gap-[24px] overflow-y-auto bg-[#f6f8fa] p-[16px] scrollbar-hide">
       <div className="flex w-full items-center justify-between">
         <button
           type="button"
@@ -167,12 +200,10 @@ export default function DiaryListPage() {
           </button>
         </div>
 
-        <div className="flex flex-col gap-[12px]">
-          {items.map((item) => {
-            const { time, text } = firstBlock(item.content);
-            const [, month, day] = item.recordedDate.split("-").map(Number);
+        <div className="flex flex-col gap-[20px]">
+          {rows.map(({ item, time, text, month, day }) => {
             return (
-              <div key={item.diaryId} className="flex flex-col gap-[12px]">
+              <div key={item.diaryId} className="flex flex-col gap-[20px]">
                 <div className="flex flex-col items-start gap-[8px]">
                   <div className="flex w-full items-center justify-between">
                     <p className="whitespace-nowrap text-[18px] font-semibold leading-[normal] tracking-[-0.36px] text-grey-90">
@@ -197,6 +228,7 @@ export default function DiaryListPage() {
                       {openMenuId === item.diaryId && (
                         <DiaryOptionsMenu
                           onClose={() => setOpenMenuId(null)}
+                          onHide={() => handleRequestHide(item)}
                           onDelete={() => handleRequestDelete(item)}
                           hideQuestionButton
                         />
@@ -208,15 +240,20 @@ export default function DiaryListPage() {
                     onClick={() => navigate(`/home/diaries/${item.diaryId}`)}
                     className="flex w-full cursor-pointer items-center gap-[5px] overflow-hidden text-left"
                   >
-                    <p className="shrink-0 whitespace-nowrap text-[16px] font-medium tracking-[-0.32px] text-grey-70">
-                      {time}
-                    </p>
-                    <p className="min-w-0 flex-1 truncate text-[16px] font-medium tracking-[-0.32px] text-grey-70">
+                    {time && (
+                      <p className="shrink-0 whitespace-nowrap text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-[#AFB6C4]">
+                        {time}
+                      </p>
+                    )}
+                    <p className="min-w-0 flex-1 truncate text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-[#AFB6C4]">
                       {text}
                     </p>
                   </button>
                 </div>
-                <div className="h-px w-full bg-grey-30" />
+                <div
+                  className="h-px w-full shrink-0"
+                  style={{ background: ROW_DIVIDER_GRADIENT }}
+                />
               </div>
             );
           })}
@@ -236,6 +273,15 @@ export default function DiaryListPage() {
           day={Number(deleteTarget.recordedDate.split("-")[2])}
           onCancel={() => setDeleteTarget(null)}
           onDelete={handleConfirmDelete}
+        />
+      )}
+
+      {hideTarget && (
+        <HideConfirmModal
+          month={Number(hideTarget.recordedDate.split("-")[1])}
+          day={Number(hideTarget.recordedDate.split("-")[2])}
+          onCancel={() => setHideTarget(null)}
+          onConfirm={handleConfirmHide}
         />
       )}
     </div>

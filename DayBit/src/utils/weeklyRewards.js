@@ -8,36 +8,38 @@ export function getWeeklyRewardDetail(weeklyRewardId) {
   return apiClient.get(`/api/v1/weekly-rewards/${weeklyRewardId}`);
 }
 
-const VIEWED_KEY = "weekly_reward_viewed_ids";
-const NOTIFIED_KEY = "weekly_reward_notified_ids";
+export function markWeeklyRewardViewed(weeklyRewardId) {
+  return apiClient.patch(`/api/v1/weekly-rewards/${weeklyRewardId}/view`);
+}
 
-function readIdSet(key) {
+const DETAIL_CACHE_PREFIX = "weekly_reward_detail_";
+
+export function getCachedWeeklyRewardDetail(weeklyRewardId) {
   try {
-    const raw = localStorage.getItem(key);
-    return raw ? new Set(JSON.parse(raw)) : new Set();
+    const raw = localStorage.getItem(`${DETAIL_CACHE_PREFIX}${weeklyRewardId}`);
+    return raw ? JSON.parse(raw) : null;
   } catch {
-    return new Set();
+    return null;
   }
 }
 
-function addId(key, id) {
-  const set = readIdSet(key);
-  set.add(id);
-  localStorage.setItem(key, JSON.stringify(Array.from(set)));
+export function saveCachedWeeklyRewardDetail(weeklyRewardId, reward) {
+  try {
+    localStorage.setItem(
+      `${DETAIL_CACHE_PREFIX}${weeklyRewardId}`,
+      JSON.stringify(reward),
+    );
+  } catch {
+    return;
+  }
 }
 
-export function isWeeklyRewardViewed(id) {
-  return readIdSet(VIEWED_KEY).has(id);
-}
-
-export function markWeeklyRewardViewed(id) {
-  addId(VIEWED_KEY, id);
-}
-
-export function isWeeklyRewardNotified(id) {
-  return readIdSet(NOTIFIED_KEY).has(id);
-}
-
-export function markWeeklyRewardNotified(id) {
-  addId(NOTIFIED_KEY, id);
+export function clearCachedWeeklyRewardDetails() {
+  try {
+    Object.keys(localStorage)
+      .filter((key) => key.startsWith(DETAIL_CACHE_PREFIX))
+      .forEach((key) => localStorage.removeItem(key));
+  } catch {
+    return;
+  }
 }

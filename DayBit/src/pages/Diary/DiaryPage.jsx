@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useLayoutEffect, useRef, useMemo } from "react";
+﻿import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCurrentTime } from "../../hooks/useCurrentTime";
 import QuestionModal from "./components/QuestionModal";
@@ -7,11 +7,30 @@ import DiaryTutorial from "./components/DiaryTutorial";
 import ReflectionConsentModal from "./components/ReflectionConsentModal";
 import AnonymousShareModal from "./components/AnonymousShareModal";
 import apiClient from "../../api/apiClient";
+import { fetchMe } from "../../utils/me";
+import { fetchWrittenToday } from "../../utils/todayDiary";
 import backIcon from "../../assets/icons/back.svg";
 import logoImage from "../../assets/logos/logo-symbol.svg";
 import logoImageDisabled from "../../assets/logos/logo-symbol-disabled.svg";
 import profileIcon from "../../assets/icons/profile.svg";
-import { saveDraft, clearDraft, loadTodayDraft } from "../../utils/diaryDraft";
+import {
+  saveDraft,
+  clearDraft,
+  loadTodayDraft,
+  getLastTimestampAt,
+  markTimestampAppended,
+  loadTodayQuestions,
+  saveQuestions,
+} from "../../utils/diaryDraft";
+import {
+  getServerDraft,
+  putServerDraft,
+  sendDraftHeartbeat,
+  stopDraftEditing,
+  getStoredDraftId,
+} from "../../utils/diaryDraftApi";
+
+const HEARTBEAT_INTERVAL_MS = 30000;
 
 function htmlToPlainText(html) {
   if (!html) return "";
@@ -25,31 +44,27 @@ function htmlToPlainText(html) {
     .replace(/\u200B/g, "")
     .trim();
 }
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
 
 export default function DiaryPage() {
   const navigate = useNavigate();
   const { dateStr } = useCurrentTime() || {};
   const [content, setContent] = useState("");
+  const [currentText, setCurrentText] = useState("");
   const [initialText, setInitialText] = useState("");
   const [hadPriorContent, setHadPriorContent] = useState(false);
-  const [questions, setQuestions] = useState(() => {
-    try {
-      const savedQuestions = localStorage.getItem("diary_questions");
-      return savedQuestions ? JSON.parse(savedQuestions) : [];
-    } catch (error) {
-      return [];
-    }
-  });
+  const [questions, setQuestions] = useState(loadTodayQuestions);
   const [remainingQuestions, setRemainingQuestions] = useState(null);
   const [isAskingQuestion, setIsAskingQuestion] = useState(false);
   const [questionError, setQuestionError] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
 
-  const [tutorialStep, setTutorialStep] = useState(() => {
-    const seen = localStorage.getItem("diary_tutorial_seen");
-    return seen ? null : 0;
-  });
+  const [tutorialStep, setTutorialStep] = useState(null);
 
   const [showReflectionConsent, setShowReflectionConsent] = useState(false);
   const [showAnonymousShare, setShowAnonymousShare] = useState(false);
@@ -57,12 +72,83 @@ export default function DiaryPage() {
   const [tutorialSpot, setTutorialSpot] = useState(null);
 
   const isTimeAppended = useRef(false);
+  const hadLocalDraftRef = useRef(false);
+  const draftIdRef = useRef(getStoredDraftId());
   const editorRef = useRef(null);
   const scrollContainerRef = useRef(null);
   const pageRef = useRef(null);
   const questionButtonRef = useRef(null);
   const completeButtonRef = useRef(null);
   const profileButtonRef = useRef(null);
+  const diaryTutorialKeyRef = useRef(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetchWrittenToday()
+      .then((written) => {
+        if (alive && written) navigate("/home", { replace: true });
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [navigate]);
+
+  useEffect(() => {
+    let alive = true;
+    fetchMe()
+      .then((response) => {
+        if (!alive) return;
+        const result = response.data.result;
+        if (result?.tutorialCompleted !== false) return;
+
+        const key = `diary_tutorial_seen_${result.id}`;
+        diaryTutorialKeyRef.current = key;
+        if (localStorage.getItem(key)) return;
+
+        setTutorialStep(0);
+      })
+      .catch((error) => {
+        console.error(
+          "GET /api/me 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    apiClient
+      .get("/api/v1/ai/writing-help/questions")
+      .then((response) => {
+        if (!alive) return;
+        const result = response.data.result;
+        const list = Array.isArray(result) ? result : (result?.questions ?? []);
+        const synced = list.map(
+          ({ questionId, questionText, contextType }) => ({
+            questionId,
+            questionText,
+            contextType,
+          }),
+        );
+        setQuestions(synced);
+        saveQuestions(synced);
+      })
+      .catch((error) => {
+        console.error(
+          "GET /api/v1/ai/writing-help/questions 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -70,8 +156,15 @@ export default function DiaryPage() {
       .get("/api/v1/ai/writing-help/status")
       .then((response) => {
         if (!alive) return;
-        const { available, remainingCount } = response.data.result;
+        const { available, remainingCount, usedCount } = response.data.result;
         setRemainingQuestions(available ? remainingCount : 0);
+        if (typeof usedCount !== "number") return;
+        setQuestions((prev) => {
+          if (prev.length <= usedCount) return prev;
+          const synced = prev.slice(0, usedCount);
+          saveQuestions(synced);
+          return synced;
+        });
       })
       .catch((error) => {
         console.error(
@@ -95,14 +188,12 @@ export default function DiaryPage() {
     const minutes = String(now.getMinutes()).padStart(2, "0");
     const ampm = hours >= 12 ? "PM" : "AM";
     hours = hours % 12 || 12;
-    return `${ampm} ${hours}:${minutes}`;
+    return `[${ampm} ${hours}:${minutes}]`;
   };
 
   useEffect(() => {
     if (isTimeAppended.current) return;
 
-    const timeStr = getFormattedTime();
-    const timeHtml = `<span data-time-badge style="color: #5F6473; font-weight: 500;">${timeStr}</span><br><span style="color: #2D3038;">\u200B</span>`;
     const savedDiary = loadTodayDraft();
 
     let priorText = "";
@@ -112,9 +203,21 @@ export default function DiaryPage() {
       priorText = (tempPrior.textContent || tempPrior.innerText || "").trim();
     }
 
-    const newContent = savedDiary
-      ? `${savedDiary}<br><br>${timeHtml}`
-      : timeHtml;
+    const lastTimestampAt = getLastTimestampAt();
+    const withinTenMinutes =
+      lastTimestampAt !== null && Date.now() - lastTimestampAt < 10 * 60 * 1000;
+
+    let newContent;
+    if (withinTenMinutes) {
+      newContent = savedDiary || "";
+    } else {
+      const timeStr = getFormattedTime();
+      const timeHtml = `<span data-time-badge style="color: #5F6473; font-weight: 500;">${timeStr}</span><br><span style="color: #2D3038;">\u200B</span>`;
+      newContent = savedDiary ? `${savedDiary}<br><br>${timeHtml}` : timeHtml;
+      markTimestampAppended();
+    }
+
+    hadLocalDraftRef.current = priorText.length > 0;
 
     if (priorText.length > 0) {
       setHadPriorContent(true);
@@ -124,9 +227,9 @@ export default function DiaryPage() {
       editorRef.current.innerHTML = newContent;
       setContent(newContent);
 
-      const temp = document.createElement("div");
-      temp.innerHTML = newContent;
-      setInitialText(temp.textContent || temp.innerText || "");
+      const plainText = editorRef.current.textContent || "";
+      setInitialText(plainText);
+      setCurrentText(plainText);
 
       setTimeout(() => {
         try {
@@ -143,8 +246,53 @@ export default function DiaryPage() {
     isTimeAppended.current = true;
   }, []);
 
+  useEffect(() => {
+    let alive = true;
+
+    getServerDraft()
+      .then((draft) => {
+        if (!alive) return;
+        if (draft?.draftId != null) draftIdRef.current = draft.draftId;
+        const text = draft?.content?.trim();
+        if (!text || hadLocalDraftRef.current) return;
+
+        const el = editorRef.current;
+        if (!el) return;
+
+        const restoredHtml = escapeHtml(text).replace(/\n/g, "<br>");
+        el.innerHTML = `${restoredHtml}<br><br>${el.innerHTML}`;
+
+        setContent(el.innerHTML);
+        const plainText = el.textContent || "";
+        setInitialText(plainText);
+        setCurrentText(plainText);
+        setHadPriorContent(true);
+      })
+      .catch((error) => {
+        console.error(
+          "GET /api/v1/diaries/draft 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const hasUserWritten =
+    hadPriorContent ||
+    (currentText !== initialText && currentText.trim().length > 0);
+  useEffect(() => {
+    if (!hasUserWritten) return;
+    const timer = setTimeout(() => {
+      saveDraft(content);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [content, hasUserWritten]);
   const handleInput = (e) => {
     setContent(e.currentTarget.innerHTML);
+    setCurrentText(e.currentTarget.textContent || "");
   };
 
   const handlePaste = (e) => {
@@ -159,16 +307,20 @@ export default function DiaryPage() {
     setIsAskingQuestion(true);
     setQuestionError("");
     try {
+      const latestContent = htmlToPlainText(
+        editorRef.current?.innerHTML ?? content,
+      );
       const response = await apiClient.post(
         "/api/v1/ai/writing-help/questions",
-        { currentContent: htmlToPlainText(content) },
+        latestContent ? { currentContent: latestContent } : undefined,
       );
-      const { questionId, questionText, remainingCount } = response.data.result;
+      const { questionId, questionText, remainingCount, contextType } =
+        response.data.result;
 
       setRemainingQuestions(remainingCount);
       setQuestions((prev) => {
-        const updated = [...prev, { questionId, questionText }];
-        localStorage.setItem("diary_questions", JSON.stringify(updated));
+        const updated = [...prev, { questionId, questionText, contextType }];
+        saveQuestions(updated);
         return updated;
       });
 
@@ -186,8 +338,7 @@ export default function DiaryPage() {
         setRemainingQuestions(0);
       } else {
         setQuestionError(
-          error.response?.data?.message ??
-            "질문을 받아오지 못했어요. 잠시 후 다시 시도해주세요.",
+          "질문을 받아오지 못했어요. 잠시 후 다시 시도해주세요.",
         );
       }
       console.error(
@@ -200,17 +351,6 @@ export default function DiaryPage() {
     }
   };
 
-  const currentText = useMemo(() => {
-    if (typeof document === "undefined") return "";
-    const temp = document.createElement("div");
-    temp.innerHTML = content;
-    return temp.textContent || temp.innerText || "";
-  }, [content]);
-
-  const hasUserWritten =
-    hadPriorContent ||
-    (currentText !== initialText && currentText.trim().length > 0);
-
   useEffect(() => {
     if (!hasUserWritten) return;
     const timer = setTimeout(() => {
@@ -219,13 +359,35 @@ export default function DiaryPage() {
     return () => clearTimeout(timer);
   }, [content, hasUserWritten]);
 
+  useEffect(() => {
+    if (!hasUserWritten) return;
+    const timer = setTimeout(() => {
+      putServerDraft(
+        htmlToPlainText(content),
+        pendingUseDiaryContent,
+        draftIdRef.current,
+      )
+        .then((result) => {
+          if (result?.draftId != null) draftIdRef.current = result.draftId;
+        })
+        .catch((error) => {
+          console.error(
+            "PUT /api/v1/diaries/draft 실패:",
+            error.response?.status,
+            error.response?.data,
+          );
+        });
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [content, hasUserWritten, pendingUseDiaryContent]);
+
   const performBack = () => {
     if (hasUserWritten) {
       saveDraft(content);
     } else {
       clearDraft();
     }
-    localStorage.setItem("diary_questions", JSON.stringify(questions));
+    saveQuestions(questions);
     navigate("/home", { replace: true });
   };
 
@@ -249,10 +411,52 @@ export default function DiaryPage() {
     setShowReflectionConsent(true);
   };
 
+  useEffect(() => {
+    const beat = () => {
+      if (document.visibilityState !== "visible") return;
+      const draftId = draftIdRef.current;
+      if (draftId == null) return;
+      sendDraftHeartbeat(draftId).catch((error) => {
+        console.error(
+          "PATCH /api/v1/diaries/draft/{draftId}/editing/heartbeat 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      });
+    };
+
+    beat();
+    const timer = setInterval(beat, HEARTBEAT_INTERVAL_MS);
+    document.addEventListener("visibilitychange", beat);
+
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", beat);
+      const draftId = draftIdRef.current;
+      if (draftId == null) return;
+      stopDraftEditing(draftId).catch(() => {});
+    };
+  }, []);
+
   const handleReflectionChoice = (useDiaryContent) => {
     setShowReflectionConsent(false);
     setPendingUseDiaryContent(useDiaryContent);
     setShowAnonymousShare(true);
+    putServerDraft(
+      htmlToPlainText(content),
+      useDiaryContent,
+      draftIdRef.current,
+    )
+      .then((result) => {
+        if (result?.draftId != null) draftIdRef.current = result.draftId;
+      })
+      .catch((error) => {
+        console.error(
+          "PUT /api/v1/diaries/draft 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      });
   };
 
   const handleAnonymousShareChoice = (shareAnonymously) => {
@@ -266,13 +470,20 @@ export default function DiaryPage() {
 
     saveDraft(content);
     navigate("/diary/reflection", {
-      state: { content: plainText, useDiaryContent, shareAnonymously },
+      state: {
+        content: plainText,
+        useDiaryContent,
+        shareAnonymously,
+        draftId: draftIdRef.current,
+      },
     });
   };
 
   const handleTutorialNext = () => {
     if (tutorialStep === 3) {
-      localStorage.setItem("diary_tutorial_seen", "true");
+      if (diaryTutorialKeyRef.current) {
+        localStorage.setItem(diaryTutorialKeyRef.current, "true");
+      }
       setTutorialStep(null);
       return;
     }
@@ -331,7 +542,7 @@ export default function DiaryPage() {
       <div className="absolute bottom-0 left-0 right-0 w-full h-[42px] bg-[#F6F8FA] z-30 pointer-events-none"></div>
 
       <div className="shrink-0 pt-[16px] px-[16px] relative z-20">
-        <header className="flex justify-between items-center mb-[12px] w-full">
+        <header className="flex justify-between items-center mb-[24px] w-full">
           <button
             type="button"
             onClick={handleBack}
@@ -400,13 +611,13 @@ export default function DiaryPage() {
             </div>
 
             <div className="flex flex-col gap-[10px] w-full shrink-0 ">
-              <div className="flex w-full gap-[14px] z-20 relative">
+              <div className="flex w-full gap-[12px] items-center z-20 relative">
                 <button
                   ref={questionButtonRef}
                   type="button"
                   onClick={handleGetQuestions}
                   disabled={isAllQuestionsLoaded || isAskingQuestion}
-                  className={`w-[217px] h-[48px] border-[1.5px] bg-grey-0 rounded-[12px] px-[26px] text-[18px] font-semibold tracking-[-0.36px] flex items-center justify-center gap-[6px] whitespace-nowrap active:bg-gray-50 transition-all ${
+                  className={`shrink-0 h-[48px] border-[1.5px] bg-grey-0 rounded-[12px] px-[26px] text-[18px] font-semibold tracking-[-0.36px] flex items-center justify-center gap-[6px] whitespace-nowrap active:bg-gray-50 transition-all ${
                     isAllQuestionsLoaded
                       ? "border-[#E8EBF0] text-grey-30"
                       : "border-grey-60 text-grey-95"
@@ -417,12 +628,20 @@ export default function DiaryPage() {
                     alt="로고"
                     className="w-[16px] h-[20px] object-contain shrink-0"
                   />
-                  <span className="whitespace-nowrap">
-                    {isAskingQuestion
-                      ? "질문 받는 중..."
-                      : isAllQuestionsLoaded
-                        ? "질문 받기 완료"
-                        : "데이빗에게 질문 받기"}
+                  <span className="grid">
+                    <span
+                      aria-hidden
+                      className="invisible col-start-1 row-start-1 whitespace-nowrap"
+                    >
+                      데이빗에게 질문 받기
+                    </span>
+                    <span className="col-start-1 row-start-1 whitespace-nowrap">
+                      {isAskingQuestion
+                        ? "질문 받는 중..."
+                        : isAllQuestionsLoaded
+                          ? "질문 받기 완료"
+                          : "데이빗에게 질문 받기"}
+                    </span>
                   </span>
                 </button>
                 <button
@@ -430,7 +649,7 @@ export default function DiaryPage() {
                   type="button"
                   onClick={handleComplete}
                   disabled={!hasUserWritten && tutorialStep !== 2}
-                  className="w-[118px] h-[48px] rounded-[12px] px-[26px] text-[18px] font-semibold tracking-[-0.18px] bg-grey-70 text-grey-0 disabled:bg-grey-20 disabled:text-grey-0 disabled:cursor-not-allowed transition-colors duration-700 delay-200 ease-in-out whitespace-nowrap"
+                  className="flex-1 min-w-0 h-[48px] rounded-[12px] px-[26px] text-[18px] font-semibold tracking-[-0.36px] bg-grey-80 text-grey-0 disabled:bg-grey-20 disabled:text-grey-0 disabled:cursor-not-allowed transition-colors duration-200 ease-out whitespace-nowrap flex items-center justify-center"
                 >
                   작성 완료
                 </button>

@@ -1,33 +1,75 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import apiClient from "../../api/apiClient";
 import MonthYearPickerModal from "./components/MonthYearPickerModal";
 import ResumeDraftModal from "../Diary/components/ResumeDraftModal";
 import HomeTutorial from "./components/HomeTutorial";
+import ExperienceBlobs from "./components/ExperienceBlobs";
 import WeeklyImageNotificationModal from "./components/WeeklyImageNotificationModal";
+import AutoCompletionNoticeModal from "./components/AutoCompletionNoticeModal";
 import SpeechBubble from "../../components/SpeechBubble";
 import { getTodayColorPalette, hexToRgba } from "../../utils/rewardColor";
+import { getWeeklyRewards } from "../../utils/weeklyRewards";
 import {
-  getWeeklyRewards,
-  isWeeklyRewardNotified,
-  isWeeklyRewardViewed,
-  markWeeklyRewardNotified,
-  markWeeklyRewardViewed,
-} from "../../utils/weeklyRewards";
+  loadCachedMonthItems,
+  saveCachedMonthItems,
+} from "../../utils/monthDiariesCache";
+import {
+  loadCachedWeeklyRewards,
+  saveCachedWeeklyRewards,
+} from "../../utils/weeklyRewardsCache";
+import { loadUnreadNotificationCount } from "../../utils/notifications";
+import {
+  loadCachedUnreadCount,
+  saveCachedUnreadCount,
+} from "../../utils/notificationsCache";
+import { addDays, generateWeeklyReward } from "../../utils/devDiary";
+import {
+  loadExperienceInbox,
+  fragmentTopic,
+  formatArrivalTime,
+} from "../../utils/experienceFragments";
+import { useDevAccess } from "../../contexts/devAccess";
+import { getServiceToday, saveDayStartTime } from "../../utils/serviceDate";
+import {
+  getPendingAutoCompletionNotice,
+  markAutoCompletionNoticeViewed,
+} from "../../utils/diaryDraftApi";
 import LogoSymbol from "../../assets/icons/LogoSymbol.jsx";
 import profileIcon from "../../assets/icons/profile.svg";
 import bellIcon from "../../assets/icons/notification-bell.svg";
+import unreadDotIcon from "../../assets/icons/notification-unread-dot.svg";
 import arrowIcon from "../../assets/icons/back.svg";
 import editIcon from "../../assets/icons/edit-pencil.svg";
 import {
   loadTodayDraft,
   clearDraft,
   draftHasContent,
+  clearQuestions,
 } from "../../utils/diaryDraft";
-let resumeCheckedThisSession = false;
-let weeklyNotifyCheckedThisSession = false;
+import { homeSessionFlags } from "../../utils/homeSessionFlags";
+import { fetchMe } from "../../utils/me";
+import {
+  fetchWrittenTodayInArchive,
+  isWrittenTodayCached,
+  markWrittenToday,
+} from "../../utils/todayDiary";
 
 const WEEKDAYS = ["월", "화", "수", "목", "금", "토", "일"];
+
+const UNREAD_POLL_INTERVAL_MS = 60000;
+
+const MONTH_TRANSITION_MS = 420;
+const CALENDAR_ROW_HEIGHT = 38;
+const CALENDAR_ROW_GAP = 2;
 
 function maskedIcon(src, color) {
   return {
@@ -43,37 +85,44 @@ function maskedIcon(src, color) {
   };
 }
 
+const EDIT_ICON_MASK = maskedIcon(editIcon, "#5F6473");
+
+const STATS_DIVIDER_GRADIENT =
+  "linear-gradient(180deg, rgba(205, 209, 218, 0.00) 0%, #CDD1DA 15%, #CDD1DA 84.62%, rgba(205, 209, 218, 0.00) 100%)";
+
 function pad2(n) {
   return String(n).padStart(2, "0");
 }
 
-function getSeoulToday() {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
-  const map = Object.fromEntries(parts.map((p) => [p.type, p.value]));
-  return {
-    year: Number(map.year),
-    month: Number(map.month),
-    day: Number(map.day),
-    dateStr: `${map.year}-${map.month}-${map.day}`,
-  };
+function monthIndex(year, month) {
+  return year * 12 + month;
+}
+
+function gridHeightOf(rowCount) {
+  if (rowCount <= 0) return 0;
+  return rowCount * CALENDAR_ROW_HEIGHT + (rowCount - 1) * CALENDAR_ROW_GAP;
 }
 
 function formatDate(d) {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
-// 각 주는 {cells, weekStartDate}로, weekStartDate는 그 주의 월요일(주간 보상 API의
-// weekStartDate와 매칭하기 위함) — 달의 앞/뒷주는 월요일이 다른 달일 수 있어 실제
-// Date 연산으로 구한다
+function mondayOf(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  const dayOffset = (date.getDay() + 6) % 7;
+  date.setDate(date.getDate() - dayOffset);
+  return formatDate(date);
+}
+
+function weeklyRewardsMapFromItems(items) {
+  return new Map((items ?? []).map((item) => [item.weekStartDate, item]));
+}
+
 function buildCalendarWeeks(year, month) {
   const firstOfMonth = new Date(year, month - 1, 1);
   const daysInMonth = new Date(year, month, 0).getDate();
-  const firstWeekday = (firstOfMonth.getDay() + 6) % 7; // 0=월요일
+  const firstWeekday = (firstOfMonth.getDay() + 6) % 7;
   const numWeeks = Math.ceil((firstWeekday + daysInMonth) / 7);
   const gridStart = new Date(year, month - 1, 1 - firstWeekday);
 
@@ -100,7 +149,7 @@ function buildCalendarWeeks(year, month) {
   return weeks;
 }
 
-function DayCell({ cell, item, onClick }) {
+const DayCell = memo(function DayCell({ cell, item, onSelect }) {
   if (!cell.inMonth) {
     return (
       <div className="relative size-[38px] shrink-0 overflow-clip rounded-[2px]">
@@ -118,7 +167,7 @@ function DayCell({ cell, item, onClick }) {
   return (
     <button
       type="button"
-      onClick={item ? onClick : undefined}
+      onClick={item ? () => onSelect(item) : undefined}
       disabled={!item}
       className={`relative size-[38px] shrink-0 overflow-clip rounded-[2px] border-none p-0 ${item ? "cursor-pointer" : "cursor-default"}`}
       style={{ backgroundColor: colorHex || "#ffffff" }}
@@ -132,24 +181,26 @@ function DayCell({ cell, item, onClick }) {
       </div>
     </button>
   );
-}
+});
 
 const REWARD_BADGE_STYLE = {
-  // 받을 수 있음(생성 완료, 아직 미확인) — 진한 배경
   available: "bg-[#5F6473] text-grey-0",
-  // 이미 확인함 — 흰 배경 + 테두리
   viewed: "border-[1.5px] border-[#787E8C] bg-transparent text-grey-70",
-  // 아직 받을 수 없음(생성 전/불가) — 연한 회색
-  unavailable: "bg-grey-30 text-grey-0",
+  unavailable: "bg-[#EFF1F6] text-grey-0",
 };
 
-function RewardBadge({ state, onClick }) {
+const RewardBadge = memo(function RewardBadge({
+  state,
+  onSelect,
+  weekStartDate,
+}) {
   const isInteractive = state === "available" || state === "viewed";
   return (
     <button
       type="button"
       data-reward-badge
-      onClick={isInteractive ? onClick : undefined}
+      data-week-start={weekStartDate}
+      onClick={isInteractive ? () => onSelect(weekStartDate) : undefined}
       disabled={!isInteractive}
       className={`relative flex size-[38px] shrink-0 items-center justify-center overflow-clip rounded-[4px] p-0 ${
         isInteractive ? "cursor-pointer" : "cursor-default"
@@ -160,16 +211,95 @@ function RewardBadge({ state, onClick }) {
       </p>
     </button>
   );
-}
+});
+
+const CalendarGrid = memo(function CalendarGrid({
+  rows,
+  itemByDate,
+  onSelectDay,
+  onSelectReward,
+}) {
+  return (
+    <div className="flex flex-col gap-[2px]">
+      {rows.map(
+        ({ cells, weekStartDate, canEarnReward, rewardState }, weekIdx) => (
+          <div
+            key={weekIdx}
+            className="flex w-full items-center justify-between"
+          >
+            <div className="flex items-center gap-[2px]">
+              {cells.map((cell, i) => (
+                <DayCell
+                  key={i}
+                  cell={cell}
+                  item={cell.inMonth ? itemByDate.get(cell.dateStr) : undefined}
+                  onSelect={onSelectDay}
+                />
+              ))}
+            </div>
+            {canEarnReward && (
+              <RewardBadge
+                state={rewardState}
+                weekStartDate={weekStartDate}
+                onSelect={onSelectReward}
+              />
+            )}
+          </div>
+        ),
+      )}
+    </div>
+  );
+});
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [today] = useState(() => getSeoulToday());
+  const { devPassword } = useDevAccess();
+  const [today] = useState(() => getServiceToday());
+  const [userId, setUserId] = useState(null);
+  const [tutorialCompleted, setTutorialCompleted] = useState(null);
 
-  const [viewYear, setViewYear] = useState(today.year);
-  const [viewMonth, setViewMonth] = useState(today.month);
-  const [monthItems, setMonthItems] = useState([]);
-  const [monthLoaded, setMonthLoaded] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    fetchMe()
+      .then((response) => {
+        if (!alive) return;
+        setUserId(response.data.result?.id ?? null);
+        setTutorialCompleted(response.data.result?.tutorialCompleted ?? null);
+        saveDayStartTime(response.data.result?.dayStartTime);
+      })
+      .catch((error) => {
+        console.error(
+          "GET /api/me 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const location = useLocation();
+  const returnedMonth = location.state?.viewMonth;
+  const [viewYear, setViewYear] = useState(returnedMonth?.year ?? today.year);
+  const [viewMonth, setViewMonth] = useState(
+    returnedMonth?.month ?? today.month,
+  );
+  const [monthItems, setMonthItems] = useState(
+    () => loadCachedMonthItems(viewYear, viewMonth) ?? [],
+  );
+  const [monthLoaded, setMonthLoaded] = useState(
+    () => loadCachedMonthItems(viewYear, viewMonth) != null,
+  );
+  const [weeklyRewardsByWeekStart, setWeeklyRewardsByWeekStart] = useState(() =>
+    weeklyRewardsMapFromItems(loadCachedWeeklyRewards(viewYear, viewMonth)),
+  );
+  const [weeklyRewardsLoaded, setWeeklyRewardsLoaded] = useState(
+    () => loadCachedWeeklyRewards(viewYear, viewMonth) != null,
+  );
+  const [hydratedMonthKey, setHydratedMonthKey] = useState(
+    `${viewYear}-${viewMonth}`,
+  );
   const [awayTodayItem, setAwayTodayItem] = useState(null);
   const [awayLoaded, setAwayLoaded] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
@@ -179,6 +309,23 @@ export default function HomePage() {
   );
 
   const isCurrentMonth = viewYear === today.year && viewMonth === today.month;
+  const isPastMonth =
+    viewYear < today.year ||
+    (viewYear === today.year && viewMonth < today.month);
+  const isFutureMonth =
+    viewYear > today.year ||
+    (viewYear === today.year && viewMonth > today.month);
+
+  const currentMonthKey = `${viewYear}-${viewMonth}`;
+  if (hydratedMonthKey !== currentMonthKey) {
+    setHydratedMonthKey(currentMonthKey);
+    const cached = loadCachedMonthItems(viewYear, viewMonth);
+    setMonthItems(cached ?? []);
+    setMonthLoaded(cached != null);
+    const cachedWeekly = loadCachedWeeklyRewards(viewYear, viewMonth);
+    setWeeklyRewardsByWeekStart(weeklyRewardsMapFromItems(cachedWeekly));
+    setWeeklyRewardsLoaded(cachedWeekly != null);
+  }
 
   useEffect(() => {
     let alive = true;
@@ -190,7 +337,9 @@ export default function HomePage() {
       .then((response) => {
         if (!alive) return;
         const result = response.data.result;
-        setMonthItems(Array.isArray(result) ? result : (result?.items ?? []));
+        const items = Array.isArray(result) ? result : (result?.items ?? []);
+        setMonthItems(items);
+        saveCachedMonthItems(viewYear, viewMonth, items);
       })
       .catch((error) => {
         console.error(
@@ -207,8 +356,6 @@ export default function HomePage() {
     };
   }, [viewYear, viewMonth]);
 
-  // 이번 달을 보고 있으면 위 응답에서 오늘 항목을 그대로 꺼내 쓴다.
-  // 따로 요청하면 캘린더 색과 포인트 색이 서로 다른 시점에 들어와 깜빡여서.
   useEffect(() => {
     if (isCurrentMonth) return;
     let alive = true;
@@ -240,15 +387,59 @@ export default function HomePage() {
     };
   }, [isCurrentMonth, today]);
 
-  const itemByDate = new Map(
-    monthItems.map((item) => [item.recordedDate, item]),
+  const itemByDate = useMemo(
+    () => new Map(monthItems.map((item) => [item.recordedDate, item])),
+    [monthItems],
   );
 
   const todayItem = isCurrentMonth
     ? (itemByDate.get(today.dateStr) ?? null)
     : awayTodayItem;
   const todayLoaded = isCurrentMonth ? monthLoaded : awayLoaded;
-  const isTodayWritten = Boolean(todayItem);
+  const [writtenToday, setWrittenToday] = useState(isWrittenTodayCached);
+  const isTodayWritten = Boolean(todayItem) || writtenToday;
+
+  const calendarMent = useMemo(() => {
+    if (isCurrentMonth && !isTodayWritten) {
+      return {
+        line1: `${today.month}월 ${today.day}일의`,
+        line2: "기록을 남겨볼까요?",
+      };
+    }
+    if (isPastMonth) {
+      return {
+        line1: `${viewMonth}월의 조각이`,
+        line2: "이렇게 모여있네요 :)",
+      };
+    }
+    if (isFutureMonth) {
+      return { line1: `${viewMonth}월의 조각은`, line2: "어떤 색일까요?" };
+    }
+    const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
+    const coloredCount = monthItems.filter(
+      (item) => item.reward?.colorHex,
+    ).length;
+    const ratio = daysInMonth > 0 ? coloredCount / daysInMonth : 0;
+    if (ratio >= 2 / 3) {
+      return { line1: `${viewMonth}월의 조각이`, line2: "다채로워졌어요 :)" };
+    }
+    if (ratio >= 1 / 3) {
+      return {
+        line1: `${viewMonth}월의 조각을`,
+        line2: "차곡차곡 쌓고 있어요",
+      };
+    }
+    return { line1: `${viewMonth}월의 조각을`, line2: "데이빗과 모아봐요 :)" };
+  }, [
+    isCurrentMonth,
+    isTodayWritten,
+    isPastMonth,
+    isFutureMonth,
+    viewYear,
+    viewMonth,
+    monthItems,
+    today,
+  ]);
 
   const themeColor =
     todayItem?.reward?.status === "COMPLETED"
@@ -257,21 +448,27 @@ export default function HomePage() {
   const palette = themeColor ? getTodayColorPalette(themeColor) : null;
 
   const accentColor = palette ? palette.uiAccentColor : null;
-  const profileShadowColor = accentColor
-    ? hexToRgba(accentColor, 0.16)
-    : "rgba(65, 68, 80, 0.16)";
+  const profileShadowColor = useMemo(
+    () =>
+      accentColor ? hexToRgba(accentColor, 0.16) : "rgba(65, 68, 80, 0.16)",
+    [accentColor],
+  );
 
-  const cardShadow = accentColor
-    ? `0 0 10px 0 ${hexToRgba(accentColor, 0.05)}, 0 0 30px 0 ${hexToRgba(accentColor, 0.05)}`
-    : "0 0 10px 0 rgba(77, 80, 91, 0.05), 0 0 30px 0 rgba(65, 68, 80, 0.05)";
+  const cardShadow = useMemo(
+    () =>
+      accentColor
+        ? `0 0 10px 0 ${hexToRgba(accentColor, 0.05)}, 0 0 30px 0 ${hexToRgba(accentColor, 0.05)}`
+        : "0 0 10px 0 rgba(77, 80, 91, 0.05), 0 0 30px 0 rgba(65, 68, 80, 0.05)",
+    [accentColor],
+  );
 
-  // 오늘 일기가 이미 완료된 상태면 남아있는 임시 저장은 버그로 생긴 값이라 지운다
   useEffect(() => {
-    if (!todayLoaded || resumeCheckedThisSession) return;
-    resumeCheckedThisSession = true;
+    if (!todayLoaded || homeSessionFlags.resumeChecked) return;
+    homeSessionFlags.resumeChecked = true;
 
     if (isTodayWritten) {
       clearDraft();
+      clearQuestions();
       setHasTodayDraft(false);
       return;
     }
@@ -281,28 +478,42 @@ export default function HomePage() {
     }
   }, [todayLoaded, isTodayWritten]);
 
+  useEffect(() => {
+    if (!todayLoaded) return;
+
+    if (todayItem) {
+      markWrittenToday();
+      return;
+    }
+
+    if (writtenToday || homeSessionFlags.writtenTodayChecked) return;
+    homeSessionFlags.writtenTodayChecked = true;
+
+    let alive = true;
+    fetchWrittenTodayInArchive()
+      .then((written) => {
+        if (alive && written) setWrittenToday(true);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [todayLoaded, todayItem, writtenToday]);
+
   const handleResumeDraft = () => {
     setShowResumeDraft(false);
     navigate("/diary");
   };
 
   const handleDiscardDraft = () => {
-    setHasTodayDraft(false);
-    clearDraft();
     setShowResumeDraft(false);
-    navigate("/diary");
   };
 
-  const [weeklyRewardsByWeekStart, setWeeklyRewardsByWeekStart] = useState(
-    () => new Map(),
-  );
-  const [weeklyRewardsLoaded, setWeeklyRewardsLoaded] = useState(false);
   const [notifyReward, setNotifyReward] = useState(null);
+  const [weeklyRewardsFetched, setWeeklyRewardsFetched] = useState(false);
 
-  // 달의 첫 주는 월요일이 이전 달일 수 있어 그 달도 같이 불러와 합친다
   useEffect(() => {
     let alive = true;
-    setWeeklyRewardsLoaded(false);
 
     const prevMonthDate = new Date(viewYear, viewMonth - 2, 1);
     const requests = [
@@ -323,6 +534,10 @@ export default function HomePage() {
       });
       setWeeklyRewardsByWeekStart(map);
       setWeeklyRewardsLoaded(true);
+      if (viewYear === today.year && viewMonth === today.month) {
+        setWeeklyRewardsFetched(true);
+      }
+      saveCachedWeeklyRewards(viewYear, viewMonth, Array.from(map.values()));
     });
 
     return () => {
@@ -330,69 +545,215 @@ export default function HomePage() {
     };
   }, [viewYear, viewMonth]);
 
-  // 지난주 보상이 생성 완료됐는데 아직 알림을 못 받았으면 세션당 한 번 띄운다
   useEffect(() => {
     if (
-      !weeklyRewardsLoaded ||
+      !weeklyRewardsFetched ||
       !isCurrentMonth ||
-      weeklyNotifyCheckedThisSession
+      userId == null ||
+      homeSessionFlags.weeklyNotifyChecked
     )
       return;
-    weeklyNotifyCheckedThisSession = true;
+    homeSessionFlags.weeklyNotifyChecked = true;
 
-    const candidates = Array.from(weeklyRewardsByWeekStart.values()).filter(
-      (item) =>
+    let latest = null;
+    weeklyRewardsByWeekStart.forEach((item) => {
+      const isUnseen =
         item.status === "COMPLETED" &&
         item.available &&
-        item.weekEndDate < today.dateStr &&
-        !isWeeklyRewardNotified(item.weeklyRewardId),
-    );
-    if (candidates.length === 0) return;
+        !item.viewed &&
+        item.weekEndDate < today.dateStr;
+      if (!isUnseen) return;
+      if (!latest || item.weekEndDate > latest.weekEndDate) latest = item;
+    });
+    if (latest) setNotifyReward(latest);
+  }, [
+    weeklyRewardsFetched,
+    weeklyRewardsByWeekStart,
+    isCurrentMonth,
+    today,
+    userId,
+  ]);
 
-    candidates.sort((a, b) => (a.weekEndDate < b.weekEndDate ? 1 : -1));
-    setNotifyReward(candidates[0]);
-  }, [weeklyRewardsLoaded, weeklyRewardsByWeekStart, isCurrentMonth, today]);
+  const [autoCompletionNotice, setAutoCompletionNotice] = useState(null);
+  const dismissedNoticeIdsRef = useRef(new Set());
+
+  useEffect(() => {
+    if (userId == null) return;
+
+    let alive = true;
+
+    const checkNotice = () => {
+      getPendingAutoCompletionNotice()
+        .then((notice) => {
+          if (!alive || !notice || notice.viewed) return;
+          const noticeId = notice.noticeId ?? notice.id;
+          if (dismissedNoticeIdsRef.current.has(noticeId)) return;
+          setAutoCompletionNotice((prev) =>
+            prev?.noticeId === noticeId || prev?.id === noticeId
+              ? prev
+              : notice,
+          );
+        })
+        .catch((error) => {
+          console.error(
+            "GET /api/v1/diaries/auto-completion-notices/pending 실패:",
+            error.response?.status,
+            error.response?.data,
+          );
+        });
+    };
+
+    checkNotice();
+    const timer = setInterval(checkNotice, UNREAD_POLL_INTERVAL_MS);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, [userId]);
+
+  const dismissAutoCompletionNotice = () => {
+    const notice = autoCompletionNotice;
+    setAutoCompletionNotice(null);
+    const noticeId = notice?.noticeId ?? notice?.id;
+    if (noticeId == null) return notice;
+    dismissedNoticeIdsRef.current.add(noticeId);
+    markAutoCompletionNoticeViewed(noticeId).catch((error) => {
+      console.error(
+        "PATCH /api/v1/diaries/auto-completion-notices/{noticeId}/view 실패:",
+        error.response?.status,
+        error.response?.data,
+      );
+    });
+    return notice;
+  };
+
+  const handleAutoCompletionConfirm = () => {
+    const notice = dismissAutoCompletionNotice();
+    const diaryId = notice?.diaryId;
+    if (diaryId != null) navigate(`/home/diaries/${diaryId}`);
+  };
 
   const handleNotifyClose = () => {
-    if (notifyReward) markWeeklyRewardNotified(notifyReward.weeklyRewardId);
     setNotifyReward(null);
   };
 
   const handleNotifyConfirm = () => {
     if (!notifyReward) return;
-    markWeeklyRewardNotified(notifyReward.weeklyRewardId);
-    markWeeklyRewardViewed(notifyReward.weeklyRewardId);
     const id = notifyReward.weeklyRewardId;
     setNotifyReward(null);
     navigate(`/home/weekly-rewards/${id}`);
   };
 
-  const getRewardBadgeState = (weekStartDate) => {
-    const item = weeklyRewardsByWeekStart.get(weekStartDate);
-    if (!item || item.status !== "COMPLETED" || !item.available) {
-      return "unavailable";
-    }
-    return isWeeklyRewardViewed(item.weeklyRewardId) ? "viewed" : "available";
-  };
+  const [claimingWeek, setClaimingWeek] = useState(null);
+  const [rewardClaimError, setRewardClaimError] = useState("");
 
-  const handleRewardBadgeClick = (weekStartDate) => {
-    const item = weeklyRewardsByWeekStart.get(weekStartDate);
-    if (!item) return;
-    markWeeklyRewardViewed(item.weeklyRewardId);
-    navigate(`/home/weekly-rewards/${item.weeklyRewardId}`);
-  };
+  const handleRewardBadgeClick = useCallback(
+    async (weekStartDate) => {
+      const item = weeklyRewardsByWeekStart.get(weekStartDate);
+
+      if (item?.weeklyRewardId) {
+        navigate(`/home/weekly-rewards/${item.weeklyRewardId}`, {
+          state: { fromMonth: { year: viewYear, month: viewMonth } },
+        });
+        return;
+      }
+
+      if (claimingWeek) return;
+      setClaimingWeek(weekStartDate);
+      setRewardClaimError("");
+      try {
+        const response = await generateWeeklyReward(weekStartDate, devPassword);
+        const result = response.data.result;
+        if (!result?.eligible || !result.weeklyRewardId) {
+          setRewardClaimError(
+            result?.message ?? "아직 이 주의 이미지를 만들 수 없어요.",
+          );
+          return;
+        }
+        navigate(`/home/weekly-rewards/${result.weeklyRewardId}`, {
+          state: { fromMonth: { year: viewYear, month: viewMonth } },
+        });
+      } catch (error) {
+        console.error(
+          "POST /api/dev/me/weekly-rewards/generate 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+        setRewardClaimError(
+          "주간 이미지를 준비 중이에요. 잠시 후 다시 확인해주세요.",
+        );
+      } finally {
+        setClaimingWeek(null);
+      }
+    },
+    [
+      weeklyRewardsByWeekStart,
+      claimingWeek,
+      devPassword,
+      navigate,
+      viewYear,
+      viewMonth,
+    ],
+  );
+
+  const [inboxArrivals, setInboxArrivals] = useState([]);
+
+  useEffect(() => {
+    let alive = true;
+    loadExperienceInbox().then(({ arrivals }) => {
+      if (alive) setInboxArrivals(arrivals);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const [unreadCount, setUnreadCount] = useState(
+    () => loadCachedUnreadCount() ?? 0,
+  );
+
+  useEffect(() => {
+    let alive = true;
+
+    const sync = () => {
+      loadUnreadNotificationCount().then((count) => {
+        if (!alive) return;
+        setUnreadCount(count);
+        saveCachedUnreadCount(count);
+      });
+    };
+
+    sync();
+    const timer = setInterval(sync, UNREAD_POLL_INTERVAL_MS);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, []);
+
+  const currentWeekStart = useMemo(() => mondayOf(today.dateStr), [today]);
 
   const scrollRef = useRef(null);
   const pencilRef = useRef(null);
   const experienceRef = useRef(null);
 
   const TUTORIAL_STEP_COUNT = 3;
-  const TUTORIAL_SHEET_HEIGHT = 312;
+  const TUTORIAL_SHEET_HEIGHT = 282;
   const tutorialJustFinished = useRef(false);
-  const [tutorialStep, setTutorialStep] = useState(() =>
-    localStorage.getItem("home_tutorial_seen") ? null : 0,
-  );
+  const hasPositionedOnceRef = useRef(false);
+  const tutorialStartedRef = useRef(false);
+  const [tutorialStep, setTutorialStep] = useState(null);
   const [spot, setSpot] = useState(null);
+
+  useEffect(() => {
+    if (tutorialStartedRef.current) return;
+    if (userId == null || !weeklyRewardsLoaded) return;
+    if (notifyReward) return;
+    if (tutorialCompleted === false) {
+      tutorialStartedRef.current = true;
+      setTutorialStep(0);
+    }
+  }, [userId, weeklyRewardsLoaded, notifyReward, tutorialCompleted]);
 
   useLayoutEffect(() => {
     if (tutorialStep === null) return;
@@ -402,64 +763,107 @@ export default function HomePage() {
 
     const collect = () => {
       if (tutorialStep === 0) {
-        const badges = Array.from(
-          scroller.querySelectorAll("[data-reward-badge]"),
+        const el = scroller.querySelector(
+          `[data-reward-badge][data-week-start="${currentWeekStart}"]`,
         );
-        if (!badges.length) return null;
-        const rects = badges.map((b) => b.getBoundingClientRect());
-        return {
-          rect: {
-            top: Math.min(...rects.map((r) => r.top)),
-            left: Math.min(...rects.map((r) => r.left)),
-            right: Math.max(...rects.map((r) => r.right)),
-            bottom: Math.max(...rects.map((r) => r.bottom)),
-          },
-          radius: 4,
-          pad: 4,
-          el: badges[0],
-        };
+        if (!el) return null;
+        return { rect: el.getBoundingClientRect(), radius: 8, pad: 4 };
       }
       const el = tutorialStep === 1 ? pencilRef.current : experienceRef.current;
       if (!el) return null;
       return {
         rect: el.getBoundingClientRect(),
-        radius: tutorialStep === 1 ? 999 : 8,
-        pad: 6,
-        el,
+        radius: 12,
+        pad: tutorialStep === 1 ? 2 : 0,
       };
     };
 
-    // 하단 시트에 가리지 않도록 시트 위쪽 영역 가운데로 직접 스크롤한다
-    const initial = collect();
-    if (initial) {
-      const base = scroller.getBoundingClientRect();
-      const visibleHeight = scroller.clientHeight - TUTORIAL_SHEET_HEIGHT;
-      const targetHeight = initial.rect.bottom - initial.rect.top;
-      const topInContent = initial.rect.top - base.top + scroller.scrollTop;
-      const desiredTop = Math.max(16, (visibleHeight - targetHeight) / 2);
-      scroller.scrollTop = Math.max(0, topInContent - desiredTop);
-    }
-
-    const measure = () => {
-      const target = collect();
-      if (!target) return;
+    const computeSpot = (target) => {
       const base = scroller.getBoundingClientRect();
       const { rect, pad } = target;
-      setSpot({
+      return {
         top: rect.top - base.top - pad,
         left: rect.left - base.left - pad,
         width: rect.right - rect.left + pad * 2,
         height: rect.bottom - rect.top + pad * 2,
         radius: target.radius,
-      });
+      };
     };
 
-    measure();
-    const raf = requestAnimationFrame(measure);
-    return () => cancelAnimationFrame(raf);
-  }, [tutorialStep, monthLoaded]);
+    const initial = collect();
+    if (!initial) return;
 
-  // 하단 여백이 걷힌 뒤에 올려야 스크롤이 중간에 잘리지 않는다
+    const base = scroller.getBoundingClientRect();
+    const maxScroll = Math.max(
+      0,
+      scroller.scrollHeight - scroller.clientHeight,
+    );
+    const visibleHeight = scroller.clientHeight - TUTORIAL_SHEET_HEIGHT;
+    const targetHeight = initial.rect.bottom - initial.rect.top;
+    const topInContent = initial.rect.top - base.top + scroller.scrollTop;
+    const desiredTop = Math.max(16, (visibleHeight - targetHeight) / 2);
+    const targetScrollTop = Math.min(
+      maxScroll,
+      Math.max(0, topInContent - desiredTop),
+    );
+
+    const fromScrollTop = scroller.scrollTop;
+    const initialSpot = computeSpot(initial);
+
+    let rafId = null;
+
+    if (!hasPositionedOnceRef.current) {
+      scroller.scrollTop = targetScrollTop;
+      hasPositionedOnceRef.current = true;
+      const settledNow = collect();
+      if (settledNow) setSpot(computeSpot(settledNow));
+
+      rafId = requestAnimationFrame(() => {
+        const settled = collect();
+        if (settled) setSpot(computeSpot(settled));
+      });
+    } else {
+      const delta = targetScrollTop - fromScrollTop;
+      const toSpot = { ...initialSpot, top: initialSpot.top - delta };
+      const fromSpot = spot ?? initialSpot;
+      const spotEl = document.querySelector("[data-tutorial-spot]");
+
+      const DURATION = 300;
+      const startTime = performance.now();
+
+      const easeOut = (t) => 1 - (1 - t) ** 3;
+
+      const tick = (now) => {
+        const t = Math.min(1, Math.max(0, (now - startTime) / DURATION));
+        const e = easeOut(t);
+
+        scroller.scrollTop = fromScrollTop + delta * e;
+
+        if (spotEl) {
+          spotEl.style.top = `${fromSpot.top + (toSpot.top - fromSpot.top) * e}px`;
+          spotEl.style.left = `${fromSpot.left + (toSpot.left - fromSpot.left) * e}px`;
+          spotEl.style.width = `${fromSpot.width + (toSpot.width - fromSpot.width) * e}px`;
+          spotEl.style.height = `${fromSpot.height + (toSpot.height - fromSpot.height) * e}px`;
+          spotEl.style.borderRadius = `${fromSpot.radius + (toSpot.radius - fromSpot.radius) * e}px`;
+        }
+
+        if (t < 1) {
+          rafId = requestAnimationFrame(tick);
+        } else {
+          const settled = collect();
+          if (settled) setSpot(computeSpot(settled));
+        }
+      };
+
+      rafId = requestAnimationFrame(tick);
+    }
+
+    return () => {
+      if (rafId != null) cancelAnimationFrame(rafId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tutorialStep, monthLoaded, currentWeekStart]);
+
   useLayoutEffect(() => {
     if (tutorialStep !== null || !tutorialJustFinished.current) return;
     tutorialJustFinished.current = false;
@@ -468,7 +872,14 @@ export default function HomePage() {
 
   const handleTutorialNext = () => {
     if (tutorialStep >= TUTORIAL_STEP_COUNT - 1) {
-      localStorage.setItem("home_tutorial_seen", "true");
+      setTutorialCompleted(true);
+      apiClient.patch("/api/me/tutorial-completion").catch((error) => {
+        console.error(
+          "PATCH /api/me/tutorial-completion 실패:",
+          error.response?.status,
+          error.response?.data,
+        );
+      });
       tutorialJustFinished.current = true;
       setTutorialStep(null);
       setSpot(null);
@@ -477,9 +888,110 @@ export default function HomePage() {
     setTutorialStep((prev) => prev + 1);
   };
 
-  const weeks = buildCalendarWeeks(viewYear, viewMonth);
+  const weeks = useMemo(
+    () => buildCalendarWeeks(viewYear, viewMonth),
+    [viewYear, viewMonth],
+  );
+
+  const calendarRows = useMemo(() => {
+    const resolveRewardState = (weekStartDate, cells) => {
+      const reward = weeklyRewardsByWeekStart.get(weekStartDate);
+      if (reward?.status === "COMPLETED" && reward.available) {
+        return reward.viewed ? "viewed" : "available";
+      }
+      if (addDays(weekStartDate, 6) >= today.dateStr) return "unavailable";
+
+      const diaryCount =
+        reward?.diaryCount ??
+        cells.reduce(
+          (count, cell) =>
+            cell.inMonth && itemByDate.has(cell.dateStr) ? count + 1 : count,
+          0,
+        );
+      return diaryCount >= 3 ? "available" : "unavailable";
+    };
+
+    return weeks.map(({ cells, weekStartDate }) => {
+      const inMonthCount = cells.reduce(
+        (count, cell) => (cell.inMonth ? count + 1 : count),
+        0,
+      );
+      return {
+        cells,
+        weekStartDate,
+        canEarnReward: inMonthCount >= 3,
+        rewardState:
+          inMonthCount >= 3 ? resolveRewardState(weekStartDate, cells) : null,
+      };
+    });
+  }, [weeks, weeklyRewardsByWeekStart, itemByDate, today]);
+
+  const [monthTransition, setMonthTransition] = useState(null);
+  const monthTransitionTimer = useRef(null);
+  const outPanelRef = useRef(null);
+  const inPanelRef = useRef(null);
+  const monthAnimRef = useRef(null);
+
+  useEffect(
+    () => () => {
+      if (monthTransitionTimer.current)
+        clearTimeout(monthTransitionTimer.current);
+    },
+    [],
+  );
+
+  useLayoutEffect(() => {
+    if (!monthTransition) return;
+
+    const inEl = inPanelRef.current;
+    const outEl = outPanelRef.current;
+    if (!inEl) return;
+
+    const sign = monthTransition.direction === "next" ? 1 : -1;
+    const easeOut = (t) => 1 - (1 - t) ** 3;
+    const start = performance.now();
+
+    inEl.style.transform = `translateX(${sign * 100}%)`;
+    if (outEl) outEl.style.transform = "translateX(0%)";
+
+    const step = (now) => {
+      const t = Math.min(1, (now - start) / MONTH_TRANSITION_MS);
+      const e = easeOut(t);
+      inEl.style.transform = `translateX(${sign * 100 * (1 - e)}%)`;
+      if (outEl) outEl.style.transform = `translateX(${-sign * 100 * e}%)`;
+      if (t < 1) {
+        monthAnimRef.current = requestAnimationFrame(step);
+      } else {
+        inEl.style.transform = "translateX(0%)";
+      }
+    };
+
+    monthAnimRef.current = requestAnimationFrame(step);
+
+    return () => {
+      if (monthAnimRef.current) cancelAnimationFrame(monthAnimRef.current);
+    };
+  }, [monthTransition]);
+
+  const startMonthTransition = useCallback(
+    (direction) => {
+      setMonthTransition({
+        direction,
+        key: `${viewYear}-${viewMonth}`,
+        rows: calendarRows,
+        itemByDate,
+      });
+      if (monthTransitionTimer.current)
+        clearTimeout(monthTransitionTimer.current);
+      monthTransitionTimer.current = setTimeout(() => {
+        setMonthTransition(null);
+      }, MONTH_TRANSITION_MS);
+    },
+    [viewYear, viewMonth, calendarRows, itemByDate],
+  );
 
   const handlePrevMonth = () => {
+    startMonthTransition("prev");
     if (viewMonth === 1) {
       setViewYear((y) => y - 1);
       setViewMonth(12);
@@ -489,6 +1001,7 @@ export default function HomePage() {
   };
 
   const handleNextMonth = () => {
+    startMonthTransition("next");
     if (viewMonth === 12) {
       setViewYear((y) => y + 1);
       setViewMonth(1);
@@ -498,12 +1011,32 @@ export default function HomePage() {
   };
 
   const handleConfirmPicker = ({ year, month }) => {
+    const target = monthIndex(year, month);
+    const current = monthIndex(viewYear, viewMonth);
+    if (target !== current) {
+      startMonthTransition(target > current ? "next" : "prev");
+    }
     setViewYear(year);
     setViewMonth(month);
     setShowPicker(false);
   };
 
   const handleGoToWrite = () => navigate("/diary");
+
+  const handleSelectDay = useCallback(
+    (item) => {
+      navigate("/diary/today-color", {
+        state: {
+          reward: item.reward,
+          diaryId: item.diaryId,
+          recordedDate: item.recordedDate,
+          mode: "review",
+          fromMonth: { year: viewYear, month: viewMonth },
+        },
+      });
+    },
+    [navigate, viewYear, viewMonth],
+  );
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#f6f8fa]">
@@ -516,7 +1049,7 @@ export default function HomePage() {
             : undefined
         }
       >
-        <div className="flex w-full flex-col items-start gap-[8px]">
+        <div className="flex w-full flex-col items-start gap-[16px]">
           <div className="flex w-full items-center justify-between">
             <div className="flex items-end gap-[4px]">
               <LogoSymbol
@@ -545,17 +1078,31 @@ export default function HomePage() {
 
           <div className="flex w-full items-end justify-between">
             <p className="text-[22px] font-semibold leading-[normal] tracking-[-0.66px] text-grey-90">
-              {viewMonth}월의 조각이
+              {calendarMent.line1}
               <br />
-              차곡차곡 쌓이고 있어요
+              {calendarMent.line2}
             </p>
-            <div className="flex shrink-0 items-center justify-center px-[6px] py-[3px]">
-              <img
-                src={bellIcon}
-                alt="알림"
-                className="h-[24.375px] w-[18.963px] object-contain"
-              />
-            </div>
+            <button
+              type="button"
+              onClick={() => navigate("/notifications")}
+              aria-label={unreadCount > 0 ? "알림 (안 읽은 알림 있음)" : "알림"}
+              className="flex shrink-0 cursor-pointer items-center justify-center border-none bg-transparent p-0 transition-opacity active:opacity-60"
+            >
+              <span className="relative block size-[30px]">
+                <img
+                  src={bellIcon}
+                  alt=""
+                  className="absolute left-[5.517px] top-[3.126px] h-[24.375px] w-[18.963px] object-contain"
+                />
+                {unreadCount > 0 && (
+                  <img
+                    src={unreadDotIcon}
+                    alt=""
+                    className="absolute left-[17px] top-[5px] size-[8px]"
+                  />
+                )}
+              </span>
+            </button>
           </div>
         </div>
 
@@ -610,52 +1157,39 @@ export default function HomePage() {
                     ))}
                   </div>
 
-                  <div className="flex flex-col gap-[2px]">
-                    {weeks.map(({ cells, weekStartDate }, weekIdx) => {
-                      const daysInMonthCount = cells.filter(
-                        (cell) => cell.inMonth,
-                      ).length;
-                      const canEarnReward = daysInMonthCount >= 3;
-                      return (
-                        <div
-                          key={weekIdx}
-                          className="flex w-full items-center justify-between"
-                        >
-                          <div className="flex items-center gap-[2px]">
-                            {cells.map((cell, i) => {
-                              const item = cell.inMonth
-                                ? itemByDate.get(cell.dateStr)
-                                : undefined;
-                              return (
-                                <DayCell
-                                  key={i}
-                                  cell={cell}
-                                  item={item}
-                                  onClick={() =>
-                                    navigate("/diary/today-color", {
-                                      state: {
-                                        reward: item.reward,
-                                        diaryId: item.diaryId,
-                                        recordedDate: item.recordedDate,
-                                        mode: "review",
-                                      },
-                                    })
-                                  }
-                                />
-                              );
-                            })}
-                          </div>
-                          {canEarnReward && (
-                            <RewardBadge
-                              state={getRewardBadgeState(weekStartDate)}
-                              onClick={() =>
-                                handleRewardBadgeClick(weekStartDate)
-                              }
-                            />
-                          )}
-                        </div>
-                      );
-                    })}
+                  <div
+                    className="relative w-full overflow-hidden"
+                    style={{
+                      height: gridHeightOf(calendarRows.length),
+                      transition: `height ${MONTH_TRANSITION_MS}ms ease-out`,
+                    }}
+                  >
+                    {monthTransition && (
+                      <div
+                        ref={outPanelRef}
+                        key={`cal-out-${monthTransition.key}`}
+                        className="pointer-events-none absolute inset-x-0 top-0"
+                      >
+                        <CalendarGrid
+                          rows={monthTransition.rows}
+                          itemByDate={monthTransition.itemByDate}
+                          onSelectDay={handleSelectDay}
+                          onSelectReward={handleRewardBadgeClick}
+                        />
+                      </div>
+                    )}
+                    <div
+                      ref={inPanelRef}
+                      key={`cal-in-${currentMonthKey}`}
+                      className="absolute inset-x-0 top-0"
+                    >
+                      <CalendarGrid
+                        rows={calendarRows}
+                        itemByDate={itemByDate}
+                        onSelectDay={handleSelectDay}
+                        onSelectReward={handleRewardBadgeClick}
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -670,7 +1204,7 @@ export default function HomePage() {
                     <div
                       aria-hidden
                       className="size-[19.503px]"
-                      style={maskedIcon(editIcon, "#5F6473")}
+                      style={EDIT_ICON_MASK}
                     />
                   </button>
                   <button
@@ -693,11 +1227,11 @@ export default function HomePage() {
           </div>
 
           <div
-            className="flex w-full flex-col items-center rounded-[12px] bg-grey-0 px-[16px] py-[12px]"
+            className="flex w-full flex-col items-center rounded-[12px] bg-grey-0 py-[12px]"
             style={{ boxShadow: cardShadow }}
           >
-            <div className="flex items-center gap-[47px]">
-              <div className="flex w-[66px] flex-col items-center gap-[6px]">
+            <div className="flex w-full items-stretch">
+              <div className="flex flex-1 flex-col items-center gap-[6px]">
                 <p className="whitespace-nowrap text-[16px] font-semibold text-grey-90">
                   오늘 작성
                 </p>
@@ -722,8 +1256,11 @@ export default function HomePage() {
                       : "작성 전"}
                 </p>
               </div>
-              <div className="h-full w-px shrink-0 bg-grey-20" />
-              <div className="flex flex-col items-center gap-[6px]">
+              <div
+                className="w-px shrink-0 self-stretch"
+                style={{ background: STATS_DIVIDER_GRADIENT }}
+              />
+              <div className="flex flex-1 flex-col items-center gap-[6px]">
                 <p className="whitespace-nowrap text-[16px] font-semibold text-grey-90">
                   이달 기록
                 </p>
@@ -734,36 +1271,64 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div
-            className="flex w-full flex-col items-start gap-[16px] rounded-[12px] bg-grey-0 px-[16px] py-[20px] text-left opacity-30"
+          <button
+            ref={experienceRef}
+            type="button"
+            onClick={() => navigate("/experience")}
+            className="relative flex w-full cursor-pointer flex-col items-start gap-[16px] overflow-hidden rounded-[12px] bg-grey-0 px-[16px] pb-[32px] pt-[20px] text-left transition-opacity active:opacity-80"
             style={{ boxShadow: cardShadow }}
           >
-            <div ref={experienceRef} className="flex items-center gap-[10px]">
-              <LogoSymbol
-                dotColor={accentColor ?? "#414450"}
-                className="h-[28px] w-[22px] shrink-0"
-              />
-              <p className="whitespace-nowrap text-[20px] font-semibold tracking-[-0.4px] text-grey-90">
-                경험조각 주고받기
-              </p>
+            <ExperienceBlobs />
+
+            <div className="relative flex w-full flex-col gap-[32px]">
+              <div className="flex w-full flex-col items-start gap-[4px]">
+                <div className="flex items-center gap-[10px]">
+                  <LogoSymbol
+                    dotColor={accentColor ?? "#414450"}
+                    className="h-[27.872px] w-[22px] shrink-0"
+                  />
+                  <p className="whitespace-nowrap text-[20px] font-semibold tracking-[-0.4px] text-grey-90">
+                    경험조각 주고받기
+                  </p>
+                </div>
+                {inboxArrivals.length === 0 && (
+                  <p className="whitespace-nowrap text-[14px] font-medium tracking-[-0.28px] text-grey-60">
+                    아직 나와 비슷한 경험이 도착하지 않았어요.
+                  </p>
+                )}
+              </div>
+
+              {inboxArrivals.length > 0 ? (
+                <div className="flex w-full flex-col gap-[16px]">
+                  {inboxArrivals.slice(0, 2).map((arrival) => (
+                    <SpeechBubble
+                      key={arrival.arrivalId}
+                      color="#EFF1F6"
+                      direction="left"
+                      bordered
+                      className="flex w-full items-center gap-[10px] px-[16px] py-[10px]"
+                    >
+                      <p className="flex-1 text-[16px] font-medium tracking-[-0.32px] text-grey-80">
+                        {fragmentTopic(arrival) || "새로운 경험"}과 관련된
+                        경험조각이 도착했어요.
+                      </p>
+                      <span className="shrink-0 whitespace-nowrap text-[12px] font-normal text-grey-60">
+                        {formatArrivalTime(arrival.arrivedAt)}
+                      </span>
+                    </SpeechBubble>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex w-full flex-col items-center justify-center">
+                  <div className="flex items-center justify-center rounded-[32px] bg-[#F8F9FC] p-[10px]">
+                    <p className="whitespace-nowrap text-[14px] font-medium tracking-[-0.28px] text-grey-80">
+                      경험조각을 찾는중..
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
-            {[
-              "“다이어트”와 관련된 다른사람의 경험이 도착했어요.",
-              "“수능공부”와 관련된 다른사람의 경험이 도착했어요.",
-            ].map((text) => (
-              <SpeechBubble
-                key={text}
-                color="#EFF1F6"
-                direction="left"
-                bordered
-                className="flex w-full items-center gap-[10px] px-[16px] py-[10px]"
-              >
-                <p className="flex-1 text-[16px] font-medium tracking-[-0.32px] text-grey-80">
-                  {text}
-                </p>
-              </SpeechBubble>
-            ))}
-          </div>
+          </button>
         </div>
 
         <MonthYearPickerModal
@@ -789,9 +1354,27 @@ export default function HomePage() {
             onClose={handleNotifyClose}
           />
         )}
+
+        {autoCompletionNotice && !notifyReward && (
+          <AutoCompletionNoticeModal
+            recordedDate={autoCompletionNotice.recordedDate}
+            onConfirm={handleAutoCompletionConfirm}
+            onClose={dismissAutoCompletionNotice}
+          />
+        )}
       </div>
 
-      {tutorialStep !== null && (
+      {rewardClaimError && (
+        <button
+          type="button"
+          onClick={() => setRewardClaimError("")}
+          className="absolute inset-x-[16px] bottom-[16px] z-40 rounded-[12px] bg-grey-90/90 px-[16px] py-[12px] text-center text-[14px] font-medium leading-[1.5] text-grey-0"
+        >
+          {rewardClaimError}
+        </button>
+      )}
+
+      {tutorialStep !== null && !notifyReward && (
         <HomeTutorial
           step={tutorialStep}
           spot={spot}

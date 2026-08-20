@@ -1,39 +1,35 @@
-import SpeechBubble from "../../../components/SpeechBubble";
-
 export default function ExperienceNotificationBubble({
   message,
   relativeTime,
-  isToday,
+  stale = false,
   onConfirm,
 }) {
   return (
-    <div className="flex w-full flex-col items-end gap-[4px]">
-      <SpeechBubble
-        color={isToday ? "#858C9C" : "#EFF1F6"}
-        direction="left"
-        bordered={!isToday}
-        className="flex w-full items-center gap-[10px] px-[16px] py-[10px]"
-      >
+    <button
+      type="button"
+      onClick={onConfirm}
+      className={`flex w-full items-center rounded-bl-[12px] rounded-br-[12px] rounded-tr-[12px] p-[16px] text-left transition-opacity active:opacity-80 ${
+        stale
+          ? "border border-solid border-grey-30 bg-grey-10"
+          : "bg-grey-30"
+      }`}
+    >
+      <div className="flex min-w-0 flex-1 items-end justify-between gap-[10px]">
         <p
-          className={`text-[16px] font-medium tracking-[-0.32px] ${
-            isToday ? "text-grey-0" : "text-grey-70"
+          className={`min-w-0 text-[16px] font-medium leading-[normal] tracking-[-0.32px] ${
+            stale ? "text-grey-80" : "text-grey-90"
           }`}
         >
           {message}
         </p>
-      </SpeechBubble>
-      <div className="flex w-full items-start justify-between">
-        <p className="whitespace-nowrap text-[14px] font-semibold text-grey-60">
+        <p
+          className={`shrink-0 whitespace-nowrap text-[12px] font-normal leading-[normal] tracking-[-0.12px] ${
+            stale ? "text-grey-70" : "text-grey-80"
+          }`}
+        >
           {relativeTime}
         </p>
-        <button
-          type="button"
-          onClick={onConfirm}
-          className="shrink-0 rounded-[12px] border-[1.5px] border-grey-60 bg-grey-0 px-[16px] py-[10px] text-[14px] font-medium tracking-[-0.28px] text-[#414450]"
-        >
-          확인하기
-        </button>
       </div>
-    </div>
+    </button>
   );
 }

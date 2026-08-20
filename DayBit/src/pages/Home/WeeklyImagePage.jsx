@@ -1,10 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import apiClient from "../../api/apiClient";
-import { getWeeklyRewardDetail, markWeeklyRewardViewed } from "../../utils/weeklyRewards";
+import {
+  getWeeklyRewardDetail,
+  markWeeklyRewardViewed,
+  getCachedWeeklyRewardDetail,
+  saveCachedWeeklyRewardDetail,
+} from "../../utils/weeklyRewards";
 import backIcon from "../../assets/icons/back.svg";
 import profileIcon from "../../assets/icons/profile.svg";
 import LogoSymbol from "../../assets/icons/LogoSymbol.jsx";
+import WeeklyImagePreviewModal from "./components/WeeklyImagePreviewModal";
 
 const BLOBS = [
   {
@@ -50,9 +56,14 @@ const ACCENT_COLOR = "#4F5563";
 
 export default function WeeklyImagePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { weeklyRewardId } = useParams();
-  const [reward, setReward] = useState(null);
+  const fromMonth = location.state?.fromMonth ?? null;
+  const [reward, setReward] = useState(() =>
+    getCachedWeeklyRewardDetail(weeklyRewardId),
+  );
   const [errorText, setErrorText] = useState("");
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const pollRef = useRef(null);
   const viewedRef = useRef(false);
@@ -66,16 +77,32 @@ export default function WeeklyImagePage() {
         if (!alive) return;
         const result = response.data.result;
         setReward(result);
+        saveCachedWeeklyRewardDetail(weeklyRewardId, result);
+        console.log({
+          categoryKeyword: result.categoryKeyword,
+          imageSource: result.imageSource,
+          status: result.status,
+        });
 
         if (result.status === "PENDING" || result.status === "GENERATING") {
           pollRef.current = setTimeout(fetchDetail, POLL_INTERVAL_MS);
         } else if (
           result.status === "COMPLETED" &&
           result.available &&
+          !result.viewed &&
           !viewedRef.current
         ) {
           viewedRef.current = true;
-          markWeeklyRewardViewed(result.weeklyRewardId ?? Number(weeklyRewardId));
+          markWeeklyRewardViewed(
+            result.weeklyRewardId ?? Number(weeklyRewardId),
+          ).catch((error) => {
+            if (error.response?.data?.code === "WEEKLY_REWARD409") return;
+            console.error(
+              "PATCH /api/v1/weekly-rewards/{weeklyRewardId}/view 실패:",
+              error.response?.status,
+              error.response?.data,
+            );
+          });
         }
       } catch (error) {
         if (!alive) return;
@@ -115,10 +142,15 @@ export default function WeeklyImagePage() {
     }
   };
 
-  const handleBack = () => navigate("/home");
-  const handleFinish = () => navigate("/home");
+  const goHome = () =>
+    navigate("/home", fromMonth ? { state: { viewMonth: fromMonth } } : {});
+  const handleBack = goHome;
+  const handleFinish = goHome;
 
   const isReady = reward?.status === "COMPLETED" && reward?.available;
+  const extraKeywords = (reward?.keywords ?? []).filter(
+    (keyword) => keyword !== reward?.categoryKeyword,
+  );
   const isPending =
     reward?.status === "PENDING" || reward?.status === "GENERATING";
 
@@ -174,13 +206,16 @@ export default function WeeklyImagePage() {
         </div>
       ) : (
         <div className="absolute inset-x-0 bottom-0 top-[65px] z-10 flex flex-col overflow-hidden rounded-t-[12px] bg-grey-0 shadow-[0_0_10px_0_rgba(77,80,91,0.05),0_0_30px_0_rgba(65,68,80,0.05)]">
-          <div className="relative z-10 flex w-full shrink-0 items-start gap-[6px] px-[16px] pt-[32px]">
-            <LogoSymbol dotColor={ACCENT_COLOR} className="h-[27.872px] w-[22px] shrink-0" />
+          {" "}
+          <div className="relative z-10 flex w-full shrink-0 items-start gap-[6px] px-[16px] pb-[32px] pt-[32px]">
+            <LogoSymbol
+              dotColor={ACCENT_COLOR}
+              className="h-[27.872px] w-[22px] shrink-0"
+            />
             <p className="text-[24px] font-bold leading-[normal] tracking-[-0.48px] text-grey-80">
               주간 이미지
             </p>
           </div>
-
           <div className="relative z-10 min-h-0 flex-1">
             <div
               className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-[56px]"
@@ -190,16 +225,22 @@ export default function WeeklyImagePage() {
               }}
             />
 
-            <div className="h-full overflow-y-auto scrollbar-hide px-[36px] pb-[56px] pt-[32px]">
+            <div className="h-full overflow-y-auto scrollbar-hide px-[16px] pb-[56px] pt-0">
               {isReady ? (
                 <div className="flex w-full flex-col items-start gap-[20px]">
                   <div className="flex w-full flex-col items-start gap-[4px]">
-                    <img
-                      src={reward.imageUrl}
-                      alt=""
-                      onError={handleImageError}
-                      className="aspect-square w-full rounded-[4px] object-cover"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setIsPreviewOpen(true)}
+                      className="w-full cursor-pointer border-none bg-transparent p-0"
+                    >
+                      <img
+                        src={reward.imageUrl}
+                        alt=""
+                        onError={handleImageError}
+                        className="w-full rounded-[4px]"
+                      />
+                    </button>
                     {reward.dailyColors?.length > 0 && (
                       <div className="flex flex-wrap items-start gap-[4px]">
                         {reward.dailyColors.map((day) => (
@@ -219,11 +260,20 @@ export default function WeeklyImagePage() {
                     </p>
                   )}
 
-                  {(reward.keywords?.length > 0 || reward.summary) && (
+                  {(reward.categoryKeyword ||
+                    extraKeywords.length > 0 ||
+                    reward.summary) && (
                     <div className="flex w-full flex-col items-start justify-center gap-[12px] rounded-[4px] border border-solid border-[#E8EBF0] bg-[#F8F9FC] px-[16px] py-[20px]">
-                      {reward.keywords?.length > 0 && (
+                      {reward.categoryKeyword && (
+                        <div className="flex items-center justify-center rounded-[100px] border border-solid border-[#AFB6C4] px-[8px] py-[4px]">
+                          <p className="whitespace-nowrap text-[14px] font-medium leading-[normal] tracking-[-0.28px] text-grey-80">
+                            {reward.categoryKeyword}
+                          </p>
+                        </div>
+                      )}
+                      {extraKeywords.length > 0 && (
                         <div className="flex flex-wrap items-center gap-[4px]">
-                          {reward.keywords.map((keyword) => (
+                          {extraKeywords.map((keyword) => (
                             <div
                               key={keyword}
                               className="flex items-center justify-center rounded-[100px] border border-solid border-[#AFB6C4] px-[8px] py-[4px]"
@@ -256,7 +306,6 @@ export default function WeeklyImagePage() {
               )}
             </div>
           </div>
-
           <div className="relative z-20 flex w-full shrink-0 justify-center bg-grey-0 px-[16px] pb-[30px] pt-[16px]">
             <button
               type="button"
@@ -267,6 +316,13 @@ export default function WeeklyImagePage() {
             </button>
           </div>
         </div>
+      )}
+
+      {isPreviewOpen && (
+        <WeeklyImagePreviewModal
+          imageUrl={reward.imageUrl}
+          onClose={() => setIsPreviewOpen(false)}
+        />
       )}
     </div>
   );

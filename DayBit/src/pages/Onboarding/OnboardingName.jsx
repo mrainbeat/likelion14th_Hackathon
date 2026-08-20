@@ -1,36 +1,32 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import OnboardingHeader from "./components/OnboardingHeader";
 import ClearIcon1 from "../../assets/icons/clear1.svg";
 import ClearIcon2 from "../../assets/icons/clear2.svg";
 import { BottomButton } from "./components/OnboardingUi";
+import { clearCachedNickname, saveCachedNickname } from "../../utils/nickname";
 
 export default function OnboardingName() {
   const navigate = useNavigate();
   const [nickname, setNickname] = useState("");
 
-  useEffect(() => {
-    const saved = localStorage.getItem("nickname");
-    if (saved) saved;
-  }, []);
-
   const handleChange = (e) => {
     const value = e.target.value;
     if (value.length <= 8) {
       setNickname(value);
-      localStorage.setItem("nickname", value);
+      saveCachedNickname(value);
     }
   };
 
   const handleClear = () => {
     setNickname("");
-    localStorage.removeItem("nickname");
+    clearCachedNickname();
   };
 
   const isValid = nickname.length >= 2 && nickname.length <= 8;
 
   const handleNext = () => {
-    if (isValid) navigate("/onboarding/job", { replace: true });
+    if (isValid) navigate("/onboarding/day-start-time", { replace: true });
   };
 
   return (
@@ -39,10 +35,10 @@ export default function OnboardingName() {
         step={0}
         onBack={() => navigate("/login")}
         lines={["안녕하세요, 전 데이빗이에요 :)", "뭐라고 부르면 될까요?"]}
-        caption="설정에서 언제든지 변경 가능해요."
+        caption="앞으로 사용하실 닉네임을 알려주세요."
       />
 
-      <div className="absolute left-[9.23%] right-[9.23%] top-[389px] flex flex-col gap-[8px]">
+      <div className="absolute left-[9.23%] right-[9.23%] top-[336px] flex flex-col gap-[8px]">
         {" "}
         <div className="flex w-full flex-col gap-[6px]">
           <label className="w-full text-[14px] font-medium leading-[1.19] text-grey-70">
