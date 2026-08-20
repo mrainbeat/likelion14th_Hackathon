@@ -171,7 +171,7 @@ export default function ExperienceDiaryPage() {
     try {
       await sendDeliveryFeedback(fragment.deliveryId, content);
       markReceivedFragmentFeedbackSubmitted(fragment.deliveryId);
-      navigate("/experience/gotten", { replace: true });
+      setFragment((prev) => (prev ? { ...prev, feedbackSubmitted: true } : prev));
     } catch (error) {
       console.error(
         "POST /api/v1/experience-fragments/deliveries/{deliveryId}/feedback 실패:",
@@ -210,7 +210,7 @@ export default function ExperienceDiaryPage() {
 
   return (
     <div className="relative flex h-full w-full select-none flex-col overflow-y-auto bg-[#f6f8fa] px-[16px] py-[16px] scrollbar-hide">
-      <div className="flex w-full flex-col items-start gap-[16px] pb-[100px]">
+      <div className="flex w-full flex-col items-start gap-[16px]">
         <div className="flex w-full items-center justify-between">
           <button
             type="button"
@@ -324,47 +324,42 @@ export default function ExperienceDiaryPage() {
             {actionError}
           </p>
         )}
-      </div>
+        {isPending && fragment?.status === "REVIEW_REQUIRED" && (
+          <div className="flex w-full items-center gap-[16px]">
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={() => setShowCancelConfirm(true)}
+              className="flex-1 h-[48px] rounded-[12px] border-[1.5px] border-grey-60 bg-grey-0 text-[18px] font-semibold tracking-[-0.18px] text-grey-80 disabled:opacity-50"
+            >
+              전달 취소하기
+            </button>
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={handleDeliver}
+              className="flex-1 h-[48px] rounded-[12px] bg-grey-70 text-[18px] font-semibold tracking-[-0.18px] text-grey-0 disabled:opacity-50"
+            >
+              전달하기
+            </button>
+          </div>
+        )}
 
-      {isPending && fragment?.status === "REVIEW_REQUIRED" && (
-        <div className="absolute inset-x-0 bottom-0 flex w-full items-center gap-[16px] bg-[#f6f8fa] px-[16px] pb-[30px] pt-[16px]">
+        {mode === "incoming" && fragment && !feedbackSubmitted && (
           <button
             type="button"
-            disabled={isSubmitting}
-            onClick={() => setShowCancelConfirm(true)}
-            className="flex-1 h-[49px] rounded-[12px] border-[1.5px] border-grey-60 bg-grey-0 text-[18px] font-semibold tracking-[-0.18px] text-grey-80 disabled:opacity-50"
-          >
-            전달 취소하기
-          </button>
-          <button
-            type="button"
-            disabled={isSubmitting}
-            onClick={handleDeliver}
-            className="flex-1 h-[49px] rounded-[12px] bg-grey-70 text-[18px] font-semibold tracking-[-0.18px] text-grey-0 disabled:opacity-50"
-          >
-            전달하기
-          </button>
-        </div>
-      )}
-
-      {mode === "incoming" && fragment && (
-        <div className="absolute inset-x-0 bottom-0 flex w-full bg-[#f6f8fa] px-[16px] pb-[30px] pt-[16px]">
-          <button
-            type="button"
-            disabled={
-              isSubmitting || feedbackSubmitted || !feedbackText.trim()
-            }
+            disabled={isSubmitting || feedbackSubmitted || !feedbackText.trim()}
             onClick={handleFeedbackComplete}
-            className={`h-[49px] w-full rounded-[12px] text-[18px] font-semibold tracking-[-0.36px] text-grey-0 ${
+            className={`h-[48px] w-full rounded-[12px] text-[18px] font-semibold tracking-[-0.36px] text-grey-0 ${
               feedbackSubmitted
                 ? "cursor-default bg-grey-20"
                 : "bg-grey-70 disabled:opacity-50"
             }`}
           >
-            {feedbackSubmitted ? "반응 보냄" : "작성 완료"}
+            {feedbackSubmitted ? "반응 보냄" : "반응 보내기"}
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {showCancelConfirm && (
         <CancelConfirmModal

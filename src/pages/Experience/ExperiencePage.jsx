@@ -30,6 +30,7 @@ import { useNickname } from "../MyPage/useNickname";
 
 const NAVIGATE_THRESHOLD = 8;
 const TOAST_DURATION_MS = 2500;
+const MAX_VISIBLE_ITEMS = 8;
 
 export default function ExperiencePage() {
   const navigate = useNavigate();
@@ -285,7 +286,7 @@ export default function ExperiencePage() {
                   {notificationItems.length > 2 && (
                     <Collapsible open={notificationsExpanded}>
                       <div className="flex w-full flex-col items-start gap-[16px]">
-                        {notificationItems.slice(2).map((n) => (
+                        {notificationItems.slice(2, MAX_VISIBLE_ITEMS).map((n) => (
                           <ExperienceNotificationBubble
                             key={n.id}
                             {...n}
@@ -343,7 +344,7 @@ export default function ExperiencePage() {
           title="받은 경험조각"
           emptyText="아직 받은 경험 조각이 없어요 -_-"
           items={receivedAll.slice(0, 2)}
-          moreItems={receivedAll.slice(2)}
+          moreItems={receivedAll.slice(2, MAX_VISIBLE_ITEMS)}
           onItemClick={(item) =>
             navigate(`/experience/diary/${item.id}`, {
               state: { mode: "incoming", fragment: item.fragment },
@@ -358,7 +359,7 @@ export default function ExperiencePage() {
 이후에는 다른 사람에게 전달될 수 있어요.`}
           hideTag
           items={pendingAll.slice(0, 2)}
-          moreItems={pendingAll.slice(2)}
+          moreItems={pendingAll.slice(2, MAX_VISIBLE_ITEMS)}
           onItemClick={(item) =>
             navigate(`/experience/diary/${item.id}`, {
               state: { mode: "pending", fragment: item.fragment },
@@ -371,7 +372,7 @@ export default function ExperiencePage() {
           emptyText="나의 경험조각을 전달할 사람을 찾고있어요:)"
           hideTag
           items={sentAll.slice(0, 2)}
-          moreItems={sentAll.slice(2)}
+          moreItems={sentAll.slice(2, MAX_VISIBLE_ITEMS)}
           onItemClick={(item) =>
             navigate(`/experience/sent/${item.id}`, {
               state: { fragment: item.fragment },
