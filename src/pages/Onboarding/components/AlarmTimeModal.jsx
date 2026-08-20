@@ -134,7 +134,7 @@ export default function AlarmTimeModal({
   if (!mounted) return null;
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
         onClick={onClose}
         className={`absolute inset-0 bg-grey-90/25 backdrop-blur-[1px] transition-opacity duration-200 ease-out ${
